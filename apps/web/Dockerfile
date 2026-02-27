@@ -35,7 +35,7 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN pnpm -C apps/web build
+RUN pnpm turbo run build --filter=@pandoroom/web
 
 FROM node:20-alpine AS runner
 WORKDIR /app
