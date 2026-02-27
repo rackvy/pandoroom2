@@ -1,5 +1,8 @@
 # syntax=docker/dockerfile:1
 
+############################
+# DEPS
+############################
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -10,54 +13,59 @@ RUN corepack prepare pnpm@10.30.3 --activate
 # workspace manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# package manifests (минимум для графа зависимостей)
+# manifests нужных пакетов для графа зависимостей
 COPY apps/api/package.json apps/api/
 COPY packages/shared/package.json packages/shared/
 
-# prisma schema (чтобы prisma generate мог кешироваться)
+# prisma schema (чтобы generate мог кешироваться)
 COPY apps/api/prisma apps/api/prisma/
 
-# 1) скачиваем зависимости в pnpm store
-RUN pnpm fetch --filter @pandoroom/api...
+# ВАЖНО: install выполняем ИЗ ПАКЕТА (как мы сделали для web)
+WORKDIR /app/apps/api
 
-# 2) устанавливаем deps именно для api (+ его зависимости), включая devDeps (где prisma)
-RUN pnpm install --offline --frozen-lockfile --prod=false --filter @pandoroom/api...
+# ставим зависимости (включая devDeps, где prisma CLI)
+RUN pnpm install --frozen-lockfile
 
+############################
+# BUILDER
+############################
 FROM node:20-alpine AS builder
 WORKDIR /app
 
 RUN corepack enable
 RUN corepack prepare pnpm@10.30.3 --activate
 
-# переносим node_modules и pnpm store
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /root/.local/share/pnpm /root/.local/share/pnpm
+# переносим весь /app из deps (там уже есть node_modules пакета api)
+COPY --from=deps /app /app
 
-# теперь исходники
+# теперь исходники целиком (для сборки)
 COPY . .
 
-# проверка что prisma реально есть (и чтобы лог был понятный)
-RUN ls -la /app/apps/api/node_modules/.bin | grep prisma
+WORKDIR /app/apps/api
 
-# prisma generate + build только api
-RUN pnpm --filter @pandoroom/api exec prisma generate
-RUN pnpm --filter @pandoroom/api build
+# проверка: prisma и другие bin реально существуют
+RUN ls -la node_modules/.bin | grep prisma
 
+# generate client + build
+RUN ./node_modules/.bin/prisma generate
+RUN pnpm build
+
+############################
+# RUNNER
+############################
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# runtime-артефакты api
+# runtime-артефакты
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
 COPY --from=builder /app/apps/api/package.json ./package.json
 
-# node_modules нужны для рантайма (nest + prisma client и т.п.)
-COPY --from=builder /app/node_modules ./node_modules
+# переносим node_modules именно пакета api (там prisma CLI и @prisma/client)
+COPY --from=builder /app/apps/api/node_modules ./node_modules
 
 EXPOSE 3001
 
-
-# миграции при старте (если DATABASE_URL задан)
-CMD sh -c "if [ -n \"$DATABASE_URL\" ]; then /app/node_modules/.bin/prisma migrate deploy; fi && node dist/main.js"
+CMD sh -c "if [ -n \"$DATABASE_URL\" ]; then ./node_modules/.bin/prisma migrate deploy; fi && node dist/main.js"
