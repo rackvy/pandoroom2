@@ -37,7 +37,7 @@ COPY --from=deps /root/.local/share/pnpm /root/.local/share/pnpm
 COPY . .
 
 # проверка что prisma реально есть (и чтобы лог был понятный)
-RUN ls -la /app/node_modules/.bin | grep prisma
+RUN ls -la /app/apps/api/node_modules/.bin | grep prisma
 
 # prisma generate + build только api
 RUN pnpm --filter @pandoroom/api exec prisma generate
