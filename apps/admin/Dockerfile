@@ -1,35 +1,32 @@
 # syntax=docker/dockerfile:1
 
-# Stage 1: Build
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install pnpm
-RUN npm install -g pnpm@9
+# pnpm через corepack (без npm install -g pnpm@9)
+RUN corepack enable
+RUN corepack prepare pnpm@10.30.3 --activate
 
-# Copy package files
-COPY package.json pnpm-lock.yaml* ./
+# 1) копируем workspace файлы
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# Install dependencies
+# 2) копируем package.json админки (чтобы кешировалось)
+COPY apps/admin/package.json apps/admin/
+
+# 3) ставим зависимости всего workspace (нужно для корректного lockfile)
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY . .
+# 4) копируем исходники админки и всё нужное (если используешь shared-пакеты — копируем и их)
+COPY apps/admin apps/admin
+COPY packages packages
 
-# Build the app
-RUN pnpm build
+# 5) билдим именно админку
+RUN pnpm -C apps/admin build
 
-# Stage 2: Nginx
 FROM nginx:alpine
 
-# Copy built files to nginx html directory
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/admin/dist /usr/share/nginx/html
+COPY apps/admin/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
 EXPOSE 80
-
-# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
