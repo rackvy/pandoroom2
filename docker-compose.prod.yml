@@ -3,7 +3,8 @@ version: '3.8'
 services:
   api:
     build:
-      context: ./apps/api
+      context: .
+      dockerfile: ./apps/api/Dockerfile
     container_name: pandoroom-api
     restart: always
     env_file: ./apps/api/.env.production
@@ -18,7 +19,8 @@ services:
 
   admin:
     build:
-      context: ./apps/admin
+      context: .
+      dockerfile: ./apps/admin/Dockerfile
     container_name: pandoroom-admin
     restart: always
     env_file: ./apps/admin/.env.production
@@ -33,7 +35,8 @@ services:
 
   web:
     build:
-      context: ./apps/web
+      context: .
+      dockerfile: ./apps/web/Dockerfile
     container_name: pandoroom-web
     restart: always
     env_file: ./apps/web/.env.production
