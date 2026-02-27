@@ -10,14 +10,15 @@ RUN corepack prepare pnpm@10.30.3 --activate
 # workspace manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# web manifest (для кеша)
+# копируем манифесты пакетов, чтобы pnpm правильно собрал граф
 COPY apps/web/package.json apps/web/
-
-# если web зависит от shared — нужен и его manifest
 COPY packages/shared/package.json packages/shared/
 
-# ставим зависимости workspace
-RUN pnpm install --frozen-lockfile
+# (важно) скачиваем зависимости в store
+RUN pnpm fetch --filter @pandoroom/web...
+
+# ставим зависимости только для web (+ его deps, включая shared)
+RUN pnpm install --frozen-lockfile --filter @pandoroom/web...
 
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -25,12 +26,15 @@ WORKDIR /app
 RUN corepack enable
 RUN corepack prepare pnpm@10.30.3 --activate
 
+# переносим node_modules и pnpm store
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /root/.local/share/pnpm /root/.local/share/pnpm
+
+# исходники целиком (нужно для сборки)
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# билдим только web (НЕ turbo root build)
 RUN pnpm -C apps/web build
 
 FROM node:20-alpine AS runner
