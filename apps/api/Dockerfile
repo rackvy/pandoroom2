@@ -18,7 +18,7 @@ COPY packages/shared/package.json packages/shared/
 COPY apps/api/prisma apps/api/prisma/
 
 # 🔥 СТАВИМ deps именно api
-RUN pnpm install --frozen-lockfile --filter @pandoroom/api...
+RUN pnpm install --frozen-lockfile
 
 # ---------- builder ----------
 
