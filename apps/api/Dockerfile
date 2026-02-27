@@ -10,14 +10,17 @@ RUN corepack prepare pnpm@10.30.3 --activate
 # workspace manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# api manifest + prisma schema
+# package manifests
 COPY apps/api/package.json apps/api/
+COPY packages/shared/package.json packages/shared/
+
+# prisma schema (нужно для generate cache)
 COPY apps/api/prisma apps/api/prisma/
 
-# 🔥 ВАЖНО — ставим dev deps (где prisma CLI)
-RUN pnpm install --frozen-lockfile --prod=false
+# 🔥 СТАВИМ deps именно api
+RUN pnpm install --frozen-lockfile --filter @pandoroom/api...
 
-# ---------------- BUILDER ----------------
+# ---------- builder ----------
 
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -30,12 +33,10 @@ COPY . .
 
 WORKDIR /app/apps/api
 
-# prisma CLI теперь существует
 RUN pnpm exec prisma generate
-
 RUN pnpm build
 
-# ---------------- RUNNER ----------------
+# ---------- runner ----------
 
 FROM node:20-alpine AS runner
 WORKDIR /app
