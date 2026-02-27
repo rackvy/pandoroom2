@@ -1,0 +1,273 @@
+.container {
+  padding: 24px;
+  max-width: 1200px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1A1A18;
+  margin: 0 0 4px 0;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+}
+
+.addButton {
+  padding: 10px 20px;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.addButton:hover {
+  background: #8fa832;
+}
+
+/* Filters */
+.filters {
+  margin-bottom: 20px;
+}
+
+.filterSelect {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  min-width: 200px;
+}
+
+/* Form */
+.formContainer {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.formContainer h3 {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1A1A18;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+}
+
+.formGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.formGroup input,
+.formGroup select {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: #A0BF39;
+}
+
+.formActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.cancelButton {
+  padding: 10px 20px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: #e0e0e0;
+}
+
+.saveButton {
+  padding: 10px 24px;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.saveButton:hover {
+  background: #8fa832;
+}
+
+/* Table */
+.tableContainer {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table thead {
+  background: #f8f9fa;
+}
+
+.table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #666;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.table tr:hover {
+  background: #f8f9fa;
+}
+
+.table tr.inactive {
+  opacity: 0.6;
+}
+
+.nameCell {
+  font-weight: 500;
+  color: #1A1A18;
+}
+
+.roleBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+}
+
+.statusToggle {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.statusToggle.active {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.statusToggle.inactive {
+  background: #ffebee;
+  color: #f44336;
+}
+
+.statusToggle:hover {
+  opacity: 0.8;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editButton {
+  padding: 6px 12px;
+  background: #e3f2fd;
+  color: #2196f3;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.editButton:hover {
+  background: #2196f3;
+  color: white;
+}
+
+.deleteButton {
+  padding: 6px 12px;
+  background: #ffebee;
+  color: #f44336;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.deleteButton:hover {
+  background: #f44336;
+  color: white;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+}
+
+.emptyState {
+  padding: 60px;
+  text-align: center;
+  color: #999;
+  font-size: 16px;
+}

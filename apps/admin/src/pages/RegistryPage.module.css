@@ -1,0 +1,362 @@
+.container {
+  padding: 24px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1A1A18;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.newOrderButton {
+  padding: 10px 20px;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.newOrderButton:hover {
+  background: #8fa832;
+}
+
+.branchSelect select {
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  min-width: 200px;
+}
+
+/* Filters Section */
+.filtersSection {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.filtersToggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+  color: #1A1A18;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.toggleIcon {
+  font-size: 12px;
+  color: #666;
+}
+
+.filtersGrid {
+  padding-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.filtersGrid .filterGroup {
+  flex: 0 0 auto;
+  min-width: 140px;
+}
+
+.filtersGrid .filterGroup:nth-child(1) { width: 180px; }
+.filtersGrid .filterGroup:nth-child(2) { width: 120px; }
+.filtersGrid .filterGroup:nth-child(3) { width: 200px; }
+.filtersGrid .filterGroup:nth-child(4) { width: 200px; }
+.filtersGrid .filterGroup:nth-child(5) { width: 240px; }
+.filtersGrid .filterGroup:nth-child(6) { width: 200px; }
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filterGroup label {
+  font-size: 12px;
+  color: #666;
+  text-transform: lowercase;
+}
+
+.filterGroup input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.filterGroup input:focus {
+  outline: none;
+  border-color: #A0BF39;
+}
+
+.rangeInputs {
+  display: flex;
+  gap: 8px;
+}
+
+.rangeInputs input {
+  flex: 1;
+}
+
+/* Filter Row */
+.filterRow {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 16px 0;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 8px;
+}
+
+.toggleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggleGroup span {
+  font-size: 12px;
+  color: #666;
+}
+
+.toggleButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.addButton {
+  padding: 6px 12px;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.addButton:hover {
+  background: #8fa832;
+}
+
+.toggleBtn {
+  padding: 6px 12px;
+  background: #e8f5e9;
+  color: #4caf50;
+  border: 1px solid #c8e6c9;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggleBtn:hover {
+  background: #c8e6c9;
+}
+
+.toggleBtn.active {
+  background: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+/* Filter Actions */
+.filterActions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.applyButton {
+  padding: 10px 20px;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.applyButton:hover {
+  background: #8fa832;
+}
+
+.resetButton {
+  padding: 10px 20px;
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resetButton:hover {
+  background: #e0e0e0;
+}
+
+/* Filter Tags */
+.filterTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.filterTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #A0BF39;
+  color: white;
+  border-radius: 16px;
+  font-size: 12px;
+}
+
+.filterTag button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Table */
+.tableContainer {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dateGroup {
+  margin-bottom: 24px;
+}
+
+.dateGroup:last-child {
+  margin-bottom: 0;
+}
+
+.bookingsTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.bookingsTable thead {
+  background: #f8f9fa;
+}
+
+.bookingsTable th {
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #666;
+  font-size: 11px;
+  text-transform: lowercase;
+  white-space: nowrap;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.bookingsTable td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  white-space: nowrap;
+}
+
+.bookingRow {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.bookingRow:hover {
+  background: #f8f9fa;
+}
+
+.yesCell {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.noCell {
+  color: #f44336;
+  font-weight: 500;
+}
+
+.totalRow {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+.totalRow td {
+  color: #666;
+  font-size: 12px;
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: #666;
+}
+
+.emptyState {
+  padding: 60px;
+  text-align: center;
+  color: #999;
+  font-size: 16px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .bookingsTable {
+    font-size: 12px;
+  }
+  
+  .bookingsTable th,
+  .bookingsTable td {
+    padding: 8px 6px;
+  }
+}

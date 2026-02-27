@@ -1,0 +1,8 @@
+-- AlterTable
+ALTER TABLE "Branch" ADD COLUMN     "address" TEXT,
+ADD COLUMN     "city" TEXT,
+ADD COLUMN     "email" TEXT,
+ADD COLUMN     "isActive" BOOLEAN NOT NULL DEFAULT true,
+ADD COLUMN     "sortOrder" INTEGER NOT NULL DEFAULT 0,
+ALTER COLUMN "geoLat" DROP NOT NULL,
+ALTER COLUMN "geoLng" DROP NOT NULL;

@@ -1,0 +1,428 @@
+/* Schedule Grid Layout */
+.scheduleContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f8f9fa;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.scheduleHeader {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  gap: 1rem;
+}
+
+.viewToggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggleButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.toggleButton:hover {
+  background: #f3f4f6;
+}
+
+.toggleButton.active {
+  background: #A0BF39;
+  color: white;
+  border-color: #A0BF39;
+}
+
+/* Grid Layout */
+.gridWrapper {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+}
+
+.timeAxis {
+  width: 60px;
+  flex-shrink: 0;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.timeLabel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.timeText {
+  font-size: 0.75rem;
+  color: #6b7280;
+  transform: translateY(-50%);
+}
+
+.gridContent {
+  display: flex;
+  flex: 1;
+  overflow: auto;
+}
+
+/* Zone Group */
+.zoneGroup {
+  display: flex;
+  flex-direction: column;
+  border-right: 2px solid #e5e7eb;
+}
+
+.zoneGroup:last-child {
+  border-right: none;
+}
+
+.zoneHeader {
+  padding: 0.75rem 1rem;
+  background: #f3f4f6;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+  text-align: center;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.zoneColumns {
+  display: flex;
+}
+
+/* Grid Column */
+.gridColumn {
+  width: 120px;
+  flex-shrink: 0;
+  border-right: 1px solid #e5e7eb;
+  position: relative;
+  background: white;
+}
+
+.gridColumn:last-child {
+  border-right: none;
+}
+
+.columnHeader {
+  padding: 0.75rem 0.5rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: #374151;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.columnContent {
+  position: relative;
+  height: 1740px; /* (24 - 9.5) * 60 * 2 = 870 minutes * 2px */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent 59px,
+    #f3f4f6 59px,
+    #f3f4f6 60px
+  );
+}
+
+.columnContent.dragOver {
+  background-color: rgba(160, 191, 57, 0.1);
+}
+
+/* Reservation Block */
+.reservationBlock {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 0.75rem;
+  cursor: grab;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s;
+  user-select: none;
+}
+
+.reservationBlock:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+
+.reservationBlock.dragging {
+  cursor: grabbing;
+  opacity: 0.8;
+  z-index: 100;
+}
+
+.reservationBlock.confirmed {
+  background: #A0BF39;
+  color: white;
+}
+
+.reservationBlock.draft {
+  background: #9ca3af;
+  color: white;
+}
+
+.reservationBlock.done {
+  background: #1A1A18;
+  color: white;
+}
+
+.reservationBlock.canceled {
+  background: #ef4444;
+  color: white;
+  opacity: 0.6;
+}
+
+.reservationTitle {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reservationTime {
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+/* Cleaning Buffer Tail */
+.cleaningBuffer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(255, 255, 255, 0.3) 4px,
+    rgba(255, 255, 255, 0.3) 8px
+  );
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+/* Resize Handles */
+.resizeHandle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: ns-resize;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.reservationBlock:hover .resizeHandle {
+  opacity: 1;
+}
+
+.resizeHandleTop {
+  top: 0;
+}
+
+.resizeHandleBottom {
+  bottom: 0;
+}
+
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 1px;
+}
+
+/* Drag Ghost */
+.dragGhost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.9;
+  transform: rotate(2deg);
+}
+
+.dragGhostTime {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1A1A18;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Booking Popover */
+.popoverOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.popover {
+  position: fixed;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  padding: 1rem;
+  min-width: 280px;
+  max-width: 320px;
+  z-index: 101;
+}
+
+.popoverHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.popoverTitle {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1A1A18;
+}
+
+.popoverBookingId {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.popoverClose {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.popoverClose:hover {
+  background: #f3f4f6;
+}
+
+.popoverContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.popoverRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.popoverLabel {
+  color: #6b7280;
+}
+
+.popoverValue {
+  font-weight: 500;
+  color: #1A1A18;
+}
+
+.popoverCategories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.categoryTag {
+  padding: 0.25rem 0.5rem;
+  background: #f3f4f6;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: #374151;
+}
+
+.popoverActions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.popoverButton {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.popoverButtonPrimary {
+  background: #A0BF39;
+  color: white;
+}
+
+.popoverButtonPrimary:hover {
+  background: #8ba832;
+}
+
+.popoverButtonDanger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.popoverButtonDanger:hover {
+  background: #fecaca;
+}
+
+.popoverButtonSecondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.popoverButtonSecondary:hover {
+  background: #e5e7eb;
+}
+
+.smsButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.smsButtons .popoverButton {
+  flex: 1;
+}

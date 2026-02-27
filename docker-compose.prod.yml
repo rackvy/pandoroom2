@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./apps/api
+    container_name: pandoroom-api
+    restart: always
+    env_file: ./apps/api/.env.production
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pandoroom-back.rule=Host(`pandoroom-back.e-rma.ru`)
+      - traefik.http.routers.pandoroom-back.entrypoints=websecure
+      - traefik.http.routers.pandoroom-back.tls.certresolver=letsencrypt
+      - traefik.http.services.pandoroom-back.loadbalancer.server.port=3001
+
+  admin:
+    build:
+      context: ./apps/admin
+    container_name: pandoroom-admin
+    restart: always
+    env_file: ./apps/admin/.env.production
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pandoroom-admin.rule=Host(`pandoroom-admin.e-rma.ru`)
+      - traefik.http.routers.pandoroom-admin.entrypoints=websecure
+      - traefik.http.routers.pandoroom-admin.tls.certresolver=letsencrypt
+      - traefik.http.services.pandoroom-admin.loadbalancer.server.port=80
+
+  web:
+    build:
+      context: ./apps/web
+    container_name: pandoroom-web
+    restart: always
+    env_file: ./apps/web/.env.production
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pandoroom-web.rule=Host(`pandoroom.e-rma.ru`)
+      - traefik.http.routers.pandoroom-web.entrypoints=websecure
+      - traefik.http.routers.pandoroom-web.tls.certresolver=letsencrypt
+      - traefik.http.services.pandoroom-web.loadbalancer.server.port=3000
+
+networks:
+  web:
+    external: true

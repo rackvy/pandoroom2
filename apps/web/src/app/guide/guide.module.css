@@ -1,0 +1,86 @@
+.contentSection {
+  padding: 3rem;
+  background: #f8f9fa;
+  min-height: 400px;
+}
+
+.blocks {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.block {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.block h3 {
+  margin: 0 0 1rem 0;
+  color: #1A1A18;
+  font-size: 1.5rem;
+}
+
+.blockContent {
+  color: #444;
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+.blockContent p {
+  margin-bottom: 1rem;
+}
+
+.blockContent ul,
+.blockContent ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.blockContent li {
+  margin-bottom: 0.5rem;
+}
+
+.mediaGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.mediaItem {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.mediaImage {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.mediaImage:hover {
+  transform: scale(1.05);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #666;
+}
+
+.emptyState p:first-child {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #1A1A18;
+}
+
+.emptySubtext {
+  font-size: 0.9rem;
+  color: #888;
+}

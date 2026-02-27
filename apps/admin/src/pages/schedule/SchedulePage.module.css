@@ -1,0 +1,177 @@
+/* Schedule Page Layout */
+.page {
+  padding: 1.5rem;
+  height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1A1A18;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  flex: 1;
+}
+
+.datePicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dateButton {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.dateButton:hover {
+  background: #f3f4f6;
+}
+
+.dateButton.active {
+  background: #A0BF39;
+  color: white;
+  border-color: #A0BF39;
+}
+
+.dateInput {
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.branchSelect {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.toggle input {
+  cursor: pointer;
+}
+
+/* View Switcher */
+.viewSwitcher {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.viewButton {
+  padding: 0.5rem 1rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  text-decoration: none;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.viewButton:hover {
+  background: #f3f4f6;
+}
+
+.viewButton.active {
+  background: #A0BF39;
+  color: white;
+  border-color: #A0BF39;
+}
+
+/* Grid Container */
+.gridContainer {
+  flex: 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading State */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+}
+
+/* Error State */
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #dc2626;
+  gap: 1rem;
+}
+
+.retryButton {
+  padding: 0.5rem 1rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.retryButton:hover {
+  background: #b91c1c;
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+  gap: 0.5rem;
+}
+
+.emptyState p:first-child {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #374151;
+}

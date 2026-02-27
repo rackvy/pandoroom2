@@ -1,0 +1,384 @@
+.container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.loading, .error {
+  padding: 60px;
+  text-align: center;
+  font-size: 18px;
+  color: #666;
+}
+
+.error {
+  color: #f44336;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.iikoField, .dateField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.iikoField label, .dateField label {
+  font-size: 12px;
+  color: #666;
+  text-transform: lowercase;
+}
+
+.iikoInput {
+  display: flex;
+  gap: 8px;
+}
+
+.shortInput {
+  width: 100px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.dateInput {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.refreshBtn {
+  padding: 10px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.refreshBtn:hover {
+  background: #e0e0e0;
+}
+
+/* Content Layout */
+.content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+@media (max-width: 1200px) {
+  .content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Sections */
+.section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+}
+
+.section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #A0BF39;
+  margin: 0 0 20px 0;
+}
+
+.subSection {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.subSection h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  margin: 0 0 16px 0;
+}
+
+/* Form Elements */
+.formRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.formGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroupSmall {
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label, .formGroupSmall label {
+  font-size: 11px;
+  color: #999;
+  text-transform: lowercase;
+}
+
+.formGroup input, .formGroupSmall input, .formGroup select, .formGroup textarea {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+}
+
+.formGroup input:focus, .formGroupSmall input:focus, .formGroup select:focus, .formGroup textarea:focus {
+  outline: none;
+  border-color: #A0BF39;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Tags */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: #A0BF39;
+  color: white;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Table Row */
+.tableRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.timeDisplay {
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.duration {
+  color: #999;
+  font-size: 13px;
+  padding-bottom: 10px;
+}
+
+/* Payment */
+.paymentType {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.paymentBtn {
+  padding: 10px 16px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.paymentBtnActive {
+  padding: 10px 16px;
+  background: #A0BF39;
+  color: white;
+  border: 1px solid #A0BF39;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Addon Rows */
+.addonRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+}
+
+.foodRow {
+  display: grid;
+  grid-template-columns: 2fr 80px 100px auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+}
+
+.foodName {
+  font-size: 14px;
+}
+
+.foodQty, .foodTime {
+  text-align: center;
+  color: #666;
+  font-size: 13px;
+}
+
+.inscription {
+  flex: 1;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+.quantity {
+  font-size: 13px;
+  color: #666;
+}
+
+.rowActions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.editBtn {
+  padding: 6px 12px;
+  background: #e8f5e9;
+  color: #4caf50;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.deleteBtn {
+  padding: 6px 10px;
+  background: #ffebee;
+  color: #f44336;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.iconBtn {
+  padding: 6px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* Buttons */
+.addButton {
+  padding: 10px 16px;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.addButton:hover {
+  background: #8fa832;
+}
+
+.buttonRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.footerLeft, .footerRight {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.saveBtn {
+  padding: 12px 24px;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.saveBtn:hover {
+  background: #8fa832;
+}
+
+.saveBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.smsBtn {
+  padding: 12px 20px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.smsBtn:hover {
+  background: #e0e0e0;
+}
+
+.deleteBookingBtn {
+  padding: 12px 24px;
+  background: #ffebee;
+  color: #f44336;
+  border: 1px solid #f44336;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deleteBookingBtn:hover {
+  background: #f44336;
+  color: white;
+}

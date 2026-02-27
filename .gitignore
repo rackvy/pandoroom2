@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+**/apps/**/node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+**/apps/**/dist
+**/apps/**/.next
+**/apps/**/build
+
+# Turbo
+**/.turbo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+**/apps/**/.env
+**/apps/**/.env.production
+
+# Uploads
+**/apps/api/uploads
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Prisma
+prisma/migrations/

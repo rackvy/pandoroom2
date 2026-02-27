@@ -1,0 +1,598 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum Difficulty {
+  easy
+  medium
+  hard
+}
+
+enum PageKey {
+  HOME
+  PARTY_GUIDE
+  PARTY_GUIDE_KIDS
+  PARTY_GUIDE_6_10
+  PARTY_GUIDE_10_15
+  CAFE
+  CAFE_KAFE
+  CAFE_LOUNGE
+  CAFE_KIDS
+}
+
+enum EmployeeRole {
+  ADMIN
+  CONTENT
+  MANAGER
+}
+
+enum MediaType {
+  image
+  file
+}
+
+enum BookingStatus {
+  draft
+  confirmed
+  canceled
+  done
+}
+
+enum ReservationStatus {
+  draft
+  confirmed
+  canceled
+  done
+}
+
+enum TableZoneKey {
+  CAFE
+  LOUNGE
+  KIDS
+}
+
+enum PaymentMethod {
+  cash
+  cashless
+  card
+  transfer
+}
+
+enum BookingExtraType {
+  show_program
+  pinata
+  other
+}
+
+enum ServeMode {
+  before
+  after
+}
+
+// ==================== MODELS ====================
+
+model Branch {
+  id        String   @id @default(uuid())
+  name      String
+  city      String?
+  address   String?
+  geoLat    Decimal? @db.Decimal(10, 8)
+  geoLng    Decimal? @db.Decimal(11, 8)
+  phone     String
+  email     String?
+  whatsapp  String?
+  max       String?
+  telegram  String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quests            Quest[]
+  bookings          Booking[]
+  tableZones        TableZone[]
+  tables            Table[]
+  tableReservations TableReservation[]
+  questReservations QuestReservation[]
+}
+
+model Media {
+  id            String    @id @default(uuid())
+  type          MediaType
+  originalName  String
+  mimeType      String
+  sizeBytes     BigInt
+  url           String
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  questPreviews     Quest[] @relation("QuestPreview")
+  questBackgrounds  Quest[] @relation("QuestBackground")
+  questGallery      QuestGalleryPhoto[] @relation("QuestGallery")
+  newsImages        News[]
+  aboutFactIcons    AboutFact[]
+  reviewSourceIcons ReviewSource[]
+  pageBlockFiles    PageBlock[] @relation("PageBlockFile")
+  pageBlockImages   PageBlock[] @relation("PageBlockImage")
+  cakeImages        Cake[]
+  showProgramImages ShowProgram[]
+  decorationImages  Decoration[]
+}
+
+model Quest {
+  id                String    @id @default(uuid())
+  branchId          String
+  name              String
+  genre             String
+  difficulty        Difficulty
+  address           String
+  minPlayers        Int
+  maxPlayers        Int
+  durationMinutes   Int
+  previewImageId    String?
+  backgroundImageId String?
+  description       String    @db.Text
+  rules             String    @db.Text
+  safety            String    @db.Text
+  extraServices     String    @db.Text
+  extraPlayerPrice  Int       @default(0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  branch            Branch    @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  previewImage      Media?    @relation("QuestPreview", fields: [previewImageId], references: [id], onDelete: SetNull)
+  backgroundImage   Media?    @relation("QuestBackground", fields: [backgroundImageId], references: [id], onDelete: SetNull)
+  bookingQuestSlots BookingQuestSlot[]
+  reservations      QuestReservation[]
+  galleryPhotos     QuestGalleryPhoto[]
+  scheduleSlots     QuestScheduleSlot[]
+}
+
+model QuestGalleryPhoto {
+  id        String   @id @default(uuid())
+  questId   String
+  imageId   String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  quest     Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  image     Media    @relation("QuestGallery", fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@index([questId])
+  @@index([sortOrder])
+}
+
+// ==================== QUEST SCHEDULE (Weekly recurring slots) ====================
+
+model QuestScheduleSlot {
+  id          String   @id @default(uuid())
+  questId     String
+  dayOfWeek   Int      // 0 = Monday, 6 = Sunday
+  startTime   String   // "HH:MM" format
+  basePrice   Int      // Base price in rubles
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  quest       Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+  specialPrices QuestScheduleSpecialPrice[]
+
+  @@index([questId])
+  @@index([dayOfWeek])
+  @@index([sortOrder])
+  @@unique([questId, dayOfWeek, startTime])
+}
+
+// Special prices for specific dates (overrides base price)
+model QuestScheduleSpecialPrice {
+  id          String   @id @default(uuid())
+  slotId      String
+  specialDate DateTime @db.Date  // Specific date for special price
+  specialPrice Int     // Override price in rubles
+  isAvailable Boolean  @default(true) // Can disable slot for specific date
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  slot        QuestScheduleSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@index([slotId])
+  @@index([specialDate])
+  @@unique([slotId, specialDate])
+}
+
+model News {
+  id        String   @id @default(uuid())
+  title     String
+  date      DateTime @db.Date
+  imageId   String?
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  image     Media?   @relation(fields: [imageId], references: [id], onDelete: SetNull)
+}
+
+model AboutFact {
+  id        String   @id @default(uuid())
+  iconId    String?
+  text      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  icon      Media?   @relation(fields: [iconId], references: [id], onDelete: SetNull)
+}
+
+model ReviewSource {
+  id        String   @id @default(uuid())
+  name      String
+  iconId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  icon      Media?   @relation(fields: [iconId], references: [id], onDelete: SetNull)
+  reviews   Review[]
+}
+
+model Review {
+  id           String       @id @default(uuid())
+  name         String
+  rating       Int          @db.SmallInt
+  sourceId     String
+  text         String       @db.Text
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  source       ReviewSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+}
+
+model PageBlock {
+  id        String    @id @default(uuid())
+  pageKey   PageKey
+  blockKey  String
+  title     String?
+  text      String?   @db.Text
+  linkUrl   String?
+  fileId    String?
+  imageId   String?
+  extraJson Json?
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  file      Media?    @relation("PageBlockFile", fields: [fileId], references: [id], onDelete: SetNull)
+  image     Media?    @relation("PageBlockImage", fields: [imageId], references: [id], onDelete: SetNull)
+
+  @@index([pageKey])
+  @@index([blockKey])
+}
+
+// ==================== PARTY GUIDE ====================
+
+model Supplier {
+  id          String   @id @default(uuid())
+  name        String
+  contactName String?
+  phone       String?
+  whatsapp    String?
+  telegram    String?
+  email       String?
+  requisites  String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cakes       Cake[]
+  showPrograms ShowProgram[]
+}
+
+model Cake {
+  id            String   @id @default(uuid())
+  imageId       String?
+  name          String
+  priceRub      Int      @default(0)
+  weightGrams   Int      @default(0)
+  supplierId    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  image         Media?   @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  supplier      Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  bookingCakes  BookingCake[]
+}
+
+model ShowProgram {
+  id         String   @id @default(uuid())
+  imageId    String?
+  name       String
+  priceRub   Int      @default(0)
+  supplierId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  image      Media?   @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+}
+
+model Decoration {
+  id        String   @id @default(uuid())
+  imageId   String?
+  name      String
+  priceRub  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  image     Media?   @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  bookingItems BookingDecorationItem[]
+}
+
+// ==================== EMPLOYEES ====================
+
+model Employee {
+  id           String       @id @default(uuid())
+  fullName     String
+  birthDate    DateTime?    @db.Date
+  phone        String
+  email        String       @unique
+  position     String
+  passwordHash String
+  role         EmployeeRole
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  bookings     Booking[]
+}
+
+// ==================== CLIENTS ====================
+
+model Client {
+  id                String    @id @default(uuid())
+  phone             String    @unique
+  name              String
+  email             String?
+  birthday          DateTime? @db.Date
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  bookings          Booking[]
+  questReservations QuestReservation[]
+
+  @@index([phone])
+  @@index([name])
+}
+
+// ==================== BOOKINGS ====================
+
+model Booking {
+  id                   String        @id @default(uuid())
+  branchId             String
+  clientId             String?
+  eventDate            DateTime      @db.Date
+  clientName           String
+  clientPhone          String
+  birthdayPersonName   String?
+  birthdayPersonAge    Int?
+  guestsKids           Int?
+  guestsAdults         Int?
+  commentClient        String?       @db.Text
+  commentInternal      String?       @db.Text
+  status               BookingStatus @default(draft)
+  managerId            String?
+  depositRub           Int           @default(0)
+  paymentMethod        PaymentMethod?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  branch               Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  client               Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  manager              Employee?     @relation(fields: [managerId], references: [id], onDelete: SetNull)
+
+  tableSlots           BookingTableSlot[]
+  questSlots           BookingQuestSlot[]
+  extraSlots           BookingExtraSlot[]
+  bookingCakes         BookingCake[]
+  decorationItems      BookingDecorationItem[]
+  foodItems            BookingFoodItem[]
+  tableReservations    TableReservation[]
+  questReservations    QuestReservation[]
+
+  @@index([eventDate])
+  @@index([branchId])
+  @@index([status])
+  @@index([clientId])
+}
+
+model BookingTableSlot {
+  id        String   @id @default(uuid())
+  bookingId String
+  title     String
+  startTime DateTime @db.Time
+  endTime   DateTime @db.Time
+  comment   String?  @db.Text
+
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model BookingQuestSlot {
+  id            String   @id @default(uuid())
+  bookingId     String
+  questId       String?
+  title         String
+  startTime     DateTime @db.Time
+  comment       String?  @db.Text
+  animatorName  String?
+
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  quest         Quest?   @relation(fields: [questId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([questId])
+}
+
+model BookingExtraSlot {
+  id        String           @id @default(uuid())
+  bookingId String
+  type      BookingExtraType
+  title     String
+  startTime DateTime?        @db.Time
+  endTime   DateTime?        @db.Time
+  priceRub  Int              @default(0)
+  comment   String?          @db.Text
+
+  booking   Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+model BookingCake {
+  id        String   @id @default(uuid())
+  bookingId String
+  cakeId    String?
+  title     String
+  inscription String?
+  priceRub  Int      @default(0)
+  comment   String?  @db.Text
+
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  cake      Cake?    @relation(fields: [cakeId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([cakeId])
+}
+
+model BookingDecorationItem {
+  id            String      @id @default(uuid())
+  bookingId     String
+  decorationId  String?
+  title         String
+  qty           Int         @default(1)
+  priceRub      Int         @default(0)
+  comment       String?     @db.Text
+
+  booking       Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  decoration    Decoration? @relation(fields: [decorationId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([decorationId])
+}
+
+model BookingFoodItem {
+  id        String     @id @default(uuid())
+  bookingId String
+  title     String
+  qty       Int        @default(1)
+  serveAt   DateTime?  @db.Time
+  serveMode ServeMode?
+  priceRub  Int        @default(0)
+  comment   String?    @db.Text
+
+  booking   Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+}
+
+// ==================== TABLE & QUEST SCHEDULE ====================
+
+model TableZone {
+  id        String       @id @default(uuid())
+  branchId  String
+  key       TableZoneKey
+  name      String
+  sortOrder Int          @default(0)
+  isActive  Boolean      @default(true)
+
+  branch    Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  tables    Table[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([branchId, key])
+}
+
+model Table {
+  id        String   @id @default(uuid())
+  branchId  String
+  zoneId    String
+  title     String
+  capacity  Int?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+
+  branch        Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  zone          TableZone          @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  reservations  TableReservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([branchId, zoneId])
+}
+
+model TableReservation {
+  id                    String            @id @default(uuid())
+  bookingId             String
+  branchId              String
+  tableId               String
+
+  eventDate             DateTime          @db.Date
+  startTime             DateTime          @db.Time
+  endTime               DateTime          @db.Time
+  cleaningBufferMinutes Int               @default(15)
+
+  title                 String
+  comment               String?
+  status                ReservationStatus @default(confirmed)
+
+  booking               Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  branch                Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  table                 Table             @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([branchId, eventDate])
+  @@index([tableId, eventDate])
+  @@index([bookingId])
+}
+
+model QuestReservation {
+  id            String            @id @default(uuid())
+  bookingId     String
+  clientId      String?
+  branchId      String
+  questId       String
+
+  eventDate     DateTime          @db.Date
+  startTime     DateTime          @db.Time
+  endTime       DateTime          @db.Time
+
+  title         String
+  animatorName  String?
+  comment       String?
+
+  status        ReservationStatus @default(confirmed)
+
+  booking       Booking           @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  client        Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  branch        Branch            @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  quest         Quest             @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([branchId, eventDate])
+  @@index([questId, eventDate])
+  @@index([bookingId])
+  @@index([clientId])
+}
