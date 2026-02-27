@@ -25,8 +25,11 @@ RUN corepack prepare pnpm@10.30.3 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN pnpm -C apps/api prisma generate
-RUN pnpm -C apps/api build
+#RUN pnpm -C apps/api prisma generate
+#RUN pnpm -C apps/api build
+WORKDIR /app/apps/api
+RUN pnpm prisma generate
+RUN pnpm build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
