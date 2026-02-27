@@ -58,5 +58,6 @@ COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3001
 
+
 # миграции при старте (если DATABASE_URL задан)
 CMD sh -c "if [ -n \"$DATABASE_URL\" ]; then /app/node_modules/.bin/prisma migrate deploy; fi && node dist/main.js"
