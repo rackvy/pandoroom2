@@ -28,7 +28,7 @@ COPY . .
 #RUN pnpm -C apps/api prisma generate
 #RUN pnpm -C apps/api build
 WORKDIR /app/apps/api
-RUN pnpm prisma generate
+RUN pnpm exec prisma generate
 RUN pnpm build
 
 FROM node:20-alpine AS runner
@@ -42,4 +42,5 @@ COPY --from=builder /app/apps/api/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3001
-CMD sh -c "if [ -n \"$DATABASE_URL\" ]; then pnpm -C apps/api prisma migrate deploy; fi && node dist/main.js"
+#CMD sh -c "if [ -n \"$DATABASE_URL\" ]; then pnpm -C apps/api prisma migrate deploy; fi && node dist/main.js"
+CMD sh -c "if [ -n \"$DATABASE_URL\" ]; then pnpm exec prisma migrate deploy; fi && node dist/main.js"
