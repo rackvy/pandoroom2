@@ -33,7 +33,7 @@ COPY . .
 
 WORKDIR /app/apps/api
 
-RUN pnpm exec prisma generate
+RUN ../../node_modules/.bin/prisma generate
 RUN pnpm build
 
 # ---------- runner ----------
