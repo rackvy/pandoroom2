@@ -5,16 +5,29 @@ import { CreatePageBlockDto } from './dto/create-page-block.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { PageKey } from '@prisma/client';
 
+// Helper to convert BigInt to number for JSON serialization
+function convertMediaBigInt(media: any) {
+  if (!media) return media;
+  return {
+    ...media,
+    sizeBytes: Number(media.sizeBytes),
+  };
+}
+
 @Injectable()
 export class ContentService {
   constructor(private prisma: PrismaService) {}
 
   // ==================== NEWS ====================
   async findAllNews() {
-    return this.prisma.news.findMany({
+    const news = await this.prisma.news.findMany({
       orderBy: { date: 'desc' },
       include: { image: true },
     });
+    return news.map(n => ({
+      ...n,
+      image: convertMediaBigInt(n.image),
+    }));
   }
 
   async findOneNews(id: string) {
@@ -23,7 +36,10 @@ export class ContentService {
       include: { image: true },
     });
     if (!news) throw new NotFoundException('Новость не найдена');
-    return news;
+    return {
+      ...news,
+      image: convertMediaBigInt(news.image),
+    };
   }
 
   async createNews(dto: CreateNewsDto) {
@@ -31,10 +47,14 @@ export class ContentService {
       ...dto,
       date: new Date(dto.date),
     };
-    return this.prisma.news.create({
+    const news = await this.prisma.news.create({
       data,
       include: { image: true },
     });
+    return {
+      ...news,
+      image: convertMediaBigInt(news.image),
+    };
   }
 
   async updateNews(id: string, dto: Partial<CreateNewsDto>) {
@@ -42,11 +62,15 @@ export class ContentService {
     const data = dto.date
       ? { ...dto, date: new Date(dto.date) }
       : dto;
-    return this.prisma.news.update({
+    const news = await this.prisma.news.update({
       where: { id },
       data,
       include: { image: true },
     });
+    return {
+      ...news,
+      image: convertMediaBigInt(news.image),
+    };
   }
 
   async removeNews(id: string) {
