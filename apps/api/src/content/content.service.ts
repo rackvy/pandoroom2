@@ -27,17 +27,24 @@ export class ContentService {
   }
 
   async createNews(dto: CreateNewsDto) {
+    const data = {
+      ...dto,
+      date: new Date(dto.date),
+    };
     return this.prisma.news.create({
-      data: dto,
+      data,
       include: { image: true },
     });
   }
 
   async updateNews(id: string, dto: Partial<CreateNewsDto>) {
     await this.findOneNews(id);
+    const data = dto.date
+      ? { ...dto, date: new Date(dto.date) }
+      : dto;
     return this.prisma.news.update({
       where: { id },
-      data: dto,
+      data,
       include: { image: true },
     });
   }
