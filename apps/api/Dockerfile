@@ -68,4 +68,4 @@ COPY --from=builder /app/apps/api/node_modules ./node_modules
 
 EXPOSE 3001
 
-CMD sh -c "if [ -n \"$DATABASE_URL\" ]; then ./node_modules/.bin/prisma migrate deploy; fi && node dist/main.js"
+CMD ["node", "dist/main.js"]
