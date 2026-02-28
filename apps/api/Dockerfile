@@ -1,52 +1,29 @@
 # syntax=docker/dockerfile:1
 
 ############################
-# DEPS
+# BUILDER
 ############################
-FROM node:20-alpine AS deps
+FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 RUN corepack enable
 RUN corepack prepare pnpm@10.30.3 --activate
 
-# workspace manifests
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
-
-# package manifests (минимум для графа)
-COPY apps/api/package.json apps/api/
-COPY packages/shared/package.json packages/shared/
-
-# prisma schema (для кеша generate)
-COPY apps/api/prisma apps/api/prisma/
-
-# ВАЖНО: ставим deps из папки пакета, чтобы создался apps/api/node_modules
-WORKDIR /app/apps/api
-RUN pnpm install --frozen-lockfile
-
-############################
-# BUILDER
-############################
-FROM node:20-alpine AS builder
-WORKDIR /app
-
-RUN corepack enable
-RUN corepack prepare pnpm@10.30.3 --activate
-
-# переносим подготовленный /app (включая node_modules из deps stage)
-COPY --from=deps /app /app
-
-# исходники целиком
+# Сразу копируем всё (для turborepo/pnpm workspace проще и надёжнее)
 COPY . .
 
-WORKDIR /app/apps/api
+# Устанавливаем зависимости и билдим ТОЛЬКО api (включая его workspace deps)
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @pandoroom/api build
 
-# Prisma CLI должен быть локально в пакете
-RUN ls -la node_modules/.bin | grep prisma
+# Готовим "portable" runtime-пакет с prod deps (без сломанных ссылок)
+RUN pnpm deploy --filter @pandoroom/api --prod /out
 
-# generate prisma client + build nest
-RUN ./node_modules/.bin/prisma generate
-RUN pnpm build
+# Кладём билд в out
+RUN mkdir -p /out/dist && cp -r /app/apps/api/dist/* /out/dist/
+RUN mkdir -p /out/prisma && cp -r /app/apps/api/prisma/* /out/prisma/
+RUN cp /app/apps/api/package.json /out/package.json
 
 ############################
 # RUNNER
@@ -56,14 +33,13 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# build output
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/prisma ./prisma
-COPY --from=builder /app/apps/api/package.json ./package.json
-
-# ВАЖНО: копируем ROOT node_modules, иначе могут отсутствовать @nestjs/* в runtime
-COPY --from=builder /app/node_modules ./node_modules
+# Самодостаточные prod зависимости + dist
+COPY --from=builder /out/node_modules ./node_modules
+COPY --from=builder /out/package.json ./package.json
+COPY --from=builder /out/dist ./dist
+COPY --from=builder /out/prisma ./prisma
 
 EXPOSE 3001
 
+# без миграций (как ты хотел)
 CMD ["node", "dist/src/main.js"]
