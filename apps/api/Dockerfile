@@ -10,40 +10,47 @@ WORKDIR /app
 RUN corepack enable
 RUN corepack prepare pnpm@10.30.3 --activate
 
-COPY . .
+# workspace manifests
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# install workspace deps
+# package manifests
+COPY apps/api/package.json apps/api/
+COPY packages/shared/package.json packages/shared/
+
+# prisma schema
+COPY apps/api/prisma apps/api/prisma/
+
+# install deps
 RUN pnpm install --frozen-lockfile
 
-# 🔥 ВАЖНО — генерируем prisma client
-RUN pnpm --filter @pandoroom/api exec prisma generate
+# source
+COPY . .
 
-# теперь build пройдет
+# build api
 RUN pnpm --filter @pandoroom/api build
 
-# создаём portable runtime
+# create portable runtime
 RUN pnpm deploy --legacy --filter @pandoroom/api --prod /out
 
-RUN mkdir -p /out/node_modules/.prisma \
- && cp -r /app/node_modules/.prisma/client /out/node_modules/.prisma/ || true
-
-RUN mkdir -p /out/dist \
- && cp -r apps/api/dist/* /out/dist/ \
- && cp -r apps/api/prisma /out/prisma \
- && cp apps/api/package.json /out/package.json
-
 ############################
-# RUNNER
+# RUNTIME
 ############################
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY --from=builder /out/node_modules ./node_modules
-COPY --from=builder /out/package.json ./package.json
-COPY --from=builder /out/dist ./dist
-COPY --from=builder /out/prisma ./prisma
+RUN corepack enable
+RUN corepack prepare pnpm@10.30.3 --activate
+
+# runtime files
+COPY --from=builder /out ./
+
+# prisma schema нужен для generate
+COPY --from=builder /app/apps/api/prisma ./prisma
+
+# ✅ ВАЖНО: generate делаем ЗДЕСЬ
+RUN pnpm exec prisma generate
 
 EXPOSE 3001
 
