@@ -24,6 +24,9 @@ RUN pnpm --filter @pandoroom/api build
 # создаём portable runtime
 RUN pnpm deploy --legacy --filter @pandoroom/api --prod /out
 
+RUN mkdir -p /out/node_modules/.prisma \
+ && cp -r /app/node_modules/.prisma/client /out/node_modules/.prisma/ || true
+
 RUN mkdir -p /out/dist \
  && cp -r apps/api/dist/* /out/dist/ \
  && cp -r apps/api/prisma /out/prisma \
