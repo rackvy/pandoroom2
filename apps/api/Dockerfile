@@ -22,7 +22,7 @@ RUN pnpm --filter @pandoroom/api exec prisma generate
 RUN pnpm --filter @pandoroom/api build
 
 # создаём portable runtime
-RUN pnpm deploy --filter @pandoroom/api --prod /out
+RUN pnpm deploy --legacy --filter @pandoroom/api --prod /out
 
 RUN mkdir -p /out/dist \
  && cp -r apps/api/dist/* /out/dist/ \
