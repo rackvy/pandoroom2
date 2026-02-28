@@ -26,6 +26,9 @@ RUN pnpm install --frozen-lockfile
 # source
 COPY . .
 
+# ✅ Generate Prisma Client BEFORE build
+RUN pnpm --filter @pandoroom/api prisma:generate
+
 # build api
 RUN pnpm --filter @pandoroom/api build
 
