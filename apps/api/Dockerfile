@@ -13,17 +13,15 @@ RUN corepack prepare pnpm@10.30.3 --activate
 # workspace manifests
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# manifests нужных пакетов для графа зависимостей
+# package manifests (минимум для графа)
 COPY apps/api/package.json apps/api/
 COPY packages/shared/package.json packages/shared/
 
-# prisma schema (чтобы generate мог кешироваться)
+# prisma schema (для кеша generate)
 COPY apps/api/prisma apps/api/prisma/
 
-# ВАЖНО: install выполняем ИЗ ПАКЕТА (как мы сделали для web)
+# ВАЖНО: ставим deps из папки пакета, чтобы создался apps/api/node_modules
 WORKDIR /app/apps/api
-
-# ставим зависимости (включая devDeps, где prisma CLI)
 RUN pnpm install --frozen-lockfile
 
 ############################
@@ -35,18 +33,18 @@ WORKDIR /app
 RUN corepack enable
 RUN corepack prepare pnpm@10.30.3 --activate
 
-# переносим весь /app из deps (там уже есть node_modules пакета api)
+# переносим подготовленный /app (включая node_modules из deps stage)
 COPY --from=deps /app /app
 
-# теперь исходники целиком (для сборки)
+# исходники целиком
 COPY . .
 
 WORKDIR /app/apps/api
 
-# проверка: prisma и другие bin реально существуют
+# Prisma CLI должен быть локально в пакете
 RUN ls -la node_modules/.bin | grep prisma
 
-# generate client + build
+# generate prisma client + build nest
 RUN ./node_modules/.bin/prisma generate
 RUN pnpm build
 
@@ -58,13 +56,13 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# runtime-артефакты
+# build output
 COPY --from=builder /app/apps/api/dist ./dist
 COPY --from=builder /app/apps/api/prisma ./prisma
 COPY --from=builder /app/apps/api/package.json ./package.json
 
-# переносим node_modules именно пакета api (там prisma CLI и @prisma/client)
-COPY --from=builder /app/apps/api/node_modules ./node_modules
+# ВАЖНО: копируем ROOT node_modules, иначе могут отсутствовать @nestjs/* в runtime
+COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 3001
 
