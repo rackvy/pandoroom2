@@ -4,7 +4,7 @@
 # BUILDER
 ############################
 FROM node:20-alpine AS builder
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 RUN corepack enable
@@ -39,6 +39,7 @@ RUN pnpm deploy --legacy --filter @pandoroom/api --prod /out
 # RUNTIME
 ############################
 FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 ENV NODE_ENV=production
