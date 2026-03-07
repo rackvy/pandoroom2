@@ -445,7 +445,7 @@ export default function BookingEditPage() {
                     <TableSelector
                       branchId={booking.branch.id}
                       eventDate={booking.eventDate}
-                      onSelect={(tableId, tableTitle, zoneName) => {
+                      onSelect={(_tableId, tableTitle, zoneName) => {
                         // TODO: Add table reservation via API
                         toast.success(`Выбран стол: ${zoneName} / ${tableTitle}`);
                         setShowTableSelector(false);
@@ -544,7 +544,7 @@ export default function BookingEditPage() {
                     <QuestSelector
                       branchId={booking.branch.id}
                       eventDate={booking.eventDate}
-                      onSelect={(questId, questName) => {
+                      onSelect={(_questId, questName) => {
                         // TODO: Add quest reservation via API
                         toast.success(`Выбран квест: ${questName}`);
                         setShowQuestSelector(false);

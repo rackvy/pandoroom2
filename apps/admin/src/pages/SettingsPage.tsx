@@ -64,10 +64,23 @@ export default function SettingsPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
+      const branchData = {
+        ...branchForm,
+        sortOrder: 0,
+        isActive: true,
+        // Default zone flags
+        hasCafe: true,
+        hasLounge: false,
+        hasKids: false,
+        hasQuests: false,
+        hasVR: false,
+        hasLava: false,
+        hasLaserTag: false,
+      };
       if (editingId) {
-        await updateBranch(editingId, { ...branchForm, sortOrder: 0, isActive: true });
+        await updateBranch(editingId, branchData);
       } else {
-        await createBranch({ ...branchForm, sortOrder: 0, isActive: true });
+        await createBranch(branchData);
       }
       setBranchForm({ name: '', city: '', address: '', phone: '', email: '' });
       setEditingId(null);
