@@ -15,9 +15,6 @@ export default function QuestsSchedulePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Get selected branch details
-  const selectedBranch = branches.find(b => b.id === branchId);
-
   // Booking modal state
   const [bookingModal, setBookingModal] = useState<{
     isOpen: boolean;
@@ -164,10 +161,6 @@ export default function QuestsSchedulePage() {
           <div className={styles.emptyState}>
             <p>Выберите филиал для просмотра расписания</p>
           </div>
-        ) : selectedBranch && !selectedBranch.hasQuests ? (
-          <div className={styles.emptyState}>
-            <p>В этом филиале нет квестов</p>
-          </div>
         ) : isLoading ? (
           <div className={styles.loading}>Загрузка...</div>
         ) : error ? (
@@ -176,6 +169,10 @@ export default function QuestsSchedulePage() {
             <button className={styles.retryButton} onClick={() => window.location.reload()}>
               Повторить
             </button>
+          </div>
+        ) : quests.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>В этом филиале нет квестов</p>
           </div>
         ) : (
           <QuestSlotGrid

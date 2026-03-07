@@ -16,14 +16,6 @@ import { toast } from '../../components/ui/Toast';
 import { confirm } from '../../components/ui/ConfirmDialog';
 import styles from './QuestSchedulePage.module.css';
 
-const TIME_OPTIONS = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-  '18:00', '18:30', '19:00', '19:30', '20:00', '20:30',
-  '21:00', '21:30', '22:00', '22:30', '23:00'
-];
-
 export default function QuestSchedulePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -93,6 +85,13 @@ export default function QuestSchedulePage() {
   const handleAddSlot = async () => {
     if (!selectedQuestId) return;
     
+    // Validate time format
+    const timeRegex = /^([01]?[0-9]|2[0-3]):([0-5][0-9])$/;
+    if (!timeRegex.test(newSlotTime)) {
+      toast.error('Неверный формат времени. Используйте ЧЧ:ММ');
+      return;
+    }
+    
     try {
       await createQuestScheduleSlot({
         questId: selectedQuestId,
@@ -102,6 +101,7 @@ export default function QuestSchedulePage() {
         isActive: true,
       });
       setShowAddModal(false);
+      setNewSlotTime('10:00'); // Reset to default
       loadSchedule(selectedQuestId);
     } catch (error) {
       console.error('Failed to add slot:', error);
@@ -506,11 +506,21 @@ export default function QuestSchedulePage() {
 
             <div className={styles.formField}>
               <label>Время начала</label>
-              <select value={newSlotTime} onChange={(e) => setNewSlotTime(e.target.value)}>
-                {TIME_OPTIONS.map(time => (
-                  <option key={time} value={time}>{time}</option>
-                ))}
-              </select>
+              <input
+                type="text"
+                value={newSlotTime}
+                onChange={(e) => {
+                  let value = e.target.value.replace(/\D/g, '');
+                  if (value.length > 4) value = value.slice(0, 4);
+                  if (value.length >= 2) {
+                    value = value.slice(0, 2) + ':' + value.slice(2);
+                  }
+                  setNewSlotTime(value);
+                }}
+                placeholder="00:00"
+                maxLength={5}
+                className={styles.timeInput}
+              />
             </div>
 
             <div className={styles.formField}>
