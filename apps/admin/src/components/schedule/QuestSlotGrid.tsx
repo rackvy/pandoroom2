@@ -40,9 +40,9 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
   }, []);
 
   // Calculate time range for all quests
-  const { startMinutes, timeSlots } = useMemo(() => {
+  const { startMinutes, timeSlots, gridHeight } = useMemo(() => {
     if (quests.length === 0) {
-      return { startMinutes: 9 * 60, timeSlots: [] };
+      return { startMinutes: 9 * 60, timeSlots: [], gridHeight: 0 };
     }
 
     let minTime = Infinity;
@@ -59,7 +59,7 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
 
     // Add some padding
     minTime = Math.floor(minTime / 30) * 30; // Round down to 30 min
-    maxTime = Math.ceil(maxTime / 30) * 30; // Round up to 30 min
+    maxTime = Math.ceil(maxTime / 30) * 30 + 30; // Round up + extra 30 min padding
 
     // Generate time slots (every 15 minutes for display)
     const slots: number[] = [];
@@ -67,7 +67,11 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
       slots.push(t);
     }
 
-    return { startMinutes: minTime, timeSlots: slots };
+    // Total grid height in pixels (20px per 15-min slot)
+    const totalSlots = (maxTime - minTime) / 15;
+    const height = totalSlots * 20;
+
+    return { startMinutes: minTime, timeSlots: slots, gridHeight: height };
   }, [quests]);
 
   // Calculate slot position and height
@@ -104,7 +108,7 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
       {/* Grid Body */}
       <div ref={bodyRef} className={styles.gridBody}>
         {/* Time axis */}
-        <div className={styles.timeAxis}>
+        <div className={styles.timeAxis} style={{ minHeight: gridHeight }}>
           {timeSlots.map((time, index) => (
             <div 
               key={time} 
@@ -119,7 +123,7 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
         {/* Quest columns */}
         <div className={styles.questsContainer}>
           {quests.map((quest) => (
-            <div key={quest.questId} className={styles.questColumn}>
+            <div key={quest.questId} className={styles.questColumn} style={{ minHeight: gridHeight }}>
               {/* Grid lines */}
               {timeSlots.map((_, index) => (
                 <div 
