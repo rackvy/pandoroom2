@@ -292,7 +292,7 @@ export default function RegistryPage() {
               />
             </div>
             
-            <div className={styles.filterGroup}>
+            <div className={`${styles.filterGroup} ${styles.span2}`}>
               <label>Сумма</label>
               <div className={styles.rangeInputs}>
                 <input 
@@ -310,7 +310,7 @@ export default function RegistryPage() {
               </div>
             </div>
             
-            <div className={styles.filterGroup}>
+            <div className={`${styles.filterGroup} ${styles.span2}`}>
               <label>Предоплата</label>
               <div className={styles.rangeInputs}>
                 <input 
@@ -328,7 +328,7 @@ export default function RegistryPage() {
               </div>
             </div>
             
-            <div className={styles.filterGroup}>
+            <div className={`${styles.filterGroup} ${styles.span2}`}>
               <label>Даты</label>
               <div className={styles.rangeInputs}>
                 <input 
@@ -344,7 +344,7 @@ export default function RegistryPage() {
               </div>
             </div>
             
-            <div className={styles.filterGroup}>
+            <div className={`${styles.filterGroup} ${styles.span2}`}>
               <label>Время</label>
               <div className={styles.rangeInputs}>
                 <input 

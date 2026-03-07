@@ -92,6 +92,11 @@
 .filtersGrid .filterGroup:nth-child(5) { grid-column: span 1; }
 .filtersGrid .filterGroup:nth-child(6) { grid-column: span 1; }
 
+/* Span 2 columns for range inputs (from/to) */
+.filtersGrid .filterGroup.span2 {
+  grid-column: span 2;
+}
+
 .filterGroup {
   display: flex;
   flex-direction: column;
