@@ -92,6 +92,16 @@ model Branch {
   telegram  String?
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
+  
+  // Zone flags
+  hasCafe     Boolean @default(true)
+  hasLounge   Boolean @default(false)
+  hasKids     Boolean @default(false)
+  hasQuests   Boolean @default(false)
+  hasVR       Boolean @default(false)
+  hasLava     Boolean @default(false)
+  hasLaserTag Boolean @default(false)
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -101,6 +111,7 @@ model Branch {
   tables            Table[]
   tableReservations TableReservation[]
   questReservations QuestReservation[]
+  employees         BranchEmployee[]
 }
 
 model Media {
@@ -349,6 +360,22 @@ model Employee {
   updatedAt    DateTime     @updatedAt
 
   bookings     Booking[]
+  branches     BranchEmployee[]
+}
+
+// Junction table for Branch-Employee many-to-many relationship
+model BranchEmployee {
+  id         String   @id @default(uuid())
+  branchId   String
+  employeeId String
+  createdAt  DateTime @default(now())
+  
+  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  
+  @@unique([branchId, employeeId])
+  @@index([branchId])
+  @@index([employeeId])
 }
 
 // ==================== CLIENTS ====================

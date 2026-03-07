@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect } from 'react';
 import { QuestWithSlots, QuestSlot } from '../../api/schedule';
 import styles from './QuestSlotGrid.module.css';
 
@@ -22,6 +22,23 @@ function minutesToTime(minutes: number): string {
 }
 
 export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick }: QuestSlotGridProps) {
+  const headerRef = useRef<HTMLDivElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  // Sync horizontal scroll between header and body
+  useEffect(() => {
+    const header = headerRef.current;
+    const body = bodyRef.current;
+    if (!header || !body) return;
+
+    const handleBodyScroll = () => {
+      header.scrollLeft = body.scrollLeft;
+    };
+
+    body.addEventListener('scroll', handleBodyScroll);
+    return () => body.removeEventListener('scroll', handleBodyScroll);
+  }, []);
+
   // Calculate time range for all quests
   const { startMinutes, timeSlots } = useMemo(() => {
     if (quests.length === 0) {
@@ -44,9 +61,9 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
     minTime = Math.floor(minTime / 30) * 30; // Round down to 30 min
     maxTime = Math.ceil(maxTime / 30) * 30; // Round up to 30 min
 
-    // Generate time slots (every 30 minutes for display)
+    // Generate time slots (every 15 minutes for display)
     const slots: number[] = [];
-    for (let t = minTime; t <= maxTime; t += 30) {
+    for (let t = minTime; t <= maxTime; t += 15) {
       slots.push(t);
     }
 
@@ -56,8 +73,8 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
   // Calculate slot position and height
   const getSlotStyle = (startTime: string, durationMinutes: number) => {
     const slotStart = timeToMinutes(startTime);
-    const top = ((slotStart - startMinutes) / 30) * 40; // 40px per 30 min
-    const height = (durationMinutes / 30) * 40;
+    const top = ((slotStart - startMinutes) / 15) * 20; // 20px per 15 min
+    const height = (durationMinutes / 15) * 20;
     return { top, height };
   };
 
@@ -74,7 +91,7 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
       {/* Header Row */}
       <div className={styles.headerRow}>
         <div className={styles.timeHeader}>Время</div>
-        <div className={styles.questHeaders}>
+        <div ref={headerRef} className={styles.questHeaders}>
           {quests.map((quest) => (
             <div key={quest.questId} className={styles.questHeader}>
               <div className={styles.questName}>{quest.questName}</div>
@@ -85,16 +102,16 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
       </div>
 
       {/* Grid Body */}
-      <div className={styles.gridBody}>
+      <div ref={bodyRef} className={styles.gridBody}>
         {/* Time axis */}
         <div className={styles.timeAxis}>
           {timeSlots.map((time, index) => (
             <div 
               key={time} 
-              className={styles.timeLabel}
-              style={{ top: index * 40 }}
+              className={`${styles.timeLabel} ${time % 60 === 0 ? styles.hourLabel : styles.quarterLabel}`}
+              style={{ top: index * 20 }}
             >
-              {time % 60 === 0 && minutesToTime(time)}
+              {minutesToTime(time)}
             </div>
           ))}
         </div>
@@ -108,7 +125,7 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
                 <div 
                   key={index} 
                   className={styles.gridLine}
-                  style={{ top: index * 40 }}
+                  style={{ top: index * 20 }}
                 />
               ))}
 

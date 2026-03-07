@@ -1,0 +1,72 @@
+.container {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.loading,
+.error,
+.empty {
+  padding: 16px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.error {
+  color: #dc2626;
+}
+
+.questsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.questButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.questButton:hover {
+  border-color: #8b5cf6;
+  background: #faf5ff;
+}
+
+.questButton.selected {
+  border-color: #8b5cf6;
+  background: #8b5cf6;
+  color: white;
+}
+
+.questButton.selected .duration,
+.questButton.selected .slots {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.questName {
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.duration {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.slots {
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 500;
+}

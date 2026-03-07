@@ -222,8 +222,8 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
           <input
             id="durationMinutes"
             type="number"
-            min={15}
-            step={15}
+            min={5}
+            step={5}
             value={formData.durationMinutes}
             onChange={(e) => handleNumberChange('durationMinutes', e.target.value)}
           />

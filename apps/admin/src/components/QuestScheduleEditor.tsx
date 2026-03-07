@@ -3,13 +3,7 @@ import styles from './QuestScheduleEditor.module.css';
 
 const DAY_NAMES = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
-const TIME_OPTIONS = [
-  '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-  '12:00', '12:30', '13:00', '13:30', '14:00', '14:30',
-  '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-  '18:00', '18:30', '19:00', '19:30', '20:00', '20:30',
-  '21:00', '21:30', '22:00', '22:30', '23:00'
-];
+
 
 export interface ScheduleSlot {
   dayOfWeek: number;
@@ -86,11 +80,20 @@ export default function QuestScheduleEditor({ slots, onChange }: QuestScheduleEd
           
           <div className={styles.formField}>
             <label>Время</label>
-            <select value={selectedTime} onChange={(e) => setSelectedTime(e.target.value)}>
-              {TIME_OPTIONS.map(time => (
-                <option key={time} value={time}>{time}</option>
-              ))}
-            </select>
+            <input
+              type="text"
+              value={selectedTime}
+              onChange={(e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length > 4) value = value.slice(0, 4);
+                if (value.length >= 2) {
+                  value = value.slice(0, 2) + ':' + value.slice(2);
+                }
+                setSelectedTime(value);
+              }}
+              placeholder="00:00"
+              maxLength={5}
+            />
           </div>
           
           <div className={styles.formField}>

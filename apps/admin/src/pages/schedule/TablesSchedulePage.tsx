@@ -22,6 +22,9 @@ export default function TablesSchedulePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Get selected branch details
+  const selectedBranch = branches.find(b => b.id === branchId);
+
   // Load branches on mount
   useEffect(() => {
     getBranches()
@@ -190,6 +193,10 @@ export default function TablesSchedulePage() {
         {!branchId ? (
           <div className={styles.emptyState}>
             <p>Выберите филиал для просмотра расписания</p>
+          </div>
+        ) : selectedBranch && !selectedBranch.hasCafe && !selectedBranch.hasLounge && !selectedBranch.hasKids ? (
+          <div className={styles.emptyState}>
+            <p>В этом филиале нет зон со столами (кафе, лаундж, детская)</p>
           </div>
         ) : isLoading ? (
           <div className={styles.loading}>Загрузка...</div>

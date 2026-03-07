@@ -240,6 +240,14 @@ export async function updateBookingBasic(id: string, data: UpdateBookingBasicReq
 export interface Branch {
   id: string;
   name: string;
+  // Zone flags
+  hasCafe: boolean;
+  hasLounge: boolean;
+  hasKids: boolean;
+  hasQuests: boolean;
+  hasVR: boolean;
+  hasLava: boolean;
+  hasLaserTag: boolean;
 }
 
 export async function getBranches(): Promise<Branch[]> {

@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookingFullDetails, getBookingFull, updateBookingBasic, getBranches } from '../api/schedule';
+import { BookingFullDetails, getBookingFull, updateBookingBasic, getBranches, type Branch } from '../api/schedule';
+import TableSelector from '../components/booking/TableSelector';
+import QuestSelector from '../components/booking/QuestSelector';
 import api from '../lib/axios';
 import { toast } from '../components/ui/Toast';
 import { confirm } from '../components/ui/ConfirmDialog';
@@ -70,6 +72,14 @@ export default function BookingEditPage() {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [extraSlots, setExtraSlots] = useState<ExtraSlot[]>([]);
   const [managers, setManagers] = useState<any[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  // Get selected branch with zone flags
+  const selectedBranch = branches.find(b => b.id === booking?.branch?.id);
+
+  // Show/hide selectors state
+  const [showTableSelector, setShowTableSelector] = useState(false);
+  const [showQuestSelector, setShowQuestSelector] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -109,9 +119,9 @@ export default function BookingEditPage() {
   };
 
   const loadBranches = async () => {
-    // Branches loaded but not used in current view
     try {
-      await getBranches();
+      const data = await getBranches();
+      setBranches(data);
     } catch (error) {
       console.error('Failed to load branches:', error);
     }
@@ -406,29 +416,60 @@ export default function BookingEditPage() {
               />
             </div>
 
-            {/* Tables */}
-            <div className={styles.subSection}>
-              <h4>Столы</h4>
-              {booking.tableReservations.map((res, idx) => (
-                <div key={res.id} className={styles.tableRow}>
-                  <div className={styles.formGroup}>
-                    <label>Стол {idx + 1}</label>
-                    <div className={styles.tag}>{res.zoneName} / {res.tableTitle}</div>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label>Время</label>
-                    <div className={styles.timeDisplay}>
-                      {res.startTime.slice(0, 5)} — {res.endTime.slice(0, 5)}
+            {/* Tables - only show if branch has cafe, lounge or kids zone */}
+            {(!selectedBranch || selectedBranch.hasCafe || selectedBranch.hasLounge || selectedBranch.hasKids) && (
+              <div className={styles.subSection}>
+                <h4>Столы</h4>
+                {booking.tableReservations.map((res, idx) => (
+                  <div key={res.id} className={styles.tableRow}>
+                    <div className={styles.formGroup}>
+                      <label>Стол {idx + 1}</label>
+                      <div className={styles.tag}>{res.zoneName} / {res.tableTitle}</div>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Время</label>
+                      <div className={styles.timeDisplay}>
+                        {res.startTime.slice(0, 5)} — {res.endTime.slice(0, 5)}
+                      </div>
+                    </div>
+                    <div className={styles.duration}>
+                      ({Math.round((new Date(`2000-01-01T${res.endTime}`).getTime() - 
+                        new Date(`2000-01-01T${res.startTime}`).getTime()) / 60000 / 60)} ч)
                     </div>
                   </div>
-                  <div className={styles.duration}>
-                    ({Math.round((new Date(`2000-01-01T${res.endTime}`).getTime() - 
-                      new Date(`2000-01-01T${res.startTime}`).getTime()) / 60000 / 60)} ч)
+                ))}
+                
+                {/* Table Selector */}
+                {showTableSelector && booking?.branch?.id && (
+                  <div className={styles.selectorContainer}>
+                    <TableSelector
+                      branchId={booking.branch.id}
+                      eventDate={booking.eventDate}
+                      onSelect={(tableId, tableTitle, zoneName) => {
+                        // TODO: Add table reservation via API
+                        toast.success(`Выбран стол: ${zoneName} / ${tableTitle}`);
+                        setShowTableSelector(false);
+                      }}
+                    />
+                    <button 
+                      className={styles.cancelButton}
+                      onClick={() => setShowTableSelector(false)}
+                    >
+                      Отмена
+                    </button>
                   </div>
-                </div>
-              ))}
-              <button className={styles.addButton}>+ добавить стол</button>
-            </div>
+                )}
+                
+                {!showTableSelector && (
+                  <button 
+                    className={styles.addButton}
+                    onClick={() => setShowTableSelector(true)}
+                  >
+                    + добавить стол
+                  </button>
+                )}
+              </div>
+            )}
           </section>
 
           {/* Payment Section */}
@@ -481,22 +522,53 @@ export default function BookingEditPage() {
           <section className={styles.section}>
             <h3>2. Дополнения</h3>
             
-            {/* Quests */}
-            <div className={styles.subSection}>
-              <h4>2.1 Квест</h4>
-              {booking.questReservations.map((res) => (
-                <div key={res.id} className={styles.addonRow}>
-                  <div className={styles.tag}>{res.questName}</div>
-                  <div className={styles.timeDisplay}>{res.startTime.slice(0, 5)}</div>
-                  <button className={styles.iconBtn}>+ Аниматор</button>
-                  <div className={styles.rowActions}>
-                    <button className={styles.editBtn}>Изменить</button>
-                    <button className={styles.deleteBtn}>🗑</button>
+            {/* Quests - only show if branch has quests */}
+            {(!selectedBranch || selectedBranch.hasQuests) && (
+              <div className={styles.subSection}>
+                <h4>2.1 Квест</h4>
+                {booking.questReservations.map((res) => (
+                  <div key={res.id} className={styles.addonRow}>
+                    <div className={styles.tag}>{res.questName}</div>
+                    <div className={styles.timeDisplay}>{res.startTime.slice(0, 5)}</div>
+                    <button className={styles.iconBtn}>+ Аниматор</button>
+                    <div className={styles.rowActions}>
+                      <button className={styles.editBtn}>Изменить</button>
+                      <button className={styles.deleteBtn}>🗑</button>
+                    </div>
                   </div>
-                </div>
-              ))}
-              <button className={styles.addButton}>+ добавить квест</button>
-            </div>
+                ))}
+                
+                {/* Quest Selector */}
+                {showQuestSelector && booking?.branch?.id && (
+                  <div className={styles.selectorContainer}>
+                    <QuestSelector
+                      branchId={booking.branch.id}
+                      eventDate={booking.eventDate}
+                      onSelect={(questId, questName) => {
+                        // TODO: Add quest reservation via API
+                        toast.success(`Выбран квест: ${questName}`);
+                        setShowQuestSelector(false);
+                      }}
+                    />
+                    <button 
+                      className={styles.cancelButton}
+                      onClick={() => setShowQuestSelector(false)}
+                    >
+                      Отмена
+                    </button>
+                  </div>
+                )}
+                
+                {!showQuestSelector && (
+                  <button 
+                    className={styles.addButton}
+                    onClick={() => setShowQuestSelector(true)}
+                  >
+                    + добавить квест
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Cakes */}
             <div className={styles.subSection}>

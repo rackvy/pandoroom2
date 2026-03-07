@@ -9,6 +9,14 @@ export interface Branch {
   email: string;
   sortOrder: number;
   isActive: boolean;
+  // Zone flags
+  hasCafe: boolean;
+  hasLounge: boolean;
+  hasKids: boolean;
+  hasQuests: boolean;
+  hasVR: boolean;
+  hasLava: boolean;
+  hasLaserTag: boolean;
 }
 
 export interface TableZone {
