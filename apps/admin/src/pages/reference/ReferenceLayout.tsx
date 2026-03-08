@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import styles from './ContentLayout.module.css';
+import styles from './ReferenceLayout.module.css';
 
 interface EntityItem {
   id: string;
@@ -8,16 +8,14 @@ interface EntityItem {
   icon: string;
 }
 
-const contentEntities: EntityItem[] = [
-  { id: 'quests', name: 'Квесты', path: '/content/quests', icon: '🎮' },
-  { id: 'news', name: 'Новости', path: '/content/news', icon: '📰' },
-  { id: 'reviews', name: 'Отзывы', path: '/content/reviews', icon: '⭐' },
-  { id: 'about', name: 'О нас (факты)', path: '/content/about', icon: 'ℹ️' },
-  { id: 'pages', name: 'Страницы', path: '/content/pages', icon: '📄' },
-
+const referenceEntities: EntityItem[] = [
+  { id: 'suppliers', name: 'Поставщики', path: '/reference/suppliers', icon: '🚚' },
+  { id: 'cakes', name: 'Торты', path: '/reference/cakes', icon: '🎂' },
+  { id: 'show-programs', name: 'Шоу-программы', path: '/reference/show-programs', icon: '🎭' },
+  { id: 'decorations', name: 'Декорации', path: '/reference/decorations', icon: '🎨' },
 ];
 
-export default function ContentLayout() {
+export default function ReferenceLayout() {
   useLocation(); // Used for NavLink active state
 
   return (
@@ -25,10 +23,10 @@ export default function ContentLayout() {
       {/* Entity Sidebar */}
       <aside className={styles.entitySidebar}>
         <div className={styles.entitySidebarHeader}>
-          <div className={styles.entitySidebarTitle}>Контент</div>
+          <div className={styles.entitySidebarTitle}>Справочники</div>
         </div>
         <nav className={styles.entityList}>
-          {contentEntities.map((entity) => (
+          {referenceEntities.map((entity) => (
             <NavLink
               key={entity.id}
               to={entity.path}

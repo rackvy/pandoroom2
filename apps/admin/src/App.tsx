@@ -26,7 +26,7 @@ import ShowProgramsListPage from './pages/content/ShowProgramsListPage'
 import ShowProgramForm from './pages/content/ShowProgramForm'
 import DecorationsListPage from './pages/content/DecorationsListPage'
 import DecorationForm from './pages/content/DecorationForm'
-import ReferencePage from './pages/ReferencePage'
+import ReferenceLayout from './pages/reference/ReferenceLayout'
 import EmployeesPage from './pages/EmployeesPage'
 import SettingsPage from './pages/SettingsPage'
 import ClientsPage from './pages/ClientsPage'
@@ -72,6 +72,11 @@ function AppRoutes() {
           <Route path="reviews/:id/edit" element={<ReviewForm />} />
           <Route path="about" element={<AboutFactsListPage />} />
           <Route path="pages" element={<PageBlocksEditor />} />
+        </Route>
+        <Route path="clients" element={<ClientsPage />} />
+        <Route path="clients/:id" element={<ClientDetailPage />} />
+        <Route path="reference" element={<ReferenceLayout />}>
+          <Route index element={<Navigate to="/reference/suppliers" replace />} />
           <Route path="suppliers" element={<SuppliersListPage />} />
           <Route path="suppliers/new" element={<SupplierForm />} />
           <Route path="suppliers/:id/edit" element={<SupplierForm />} />
@@ -85,9 +90,6 @@ function AppRoutes() {
           <Route path="decorations/new" element={<DecorationForm />} />
           <Route path="decorations/:id/edit" element={<DecorationForm />} />
         </Route>
-        <Route path="clients" element={<ClientsPage />} />
-        <Route path="clients/:id" element={<ClientDetailPage />} />
-        <Route path="reference" element={<ReferencePage />} />
         <Route path="employees" element={<EmployeesPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
