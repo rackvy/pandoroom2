@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { getPageBlocks, updatePageBlock, type PageBlock, type PageKey } from '../../api/content';
 import { uploadMedia } from '../../api/media';
 import styles from './QuestsListPage.module.css';
+import RichTextEditor from '../../components/ui/RichTextEditor';
 
 const PAGE_OPTIONS: { key: PageKey; label: string }[] = [
   { key: 'HOME', label: 'Главная страница' },
@@ -119,11 +120,10 @@ export default function PageBlocksEditor() {
 
           <div className={styles.formGroup}>
             <label className={styles.label}>Текст</label>
-            <textarea
+            <RichTextEditor
               value={editingBlock.text || ''}
-              onChange={(e) => setEditingBlock({ ...editingBlock, text: e.target.value })}
-              className={styles.textarea}
-              rows={6}
+              onChange={(val) => setEditingBlock({ ...editingBlock, text: val })}
+              minHeight={180}
             />
           </div>
 

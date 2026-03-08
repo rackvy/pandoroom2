@@ -4,6 +4,7 @@ import { createNews, updateNews, getNewsItem, type CreateNewsData } from '../../
 import { uploadMedia } from '../../api/media';
 import { getMediaUrl } from '../../utils/media';
 import styles from './Form.module.css';
+import RichTextEditor from '../../components/ui/RichTextEditor';
 
 export default function NewsForm() {
   const navigate = useNavigate();
@@ -127,12 +128,10 @@ export default function NewsForm() {
 
         <div className={styles.formGroup}>
           <label className={styles.label}>Содержание *</label>
-          <textarea
+          <RichTextEditor
             value={formData.content}
-            onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-            className={styles.textarea}
-            rows={10}
-            required
+            onChange={(val) => setFormData(prev => ({ ...prev, content: val }))}
+            minHeight={250}
           />
         </div>
 

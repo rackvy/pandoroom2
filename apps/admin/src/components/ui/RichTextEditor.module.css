@@ -1,0 +1,47 @@
+.wrapper {
+  width: 100%;
+}
+
+.wrapper :global(.ql-toolbar) {
+  border-radius: 6px 6px 0 0;
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.wrapper :global(.ql-container) {
+  border-radius: 0 0 6px 6px;
+  border-color: #d1d5db;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  min-height: var(--editor-min-height, 150px);
+}
+
+.wrapper :global(.ql-editor) {
+  min-height: var(--editor-min-height, 150px);
+  line-height: 1.6;
+}
+
+.wrapper :global(.ql-editor.ql-blank::before) {
+  color: #9ca3af;
+  font-style: normal;
+}
+
+.wrapper :global(.ql-toolbar button:hover),
+.wrapper :global(.ql-toolbar button.ql-active) {
+  color: #A0BF39;
+}
+
+.wrapper :global(.ql-toolbar button:hover .ql-stroke),
+.wrapper :global(.ql-toolbar button.ql-active .ql-stroke) {
+  stroke: #A0BF39;
+}
+
+.wrapper :global(.ql-toolbar button:hover .ql-fill),
+.wrapper :global(.ql-toolbar button.ql-active .ql-fill) {
+  fill: #A0BF39;
+}
+
+.wrapper :global(.ql-toolbar .ql-picker-label:hover),
+.wrapper :global(.ql-toolbar .ql-picker-label.ql-active) {
+  color: #A0BF39;
+}

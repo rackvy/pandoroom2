@@ -4,6 +4,7 @@ import { getBranches } from '../api/catalog';
 import { uploadMedia, Media } from '../api/media';
 import { getMediaUrl } from '../utils/media';
 import QuestScheduleEditor, { ScheduleSlot } from './QuestScheduleEditor';
+import RichTextEditor from './ui/RichTextEditor';
 import styles from './QuestForm.module.css';
 
 interface QuestFormProps {
@@ -322,41 +323,37 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
       <div className={styles.textareas}>
         <div className={styles.field}>
           <label htmlFor="description">Описание</label>
-          <textarea
-            id="description"
-            rows={4}
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
+          <RichTextEditor
+            value={formData.description || ''}
+            onChange={(val) => handleChange('description', val)}
+            minHeight={120}
           />
         </div>
 
         <div className={styles.field}>
           <label htmlFor="rules">Правила</label>
-          <textarea
-            id="rules"
-            rows={3}
-            value={formData.rules}
-            onChange={(e) => handleChange('rules', e.target.value)}
+          <RichTextEditor
+            value={formData.rules || ''}
+            onChange={(val) => handleChange('rules', val)}
+            minHeight={100}
           />
         </div>
 
         <div className={styles.field}>
           <label htmlFor="safety">Безопасность</label>
-          <textarea
-            id="safety"
-            rows={3}
-            value={formData.safety}
-            onChange={(e) => handleChange('safety', e.target.value)}
+          <RichTextEditor
+            value={formData.safety || ''}
+            onChange={(val) => handleChange('safety', val)}
+            minHeight={100}
           />
         </div>
 
         <div className={styles.field}>
           <label htmlFor="extraServices">Доп. услуги</label>
-          <textarea
-            id="extraServices"
-            rows={3}
-            value={formData.extraServices}
-            onChange={(e) => handleChange('extraServices', e.target.value)}
+          <RichTextEditor
+            value={formData.extraServices || ''}
+            onChange={(val) => handleChange('extraServices', val)}
+            minHeight={100}
           />
         </div>
       </div>

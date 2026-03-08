@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createReview, updateReview, getReview, getReviewSources, type CreateReviewData, type ReviewSource } from '../../api/content';
 import styles from './Form.module.css';
+import RichTextEditor from '../../components/ui/RichTextEditor';
 
 export default function ReviewForm() {
   const navigate = useNavigate();
@@ -127,12 +128,10 @@ export default function ReviewForm() {
 
         <div className={styles.formGroup}>
           <label className={styles.label}>Текст отзыва *</label>
-          <textarea
+          <RichTextEditor
             value={formData.text}
-            onChange={(e) => setFormData(prev => ({ ...prev, text: e.target.value }))}
-            className={styles.textarea}
-            rows={6}
-            required
+            onChange={(val) => setFormData(prev => ({ ...prev, text: val }))}
+            minHeight={180}
           />
         </div>
 

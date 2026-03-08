@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createSupplier, updateSupplier, getSupplier, type CreateSupplierData } from '../../api/content';
 import styles from './Form.module.css';
+import RichTextEditor from '../../components/ui/RichTextEditor';
 
 export default function SupplierForm() {
   const navigate = useNavigate();
@@ -140,11 +141,10 @@ export default function SupplierForm() {
 
         <div className={styles.formGroup}>
           <label className={styles.label}>Реквизиты</label>
-          <textarea
-            value={formData.requisites}
-            onChange={(e) => setFormData(prev => ({ ...prev, requisites: e.target.value }))}
-            className={styles.textarea}
-            rows={4}
+          <RichTextEditor
+            value={formData.requisites || ''}
+            onChange={(val) => setFormData(prev => ({ ...prev, requisites: val }))}
+            minHeight={150}
           />
         </div>
 
