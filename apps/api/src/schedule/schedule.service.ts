@@ -16,10 +16,14 @@ import {
   QuickQuestBookingDto,
   QuickBookingResponse,
 } from './dto/quick-booking.dto';
+import { ClientsService } from '../clients/clients.service';
 
 @Injectable()
 export class ScheduleService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private clientsService: ClientsService,
+  ) {}
 
   // ==================== TABLE SCHEDULE ====================
 
@@ -279,10 +283,18 @@ export class ScheduleService {
     }
 
     // Create booking
+    // Get or create client by phone
+    let clientIdForTable: string | null = null;
+    if (dto.clientPhone && dto.clientName) {
+      const client = await this.clientsService.getOrCreate(dto.clientPhone, dto.clientName);
+      clientIdForTable = client.id;
+    }
+
     const booking = await this.prisma.booking.create({
       data: {
         branchId: dto.branchId,
         eventDate,
+        clientId: clientIdForTable,
         clientName: dto.clientName || '',
         clientPhone: dto.clientPhone || '',
         depositRub: 0,
@@ -365,10 +377,18 @@ export class ScheduleService {
     }
 
     // Create booking
+    // Get or create client by phone
+    let clientIdForQuest: string | null = null;
+    if (dto.clientPhone && dto.clientName) {
+      const client = await this.clientsService.getOrCreate(dto.clientPhone, dto.clientName);
+      clientIdForQuest = client.id;
+    }
+
     const booking = await this.prisma.booking.create({
       data: {
         branchId: dto.branchId,
         eventDate,
+        clientId: clientIdForQuest,
         clientName: dto.clientName || '',
         clientPhone: dto.clientPhone || '',
         depositRub: 0,

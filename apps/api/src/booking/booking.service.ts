@@ -241,12 +241,20 @@ export class BookingService {
 
     if (!booking) throw new NotFoundException('Бронирование не найдено');
 
+    // Get or create client if phone provided
+    let clientId: string | undefined = undefined;
+    if (data.clientPhone && data.clientName) {
+      const client = await this.clientsService.getOrCreate(data.clientPhone, data.clientName);
+      clientId = client.id;
+    }
+
     // Update booking
     const updated = await this.prisma.booking.update({
       where: { id },
       data: {
         clientName: data.clientName,
         clientPhone: data.clientPhone,
+        clientId: clientId,
         depositRub: data.depositRub,
         status: data.status,
         commentClient: data.commentClient,
