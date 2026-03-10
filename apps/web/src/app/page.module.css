@@ -6,6 +6,14 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* Legacy compatibility for other pages */
+.main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #0d0d0c;
+}
+
 .container {
   max-width: 1400px;
   margin: 0 auto;
