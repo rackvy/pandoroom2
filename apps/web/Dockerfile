@@ -44,6 +44,10 @@ RUN ls -la node_modules/.bin
 
 RUN pnpm build
 
+# Debug: проверяем структуру standalone
+RUN ls -la /app/apps/web/.next/standalone/ || echo "standalone not found"
+RUN find /app/apps/web/.next -name "server.js" 2>/dev/null | head -5
+
 ############################
 # RUNNER
 ############################
@@ -57,7 +61,12 @@ COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./.next/static
 COPY --from=builder /app/apps/web/public ./public
 
+# Debug: проверяем что скопировалось
+RUN ls -la /app/
+RUN ls -la /app/server.js 2>/dev/null || echo "server.js not in /app"
+RUN find /app -name "server.js" 2>/dev/null | head -5
+
 EXPOSE 3000
 ENV HOSTNAME=0.0.0.0
 
-CMD ["node", "server.js"]
+CMD ["node", "/app/server.js"]
