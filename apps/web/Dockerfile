@@ -45,11 +45,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
+# Устанавливаем next глобально
+RUN npm install -g next@14.2.0
+
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./.next/static
 COPY --from=builder /app/apps/web/public ./public
 
-# ВАЖНО: докидываем runtime deps Next
+# Копируем node_modules полностью
 COPY --from=builder /app/apps/web/node_modules ./node_modules
 
 EXPOSE 3000
