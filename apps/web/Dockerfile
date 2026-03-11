@@ -15,7 +15,7 @@ COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 
 WORKDIR /app/apps/web
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --prod=false
 
 ############################
 # BUILDER
