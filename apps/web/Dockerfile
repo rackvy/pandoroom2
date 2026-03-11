@@ -49,11 +49,9 @@ COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./.next/static
 COPY --from=builder /app/apps/web/public ./public
 
-# Совместимость с monorepo standalone, если Next ожидает assets в apps/web/*
-RUN mkdir -p /app/apps/web/.next /app/apps/web \
- && cp -r /app/.next/static /app/apps/web/.next/static 2>/dev/null || true \
- && cp -r /app/public /app/apps/web/public 2>/dev/null || true
+# ВАЖНО: докидываем runtime deps Next
+COPY --from=builder /app/apps/web/node_modules ./node_modules
 
 EXPOSE 3000
 
-CMD ["sh", "-lc", "SERVER=$(find /app -maxdepth 4 -name server.js | head -n 1); echo Starting $SERVER; node \"$SERVER\""]
+CMD ["node", "server.js"]
