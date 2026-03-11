@@ -46,9 +46,14 @@ ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
 COPY --from=builder /app/apps/web/.next/standalone ./
-COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/.next/static ./.next/static
+COPY --from=builder /app/apps/web/public ./public
+
+# Совместимость с monorepo standalone, если Next ожидает assets в apps/web/*
+RUN mkdir -p /app/apps/web/.next /app/apps/web \
+ && cp -r /app/.next/static /app/apps/web/.next/static 2>/dev/null || true \
+ && cp -r /app/public /app/apps/web/public 2>/dev/null || true
 
 EXPOSE 3000
 
-CMD ["node", "apps/web/server.js"]
+CMD ["sh", "-lc", "SERVER=$(find /app -maxdepth 4 -name server.js | head -n 1); echo Starting $SERVER; node \"$SERVER\""]
