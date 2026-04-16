@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Quest, UpdateQuestData, getQuest, updateQuest } from '../../api/catalog';
 import QuestForm from '../../components/QuestForm';
+import { toast } from '../../components/ui/Toast';
 import styles from './QuestEditPage.module.css';
 
 export default function QuestEditPage() {
@@ -23,7 +24,7 @@ export default function QuestEditPage() {
       setQuest(data);
     } catch (error) {
       console.error('Failed to load quest:', error);
-      alert('Ошибка загрузки квеста');
+      toast.error('Ошибка загрузки квеста');
     } finally {
       setIsLoading(false);
     }
@@ -34,10 +35,11 @@ export default function QuestEditPage() {
     
     try {
       await updateQuest(id, data);
+      toast.success('Квест обновлен');
       navigate('/content/quests');
     } catch (error) {
       console.error('Failed to update quest:', error);
-      alert('Ошибка обновления квеста');
+      toast.error('Ошибка обновления квеста');
     }
   };
 

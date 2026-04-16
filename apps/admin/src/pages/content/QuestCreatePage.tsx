@@ -3,6 +3,7 @@ import { CreateQuestData, createQuest } from '../../api/catalog';
 import { createQuestScheduleSlot } from '../../api/questSchedule';
 import QuestForm from '../../components/QuestForm';
 import { ScheduleSlot } from '../../components/QuestScheduleEditor';
+import { toast } from '../../components/ui/Toast';
 import styles from './QuestCreatePage.module.css';
 
 export default function QuestCreatePage() {
@@ -28,10 +29,11 @@ export default function QuestCreatePage() {
         );
       }
       
+      toast.success('Квест создан');
       navigate('/content/quests');
     } catch (error) {
       console.error('Failed to create quest:', error);
-      alert('Ошибка создания квеста');
+      toast.error('Ошибка создания квеста');
     }
   };
 

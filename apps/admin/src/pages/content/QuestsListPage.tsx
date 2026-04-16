@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getQuests, deleteQuest, type Quest } from '../../api/catalog';
 import { getMediaUrl } from '../../utils/media';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 import styles from './QuestsListPage.module.css';
 
 const difficultyLabels: Record<string, string> = {
@@ -51,13 +53,21 @@ export default function QuestsListPage() {
     navigate(`/content/quests/${id}/schedule`);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить этот квест?')) return;
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirm({
+      title: 'Удалить квест?',
+      message: `Вы уверены, что хотите удалить "${name}"?`,
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteQuest(id);
       loadQuests();
+      toast.success('Квест удален');
     } catch (err) {
-      alert('Ошибка удаления квеста');
+      toast.error('Ошибка удаления квеста');
     }
   };
 
@@ -135,7 +145,7 @@ export default function QuestsListPage() {
                     </button>
                     <button
                       className={`${styles.actionButton} ${styles.delete}`}
-                      onClick={() => handleDelete(quest.id)}
+                      onClick={() => handleDelete(quest.id, quest.name)}
                       title="Удалить"
                     >
                       🗑️
