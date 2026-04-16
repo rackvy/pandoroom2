@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getNews, deleteNews, type News } from '../../api/content';
 import { getMediaUrl } from '../../utils/media';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 import styles from './QuestsListPage.module.css';
 
 export default function NewsListPage() {
@@ -36,13 +38,21 @@ export default function NewsListPage() {
     navigate(`/content/news/${id}/edit`);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить эту новость?')) return;
+  const handleDelete = async (id: string, title: string) => {
+    const confirmed = await confirm({
+      title: 'Удалить новость?',
+      message: `Вы уверены, что хотите удалить "${title}"?`,
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteNews(id);
       loadNews();
+      toast.success('Новость удалена');
     } catch (err) {
-      alert('Ошибка удаления новости');
+      toast.error('Ошибка удаления новости');
     }
   };
 
@@ -86,6 +96,7 @@ export default function NewsListPage() {
             <tr>
               <th>Изображение</th>
               <th>Заголовок</th>
+              <th>Содержание</th>
               <th>Дата</th>
               <th>Действия</th>
             </tr>
@@ -103,6 +114,12 @@ export default function NewsListPage() {
                 <td>
                   <div className={styles.questName}>{item.title}</div>
                 </td>
+                <td>
+                  <div style={{ maxWidth: '300px', maxHeight: '60px', overflow: 'hidden' }}>
+                    {item.content.replace(/<[^>]*>/g, '').substring(0, 100)}
+                    {item.content.length > 100 ? '...' : ''}
+                  </div>
+                </td>
                 <td>{new Date(item.date).toLocaleDateString('ru-RU')}</td>
                 <td>
                   <div className={styles.actions}>
@@ -115,7 +132,7 @@ export default function NewsListPage() {
                     </button>
                     <button
                       className={`${styles.actionButton} ${styles.delete}`}
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(item.id, item.title)}
                       title="Удалить"
                     >
                       🗑️
