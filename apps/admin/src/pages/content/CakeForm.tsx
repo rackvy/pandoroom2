@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createCake, updateCake, getCake, getSuppliers, type CreateCakeData, type Supplier } from '../../api/content';
 import { uploadMedia } from '../../api/media';
 import styles from './Form.module.css';
+import { toast } from '../../components/ui/Toast';
 
 export default function CakeForm() {
   const navigate = useNavigate();
@@ -65,8 +66,9 @@ export default function CakeForm() {
       const media = await uploadMedia(file);
       setFormData(prev => ({ ...prev, imageId: media.id }));
       setImagePreview(media.url);
+      toast.success('Изображение загружено');
     } catch (err) {
-      alert('Ошибка загрузки изображения');
+      toast.error('Ошибка загрузки изображения');
     }
   };
 
@@ -76,12 +78,15 @@ export default function CakeForm() {
       setSaving(true);
       if (isEdit) {
         await updateCake(id!, formData);
+        toast.success('Торт обновлен');
       } else {
         await createCake(formData);
+        toast.success('Торт создан');
       }
       navigate('/content/cakes');
     } catch (err) {
       setError('Ошибка сохранения торта');
+      toast.error('Ошибка сохранения торта');
     } finally {
       setSaving(false);
     }

@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCakes, deleteCake, type Cake } from '../../api/content';
 import { getMediaUrl } from '../../utils/media';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 import styles from './QuestsListPage.module.css';
 
 export default function CakesListPage() {
@@ -36,13 +38,21 @@ export default function CakesListPage() {
     navigate(`/content/cakes/${id}/edit`);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить этот торт?')) return;
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirm({
+      title: 'Удалить торт?',
+      message: `Вы уверены, что хотите удалить "${name}"?`,
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteCake(id);
       loadCakes();
+      toast.success('Торт удален');
     } catch (err) {
-      alert('Ошибка удаления торта');
+      toast.error('Ошибка удаления торта');
     }
   };
 
@@ -119,7 +129,7 @@ export default function CakesListPage() {
                     </button>
                     <button
                       className={`${styles.actionButton} ${styles.delete}`}
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(item.id, item.name)}
                       title="Удалить"
                     >
                       🗑️
