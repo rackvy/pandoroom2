@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createDecoration, updateDecoration, getDecoration, type CreateDecorationData } from '../../api/content';
 import { uploadMedia } from '../../api/media';
 import styles from './Form.module.css';
+import { toast } from '../../components/ui/Toast';
 
 export default function DecorationForm() {
   const navigate = useNavigate();
@@ -50,8 +51,9 @@ export default function DecorationForm() {
       const media = await uploadMedia(file);
       setFormData(prev => ({ ...prev, imageId: media.id }));
       setImagePreview(media.url);
+      toast.success('Изображение загружено');
     } catch (err) {
-      alert('Ошибка загрузки изображения');
+      toast.error('Ошибка загрузки изображения');
     }
   };
 
@@ -61,12 +63,15 @@ export default function DecorationForm() {
       setSaving(true);
       if (isEdit) {
         await updateDecoration(id!, formData);
+        toast.success('Декорация обновлена');
       } else {
         await createDecoration(formData);
+        toast.success('Декорация создана');
       }
       navigate('/content/decorations');
     } catch (err) {
       setError('Ошибка сохранения декорации');
+      toast.error('Ошибка сохранения декорации');
     } finally {
       setSaving(false);
     }
