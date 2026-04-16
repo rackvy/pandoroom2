@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getShowPrograms, deleteShowProgram, type ShowProgram } from '../../api/content';
 import { getMediaUrl } from '../../utils/media';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 import styles from './QuestsListPage.module.css';
 
 export default function ShowProgramsListPage() {
@@ -36,13 +38,21 @@ export default function ShowProgramsListPage() {
     navigate(`/content/show-programs/${id}/edit`);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить эту шоу-программу?')) return;
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirm({
+      title: 'Удалить шоу-программу?',
+      message: `Вы уверены, что хотите удалить "${name}"?`,
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteShowProgram(id);
       loadPrograms();
+      toast.success('Шоу-программа удалена');
     } catch (err) {
-      alert('Ошибка удаления шоу-программы');
+      toast.error('Ошибка удаления шоу-программы');
     }
   };
 
@@ -117,7 +127,7 @@ export default function ShowProgramsListPage() {
                     </button>
                     <button
                       className={`${styles.actionButton} ${styles.delete}`}
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(item.id, item.name)}
                       title="Удалить"
                     >
                       🗑️

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createShowProgram, updateShowProgram, getShowProgram, getSuppliers, type CreateShowProgramData, type Supplier } from '../../api/content';
 import { uploadMedia } from '../../api/media';
 import styles from './Form.module.css';
+import { toast } from '../../components/ui/Toast';
 
 export default function ShowProgramForm() {
   const navigate = useNavigate();
@@ -63,8 +64,9 @@ export default function ShowProgramForm() {
       const media = await uploadMedia(file);
       setFormData(prev => ({ ...prev, imageId: media.id }));
       setImagePreview(media.url);
+      toast.success('Изображение загружено');
     } catch (err) {
-      alert('Ошибка загрузки изображения');
+      toast.error('Ошибка загрузки изображения');
     }
   };
 
@@ -74,12 +76,15 @@ export default function ShowProgramForm() {
       setSaving(true);
       if (isEdit) {
         await updateShowProgram(id!, formData);
+        toast.success('Шоу-программа обновлена');
       } else {
         await createShowProgram(formData);
+        toast.success('Шоу-программа создана');
       }
       navigate('/content/show-programs');
     } catch (err) {
       setError('Ошибка сохранения шоу-программы');
+      toast.error('Ошибка сохранения шоу-программы');
     } finally {
       setSaving(false);
     }
