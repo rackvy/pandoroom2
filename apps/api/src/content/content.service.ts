@@ -208,4 +208,26 @@ export class ContentService {
     if (!fact) throw new NotFoundException('Факт не найден');
     return fact;
   }
+
+  async createAboutFact(dto: { text: string; iconId?: string; sortOrder?: number }) {
+    return this.prisma.aboutFact.create({
+      data: dto,
+      include: { icon: true },
+    });
+  }
+
+  async updateAboutFact(id: string, dto: { text?: string; iconId?: string; sortOrder?: number }) {
+    await this.findOneAboutFact(id);
+    return this.prisma.aboutFact.update({
+      where: { id },
+      data: dto,
+      include: { icon: true },
+    });
+  }
+
+  async removeAboutFact(id: string) {
+    await this.findOneAboutFact(id);
+    await this.prisma.aboutFact.delete({ where: { id } });
+    return { message: 'Факт удален' };
+  }
 }

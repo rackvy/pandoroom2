@@ -1,11 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getAboutFacts, deleteAboutFact, type AboutFact } from '../../api/content';
+import { getAboutFacts, createAboutFact, updateAboutFact, deleteAboutFact, type AboutFact } from '../../api/content';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 import styles from './QuestsListPage.module.css';
 
 export default function AboutFactsListPage() {
   const [facts, setFacts] = useState<AboutFact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newFactText, setNewFactText] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   const loadFacts = useCallback(async () => {
     try {
@@ -24,34 +30,82 @@ export default function AboutFactsListPage() {
     loadFacts();
   }, [loadFacts]);
 
-  const handleAdd = () => {
-    // For simplicity, inline add
-    const text = prompt('Введите текст факта:');
-    if (!text) return;
-    
-    // This would need a proper form, but for now just alert
-    alert('Используйте API для создания факта');
-  };
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newFactText.trim()) return;
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить этот факт?')) return;
     try {
-      await deleteAboutFact(id);
+      await createAboutFact({
+        text: newFactText.trim(),
+        sortOrder: facts.length,
+      });
+      setNewFactText('');
+      setIsCreating(false);
       loadFacts();
+      toast.success('Факт создан');
     } catch (err) {
-      alert('Ошибка удаления факта');
+      setError('Ошибка создания факта');
+      toast.error('Ошибка создания факта');
     }
   };
 
-  const handleMoveUp = async (index: number) => {
-    if (index === 0) return;
-    // Would need update API call
-    alert('Изменение порядка - в разработке');
+  const handleEdit = (fact: AboutFact) => {
+    setEditingId(fact.id);
+    setEditText(fact.text);
   };
 
-  const handleMoveDown = async (index: number) => {
-    if (index === facts.length - 1) return;
-    alert('Изменение порядка - в разработке');
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId || !editText.trim()) return;
+
+    try {
+      await updateAboutFact(editingId, { text: editText.trim() });
+      setEditingId(null);
+      loadFacts();
+      toast.success('Факт обновлен');
+    } catch (err) {
+      toast.error('Ошибка обновления факта');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    const confirmed = await confirm({
+      title: 'Удалить факт?',
+      message: 'Вы уверены, что хотите удалить этот факт?',
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await deleteAboutFact(id);
+      loadFacts();
+      toast.success('Факт удален');
+    } catch (err) {
+      toast.error('Ошибка удаления факта');
+    }
+  };
+
+  const handleMove = async (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === facts.length - 1) return;
+
+    const newFacts = [...facts];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    [newFacts[index], newFacts[targetIndex]] = [newFacts[targetIndex], newFacts[index]];
+    
+    try {
+      await Promise.all(
+        newFacts.map((fact, i) => 
+          updateAboutFact(fact.id, { sortOrder: i })
+        )
+      );
+      loadFacts();
+      toast.success('Порядок обновлен');
+    } catch (err) {
+      toast.error('Ошибка обновления порядка');
+    }
   };
 
   if (loading) {
@@ -62,11 +116,35 @@ export default function AboutFactsListPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Факты "О нас"</h1>
-        <button className={styles.addButton} onClick={handleAdd}>
+        <button className={styles.addButton} onClick={() => setIsCreating(true)} disabled={isCreating}>
           <span>+</span>
           <span>Добавить факт</span>
         </button>
       </div>
+
+      {isCreating && (
+        <form onSubmit={handleAdd} className={styles.form} style={{ marginBottom: '20px' }}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Текст факта</label>
+            <textarea
+              value={newFactText}
+              onChange={(e) => setNewFactText(e.target.value)}
+              className={styles.textarea}
+              rows={3}
+              placeholder="Введите текст факта..."
+              autoFocus
+            />
+          </div>
+          <div className={styles.actions}>
+            <button type="button" className={styles.cancelButton} onClick={() => setIsCreating(false)}>
+              Отмена
+            </button>
+            <button type="submit" className={styles.saveButton} disabled={!newFactText.trim()}>
+              Создать
+            </button>
+          </div>
+        </form>
+      )}
 
       {error && <div className={styles.error}>{error}</div>}
 
@@ -94,13 +172,37 @@ export default function AboutFactsListPage() {
                   )}
                 </td>
                 <td>
-                  <div className={styles.questName}>{item.text}</div>
+                  {editingId === item.id ? (
+                    <form onSubmit={handleSaveEdit} style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className={styles.input}
+                        style={{ flex: 1 }}
+                        autoFocus
+                      />
+                      <button type="submit" className={styles.actionButton} title="Сохранить">
+                        ✓
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.actionButton}
+                        onClick={() => setEditingId(null)}
+                        title="Отмена"
+                      >
+                        ✕
+                      </button>
+                    </form>
+                  ) : (
+                    <div className={styles.questName}>{item.text}</div>
+                  )}
                 </td>
                 <td>
                   <div className={styles.actions}>
                     <button
                       className={styles.actionButton}
-                      onClick={() => handleMoveUp(index)}
+                      onClick={() => handleMove(index, 'up')}
                       title="Вверх"
                       disabled={index === 0}
                     >
@@ -108,11 +210,18 @@ export default function AboutFactsListPage() {
                     </button>
                     <button
                       className={styles.actionButton}
-                      onClick={() => handleMoveDown(index)}
+                      onClick={() => handleMove(index, 'down')}
                       title="Вниз"
                       disabled={index === facts.length - 1}
                     >
                       ⬇️
+                    </button>
+                    <button
+                      className={styles.actionButton}
+                      onClick={() => handleEdit(item)}
+                      title="Редактировать"
+                    >
+                      ✏️
                     </button>
                     <button
                       className={`${styles.actionButton} ${styles.delete}`}

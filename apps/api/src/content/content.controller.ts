@@ -137,4 +137,19 @@ export class ContentController {
   findOneAboutFact(@Param('id') id: string) {
     return this.contentService.findOneAboutFact(id);
   }
+
+  @Post('about-facts')
+  createAboutFact(@Body() dto: { text: string; iconId?: string; sortOrder?: number }) {
+    return this.contentService.createAboutFact(dto);
+  }
+
+  @Patch('about-facts/:id')
+  updateAboutFact(@Param('id') id: string, @Body() dto: { text?: string; iconId?: string; sortOrder?: number }) {
+    return this.contentService.updateAboutFact(id, dto);
+  }
+
+  @Delete('about-facts/:id')
+  removeAboutFact(@Param('id') id: string) {
+    return this.contentService.removeAboutFact(id);
+  }
 }
