@@ -7,7 +7,7 @@ import { UpdateClientDto } from './dto/update-client.dto';
 export class ClientsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(search?: string) {
+  async findAll(search?: string, page: number = 1, limit: number = 20) {
     const where: any = {};
     
     if (search) {
@@ -18,18 +18,33 @@ export class ClientsService {
       ];
     }
 
-    return this.prisma.client.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        _count: {
-          select: {
-            bookings: true,
-            questReservations: true,
+    const skip = (page - 1) * limit;
+
+    const [clients, total] = await Promise.all([
+      this.prisma.client.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          _count: {
+            select: {
+              bookings: true,
+              questReservations: true,
+            },
           },
         },
-      },
-    });
+      }),
+      this.prisma.client.count({ where }),
+    ]);
+
+    return {
+      clients,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(id: string) {

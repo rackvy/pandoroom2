@@ -11,23 +11,30 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 20;
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
+      setPage(1);
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
   useEffect(() => {
     loadClients();
-  }, [debouncedSearch]);
+  }, [debouncedSearch, page]);
 
   const loadClients = async () => {
     setLoading(true);
     try {
-      const data = await getClients(debouncedSearch || undefined);
-      setClients(data);
+      const data = await getClients(debouncedSearch || undefined, page, limit);
+      setClients(data.clients);
+      setTotalPages(data.totalPages);
+      setTotal(data.total);
     } catch (error) {
       console.error('Failed to load clients:', error);
       toast.error('Ошибка загрузки клиентов');
@@ -93,46 +100,71 @@ export default function ClientsPage() {
           {search ? 'Клиенты не найдены' : 'Нет клиентов'}
         </div>
       ) : (
-        <div className={styles.tableContainer}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Имя</th>
-                <th>Телефон</th>
-                <th>Email</th>
-                <th>Бронирований</th>
-                <th>Квестов</th>
-                <th>Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clients.map((client) => (
-                <tr 
-                  key={client.id}
-                  onClick={() => navigate(`/clients/${client.id}`)}
-                  className={styles.row}
-                >
-                  <td className={styles.nameCell}>{client.name}</td>
-                  <td>{formatPhone(client.phone)}</td>
-                  <td>{client.email || '—'}</td>
-                  <td>{client._count?.bookings || 0}</td>
-                  <td>{client._count?.questReservations || 0}</td>
-                  <td>
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(client);
-                      }}
-                    >
-                      Удалить
-                    </button>
-                  </td>
+        <>
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Имя</th>
+                  <th>Телефон</th>
+                  <th>Email</th>
+                  <th>Бронирований</th>
+                  <th>Квестов</th>
+                  <th>Действия</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {clients.map((client) => (
+                  <tr 
+                    key={client.id}
+                    onClick={() => navigate(`/clients/${client.id}`)}
+                    className={styles.row}
+                  >
+                    <td className={styles.nameCell}>{client.name}</td>
+                    <td>{formatPhone(client.phone)}</td>
+                    <td>{client.email || '—'}</td>
+                    <td>{client._count?.bookings || 0}</td>
+                    <td>{client._count?.questReservations || 0}</td>
+                    <td>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(client);
+                        }}
+                      >
+                        Удалить
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button
+                className={styles.pageBtn}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                ← Назад
+              </button>
+              <span className={styles.pageInfo}>
+                Страница {page} из {totalPages} (всего {total})
+              </span>
+              <button
+                className={styles.pageBtn}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Вперёд →
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -26,8 +26,14 @@ export class ClientsController {
   constructor(private clientsService: ClientsService) {}
 
   @Get()
-  findAll(@Query('search') search?: string) {
-    return this.clientsService.findAll(search);
+  findAll(
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 20;
+    return this.clientsService.findAll(search, pageNum, limitNum);
   }
 
   @Get(':id')

@@ -61,8 +61,17 @@ export interface UpdateClientData {
   notes?: string;
 }
 
-export const getClients = async (search?: string): Promise<Client[]> => {
-  const params = search ? { search } : {};
+export interface ClientsResponse {
+  clients: Client[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export const getClients = async (search?: string, page: number = 1, limit: number = 20): Promise<ClientsResponse> => {
+  const params: any = { page, limit };
+  if (search) params.search = search;
   const response = await api.get('/api/admin/clients', { params });
   return response.data;
 };
