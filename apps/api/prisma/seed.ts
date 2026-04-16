@@ -116,6 +116,45 @@ async function main() {
   });
   console.log('✅ Создан блок страницы:', pageBlock.blockKey);
 
+  // 8.1 Создаем блоки для всех страниц
+  const pageBlocks = [
+    // HOME
+    { pageKey: 'HOME', blockKey: 'about', title: 'О нас', text: 'Pandoroom - это сеть квест-комнат с уникальными сценариями', sortOrder: 2 },
+    { pageKey: 'HOME', blockKey: 'features', title: 'Почему мы', text: 'Уникальные квесты, профессиональные актеры, незабываемые эмоции', sortOrder: 3 },
+    { pageKey: 'HOME', blockKey: 'cta', title: 'Забронируйте сейчас', text: 'Подарите себе и близким незабываемые впечатления', sortOrder: 4 },
+    // PARTY_GUIDE
+    { pageKey: 'PARTY_GUIDE', blockKey: 'hero', title: 'Гид по праздникам', text: 'Все, что нужно знать для идеального праздника', sortOrder: 1 },
+    { pageKey: 'PARTY_GUIDE', blockKey: 'steps', title: 'Этапы организации', text: 'Планирование, подготовка, проведение, воспоминания', sortOrder: 2 },
+    { pageKey: 'PARTY_GUIDE', blockKey: 'tips', title: 'Советы', text: 'Как сделать праздник незабываемым', sortOrder: 3 },
+    // PARTY_GUIDE_KIDS
+    { pageKey: 'PARTY_GUIDE_KIDS', blockKey: 'hero', title: 'Детский праздник', text: 'Организация праздников для детей любого возраста', sortOrder: 1 },
+    { pageKey: 'PARTY_GUIDE_KIDS', blockKey: 'programs', title: 'Программы', text: 'Аниматоры, квесты, мастер-классы', sortOrder: 2 },
+    // PARTY_GUIDE_6_10
+    { pageKey: 'PARTY_GUIDE_6_10', blockKey: 'hero', title: 'Праздник для 6-10 лет', text: 'Специальные программы для дошкольников и младших школьников', sortOrder: 1 },
+    { pageKey: 'PARTY_GUIDE_6_10', blockKey: 'activities', title: 'Развлечения', text: 'Игры, конкурсы, творческие задания', sortOrder: 2 },
+    // PARTY_GUIDE_10_15
+    { pageKey: 'PARTY_GUIDE_10_15', blockKey: 'hero', title: 'Праздник для 10-15 лет', text: 'Квесты и активности для подростков', sortOrder: 1 },
+    { pageKey: 'PARTY_GUIDE_10_15', blockKey: 'quests', title: 'Подростковые квесты', text: 'Захватывающие сценарии для старшеклассников', sortOrder: 2 },
+    // CAFE
+    { pageKey: 'CAFE', blockKey: 'hero', title: 'Наше кафе', text: 'Вкусная еда и уютная атмосфера', sortOrder: 1 },
+    { pageKey: 'CAFE', blockKey: 'menu', title: 'Меню', text: 'Блюда европейской и азиатской кухни', sortOrder: 2 },
+    { pageKey: 'CAFE', blockKey: 'booking', title: 'Бронирование', text: 'Забронируйте столик онлайн', sortOrder: 3 },
+    // CAFE_KAFE
+    { pageKey: 'CAFE_KAFE', blockKey: 'hero', title: 'Кафе-зона', text: 'Основной зал для отдыха и общения', sortOrder: 1 },
+    { pageKey: 'CAFE_KAFE', blockKey: 'tables', title: 'Столы', text: 'Выберите подходящий столик', sortOrder: 2 },
+    // CAFE_LOUNGE
+    { pageKey: 'CAFE_LOUNGE', blockKey: 'hero', title: 'Лаунж-зона', text: 'Уютное пространство для расслабленного отдыха', sortOrder: 1 },
+    { pageKey: 'CAFE_LOUNGE', blockKey: 'hookah', title: 'Кальяны', text: 'Большой выбор вкусов', sortOrder: 2 },
+    // CAFE_KIDS
+    { pageKey: 'CAFE_KIDS', blockKey: 'hero', title: 'Детская зона', text: 'Безопасное пространство для детей', sortOrder: 1 },
+    { pageKey: 'CAFE_KIDS', blockKey: 'games', title: 'Игры', text: 'PS4, настольные игры, игровая зона', sortOrder: 2 },
+  ];
+
+  for (const block of pageBlocks) {
+    const created = await prisma.pageBlock.create({ data: block });
+    console.log('✅ Создан блок:', created.pageKey, '-', created.blockKey);
+  }
+
   // 9. Создаем поставщика
   const supplier = await prisma.supplier.create({
     data: {
