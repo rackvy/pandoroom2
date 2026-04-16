@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createSupplier, updateSupplier, getSupplier, type CreateSupplierData } from '../../api/content';
 import styles from './Form.module.css';
 import RichTextEditor from '../../components/ui/RichTextEditor';
+import { toast } from '../../components/ui/Toast';
 
 export default function SupplierForm() {
   const navigate = useNavigate();
@@ -54,12 +55,15 @@ export default function SupplierForm() {
       setSaving(true);
       if (isEdit) {
         await updateSupplier(id!, formData);
+        toast.success('Поставщик обновлен');
       } else {
         await createSupplier(formData);
+        toast.success('Поставщик создан');
       }
       navigate('/content/suppliers');
     } catch (err) {
       setError('Ошибка сохранения поставщика');
+      toast.error('Ошибка сохранения поставщика');
     } finally {
       setSaving(false);
     }

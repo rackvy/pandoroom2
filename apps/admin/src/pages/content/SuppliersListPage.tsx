@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getSuppliers, deleteSupplier, type Supplier } from '../../api/content';
+import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 import styles from './QuestsListPage.module.css';
 
 export default function SuppliersListPage() {
@@ -35,13 +37,21 @@ export default function SuppliersListPage() {
     navigate(`/content/suppliers/${id}/edit`);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Удалить этого поставщика?')) return;
+  const handleDelete = async (id: string, name: string) => {
+    const confirmed = await confirm({
+      title: 'Удалить поставщика?',
+      message: `Вы уверены, что хотите удалить "${name}"?`,
+      type: 'danger',
+    });
+
+    if (!confirmed) return;
+
     try {
       await deleteSupplier(id);
       loadSuppliers();
+      toast.success('Поставщик удален');
     } catch (err) {
-      alert('Ошибка удаления поставщика');
+      toast.error('Ошибка удаления поставщика');
     }
   };
 
@@ -111,7 +121,7 @@ export default function SuppliersListPage() {
                     </button>
                     <button
                       className={`${styles.actionButton} ${styles.delete}`}
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => handleDelete(item.id, item.name)}
                       title="Удалить"
                     >
                       🗑️
