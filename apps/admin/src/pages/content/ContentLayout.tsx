@@ -12,6 +12,7 @@ const contentEntities: EntityItem[] = [
   { id: 'quests', name: 'Квесты', path: '/content/quests', icon: '🎮' },
   { id: 'news', name: 'Новости', path: '/content/news', icon: '📰' },
   { id: 'reviews', name: 'Отзывы', path: '/content/reviews', icon: '⭐' },
+  { id: 'review-sources', name: 'Источники отзывов', path: '/content/review-sources', icon: '📡' },
   { id: 'about', name: 'О нас (факты)', path: '/content/about', icon: 'ℹ️' },
   { id: 'pages', name: 'Страницы', path: '/content/pages', icon: '📄' },
 

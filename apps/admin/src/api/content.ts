@@ -82,6 +82,20 @@ export async function getReviewSources(): Promise<ReviewSource[]> {
   return response.data;
 }
 
+export async function createReviewSource(data: { name: string }): Promise<ReviewSource> {
+  const response = await api.post('/api/admin/content/review-sources', data);
+  return response.data;
+}
+
+export async function updateReviewSource(id: string, data: { name: string }): Promise<ReviewSource> {
+  const response = await api.patch(`/api/admin/content/review-sources/${id}`, data);
+  return response.data;
+}
+
+export async function deleteReviewSource(id: string): Promise<void> {
+  await api.delete(`/api/admin/content/review-sources/${id}`);
+}
+
 export async function getReviews(): Promise<Review[]> {
   const response = await api.get('/api/admin/content/reviews');
   return response.data;

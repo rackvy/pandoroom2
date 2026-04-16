@@ -82,6 +82,26 @@ export class ContentController {
   }
 
   // ==================== REVIEWS ====================
+  @Get('review-sources')
+  findAllReviewSources() {
+    return this.contentService.findAllReviewSources();
+  }
+
+  @Post('review-sources')
+  createReviewSource(@Body() dto: { name: string }) {
+    return this.contentService.createReviewSource(dto);
+  }
+
+  @Patch('review-sources/:id')
+  updateReviewSource(@Param('id') id: string, @Body() dto: { name: string }) {
+    return this.contentService.updateReviewSource(id, dto);
+  }
+
+  @Delete('review-sources/:id')
+  removeReviewSource(@Param('id') id: string) {
+    return this.contentService.removeReviewSource(id);
+  }
+
   @Get('reviews')
   findAllReviews() {
     return this.contentService.findAllReviews();

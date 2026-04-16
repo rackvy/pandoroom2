@@ -16,6 +16,7 @@ import NewsListPage from './pages/content/NewsListPage'
 import NewsForm from './pages/content/NewsForm'
 import ReviewsListPage from './pages/content/ReviewsListPage'
 import ReviewForm from './pages/content/ReviewForm'
+import ReviewSourcesPage from './pages/content/ReviewSourcesPage'
 import AboutFactsListPage from './pages/content/AboutFactsListPage'
 import PageBlocksEditor from './pages/content/PageBlocksEditor'
 import SuppliersListPage from './pages/content/SuppliersListPage'
@@ -70,6 +71,7 @@ function AppRoutes() {
           <Route path="reviews" element={<ReviewsListPage />} />
           <Route path="reviews/new" element={<ReviewForm />} />
           <Route path="reviews/:id/edit" element={<ReviewForm />} />
+          <Route path="review-sources" element={<ReviewSourcesPage />} />
           <Route path="about" element={<AboutFactsListPage />} />
           <Route path="pages" element={<PageBlocksEditor />} />
         </Route>

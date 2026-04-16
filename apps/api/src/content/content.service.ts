@@ -127,6 +127,33 @@ export class ContentService {
   }
 
   // ==================== REVIEWS ====================
+  async findAllReviewSources() {
+    return this.prisma.reviewSource.findMany({
+      orderBy: { name: 'asc' },
+      include: { icon: true },
+    });
+  }
+
+  async createReviewSource(dto: { name: string }) {
+    return this.prisma.reviewSource.create({
+      data: dto,
+      include: { icon: true },
+    });
+  }
+
+  async updateReviewSource(id: string, dto: { name: string }) {
+    return this.prisma.reviewSource.update({
+      where: { id },
+      data: dto,
+      include: { icon: true },
+    });
+  }
+
+  async removeReviewSource(id: string) {
+    await this.prisma.reviewSource.delete({ where: { id } });
+    return { message: 'Источник отзывов удален' };
+  }
+
   async findAllReviews() {
     return this.prisma.review.findMany({
       orderBy: { createdAt: 'desc' },
