@@ -43,8 +43,7 @@ async function main() {
   });
   console.log('✅ Создан филиал:', branch.name);
 
-  // 3. Создаем квесты (idempotent: deleteMany + create)
-  await prisma.quest.deleteMany({});
+  // 3. Создаем квесты (idempotent: upsert preserves previewImageId/backgroundImageId)
 
   const questData = [
     // === Quests with actors (hasActors: true) ===
@@ -288,8 +287,28 @@ async function main() {
   ];
 
   for (const q of questData) {
-    await prisma.quest.create({ data: q });
-    console.log('✅ Создан квест:', q.name);
+    await prisma.quest.upsert({
+      where: { id: q.id },
+      update: {
+        name: q.name,
+        subtitle: q.subtitle,
+        genre: q.genre,
+        difficulty: q.difficulty,
+        hasActors: q.hasActors,
+        ageRestriction: q.ageRestriction,
+        address: q.address,
+        minPlayers: q.minPlayers,
+        maxPlayers: q.maxPlayers,
+        durationMinutes: q.durationMinutes,
+        description: q.description,
+        rules: q.rules,
+        safety: q.safety,
+        extraServices: q.extraServices,
+        extraPlayerPrice: q.extraPlayerPrice,
+      },
+      create: q,
+    });
+    console.log('✅ Создан/обновлен квест:', q.name);
   }
 
   // 4. Создаем источник отзывов
@@ -323,11 +342,11 @@ async function main() {
   });
   console.log('✅ Создан факт:', aboutFact.text.substring(0, 30) + '...');
 
-  // 7. Создаем новости (idempotent: deleteMany + create)
-  await prisma.news.deleteMany({});
+  // 7. Создаем новости (idempotent: upsert preserves imageId)
 
   const newsData = [
     {
+      id: '00000000-0000-0000-0000-200000000001',
       title: 'День рождения в квесте',
       date: new Date('2024-08-25'),
       content: 'Проведите день рождения в наших квестах со скидкой 20%',
@@ -335,6 +354,7 @@ async function main() {
       cardBg: 'linear-gradient(180deg, #1a2010 0%, #07080a 100%)',
     },
     {
+      id: '00000000-0000-0000-0000-200000000002',
       title: 'Новый квест — Мумия',
       date: new Date('2024-11-01'),
       content: 'Скоро открытие нового квеста в египетском стиле',
@@ -343,6 +363,7 @@ async function main() {
       cardBg: 'linear-gradient(180deg, #2a1a0a 0%, #0a0807 100%)',
     },
     {
+      id: '00000000-0000-0000-0000-200000000003',
       title: 'Скидка 30% на «Тайна Теслы»',
       date: new Date('2024-08-19'),
       content: 'Специальное предложение на популярный квест',
@@ -352,6 +373,7 @@ async function main() {
       cardBg: 'linear-gradient(180deg, #0a1a2a 0%, #070a08 100%)',
     },
     {
+      id: '00000000-0000-0000-0000-200000000004',
       title: 'Дарим квест весь май',
       date: new Date('2024-05-01'),
       content: 'Каждый день — новая история!',
@@ -362,15 +384,27 @@ async function main() {
   ];
 
   for (const n of newsData) {
-    const created = await prisma.news.create({ data: n });
-    console.log('✅ Создана новость:', created.title);
+    await prisma.news.upsert({
+      where: { id: n.id },
+      update: {
+        title: n.title,
+        date: n.date,
+        content: n.content,
+        coverTitle: n.coverTitle,
+        coverSub: n.coverSub,
+        coverVariant: n.coverVariant,
+        cardBg: n.cardBg,
+      },
+      create: n,
+    });
+    console.log('✅ Создана/обновлена новость:', n.title);
   }
 
-  // 8. Создаем PageBlock-и (idempotent: deleteMany + create)
-  await prisma.pageBlock.deleteMany({});
+  // 8. Создаем PageBlock-и (idempotent: upsert preserves imageId/fileId)
 
   // HOME page blocks
   const homePageBlocks: {
+    id: string;
     pageKey: PageKeyType;
     blockKey: string;
     title?: string;
@@ -380,12 +414,14 @@ async function main() {
   }[] = [
     // Hero section
     {
+      id: '00000000-0000-0000-0000-300000000001',
       pageKey: 'HOME',
       blockKey: 'hero_title',
       title: 'Самый большой квеструм и площадки для праздников во Владивостоке',
       sortOrder: 0,
     },
     {
+      id: '00000000-0000-0000-0000-300000000002',
       pageKey: 'HOME',
       blockKey: 'hero_features',
       extraJson: [
@@ -397,6 +433,7 @@ async function main() {
       sortOrder: 1,
     },
     {
+      id: '00000000-0000-0000-0000-300000000003',
       pageKey: 'HOME',
       blockKey: 'hero_cta_text',
       title: 'Забронируйте праздник прямо сейчас',
@@ -404,6 +441,7 @@ async function main() {
     },
     // Holiday cards
     {
+      id: '00000000-0000-0000-0000-300000000004',
       pageKey: 'HOME',
       blockKey: 'holiday_cards',
       extraJson: [
@@ -418,6 +456,7 @@ async function main() {
     },
     // Services
     {
+      id: '00000000-0000-0000-0000-300000000005',
       pageKey: 'HOME',
       blockKey: 'services',
       extraJson: [
@@ -435,6 +474,7 @@ async function main() {
 
   // Non-HOME page blocks (preserved from original seed)
   const otherPageBlocks: {
+    id: string;
     pageKey: PageKeyType;
     blockKey: string;
     title: string;
@@ -442,37 +482,48 @@ async function main() {
     sortOrder: number;
   }[] = [
     // PARTY_GUIDE
-    { pageKey: 'PARTY_GUIDE', blockKey: 'hero', title: 'Гид по праздникам', text: 'Все, что нужно знать для идеального праздника', sortOrder: 1 },
-    { pageKey: 'PARTY_GUIDE', blockKey: 'steps', title: 'Этапы организации', text: 'Планирование, подготовка, проведение, воспоминания', sortOrder: 2 },
-    { pageKey: 'PARTY_GUIDE', blockKey: 'tips', title: 'Советы', text: 'Как сделать праздник незабываемым', sortOrder: 3 },
+    { id: '00000000-0000-0000-0000-300000000010', pageKey: 'PARTY_GUIDE', blockKey: 'hero', title: 'Гид по праздникам', text: 'Все, что нужно знать для идеального праздника', sortOrder: 1 },
+    { id: '00000000-0000-0000-0000-300000000011', pageKey: 'PARTY_GUIDE', blockKey: 'steps', title: 'Этапы организации', text: 'Планирование, подготовка, проведение, воспоминания', sortOrder: 2 },
+    { id: '00000000-0000-0000-0000-300000000012', pageKey: 'PARTY_GUIDE', blockKey: 'tips', title: 'Советы', text: 'Как сделать праздник незабываемым', sortOrder: 3 },
     // PARTY_GUIDE_KIDS
-    { pageKey: 'PARTY_GUIDE_KIDS', blockKey: 'hero', title: 'Детский праздник', text: 'Организация праздников для детей любого возраста', sortOrder: 1 },
-    { pageKey: 'PARTY_GUIDE_KIDS', blockKey: 'programs', title: 'Программы', text: 'Аниматоры, квесты, мастер-классы', sortOrder: 2 },
+    { id: '00000000-0000-0000-0000-300000000020', pageKey: 'PARTY_GUIDE_KIDS', blockKey: 'hero', title: 'Детский праздник', text: 'Организация праздников для детей любого возраста', sortOrder: 1 },
+    { id: '00000000-0000-0000-0000-300000000021', pageKey: 'PARTY_GUIDE_KIDS', blockKey: 'programs', title: 'Программы', text: 'Аниматоры, квесты, мастер-классы', sortOrder: 2 },
     // PARTY_GUIDE_6_10
-    { pageKey: 'PARTY_GUIDE_6_10', blockKey: 'hero', title: 'Праздник для 6-10 лет', text: 'Специальные программы для дошкольников и младших школьников', sortOrder: 1 },
-    { pageKey: 'PARTY_GUIDE_6_10', blockKey: 'activities', title: 'Развлечения', text: 'Игры, конкурсы, творческие задания', sortOrder: 2 },
+    { id: '00000000-0000-0000-0000-300000000030', pageKey: 'PARTY_GUIDE_6_10', blockKey: 'hero', title: 'Праздник для 6-10 лет', text: 'Специальные программы для дошкольников и младших школьников', sortOrder: 1 },
+    { id: '00000000-0000-0000-0000-300000000031', pageKey: 'PARTY_GUIDE_6_10', blockKey: 'activities', title: 'Развлечения', text: 'Игры, конкурсы, творческие задания', sortOrder: 2 },
     // PARTY_GUIDE_10_15
-    { pageKey: 'PARTY_GUIDE_10_15', blockKey: 'hero', title: 'Праздник для 10-15 лет', text: 'Квесты и активности для подростков', sortOrder: 1 },
-    { pageKey: 'PARTY_GUIDE_10_15', blockKey: 'quests', title: 'Подростковые квесты', text: 'Захватывающие сценарии для старшеклассников', sortOrder: 2 },
+    { id: '00000000-0000-0000-0000-300000000040', pageKey: 'PARTY_GUIDE_10_15', blockKey: 'hero', title: 'Праздник для 10-15 лет', text: 'Квесты и активности для подростков', sortOrder: 1 },
+    { id: '00000000-0000-0000-0000-300000000041', pageKey: 'PARTY_GUIDE_10_15', blockKey: 'quests', title: 'Подростковые квесты', text: 'Захватывающие сценарии для старшеклассников', sortOrder: 2 },
     // CAFE
-    { pageKey: 'CAFE', blockKey: 'hero', title: 'Наше кафе', text: 'Вкусная еда и уютная атмосфера', sortOrder: 1 },
-    { pageKey: 'CAFE', blockKey: 'menu', title: 'Меню', text: 'Блюда европейской и азиатской кухни', sortOrder: 2 },
-    { pageKey: 'CAFE', blockKey: 'booking', title: 'Бронирование', text: 'Забронируйте столик онлайн', sortOrder: 3 },
+    { id: '00000000-0000-0000-0000-300000000050', pageKey: 'CAFE', blockKey: 'hero', title: 'Наше кафе', text: 'Вкусная еда и уютная атмосфера', sortOrder: 1 },
+    { id: '00000000-0000-0000-0000-300000000051', pageKey: 'CAFE', blockKey: 'menu', title: 'Меню', text: 'Блюда европейской и азиатской кухни', sortOrder: 2 },
+    { id: '00000000-0000-0000-0000-300000000052', pageKey: 'CAFE', blockKey: 'booking', title: 'Бронирование', text: 'Забронируйте столик онлайн', sortOrder: 3 },
     // CAFE_KAFE
-    { pageKey: 'CAFE_KAFE', blockKey: 'hero', title: 'Кафе-зона', text: 'Основной зал для отдыха и общения', sortOrder: 1 },
-    { pageKey: 'CAFE_KAFE', blockKey: 'tables', title: 'Столы', text: 'Выберите подходящий столик', sortOrder: 2 },
+    { id: '00000000-0000-0000-0000-300000000060', pageKey: 'CAFE_KAFE', blockKey: 'hero', title: 'Кафе-зона', text: 'Основной зал для отдыха и общения', sortOrder: 1 },
+    { id: '00000000-0000-0000-0000-300000000061', pageKey: 'CAFE_KAFE', blockKey: 'tables', title: 'Столы', text: 'Выберите подходящий столик', sortOrder: 2 },
     // CAFE_LOUNGE
-    { pageKey: 'CAFE_LOUNGE', blockKey: 'hero', title: 'Лаунж-зона', text: 'Уютное пространство для расслабленного отдыха', sortOrder: 1 },
-    { pageKey: 'CAFE_LOUNGE', blockKey: 'hookah', title: 'Кальяны', text: 'Большой выбор вкусов', sortOrder: 2 },
+    { id: '00000000-0000-0000-0000-300000000070', pageKey: 'CAFE_LOUNGE', blockKey: 'hero', title: 'Лаунж-зона', text: 'Уютное пространство для расслабленного отдыха', sortOrder: 1 },
+    { id: '00000000-0000-0000-0000-300000000071', pageKey: 'CAFE_LOUNGE', blockKey: 'hookah', title: 'Кальяны', text: 'Большой выбор вкусов', sortOrder: 2 },
     // CAFE_KIDS
-    { pageKey: 'CAFE_KIDS', blockKey: 'hero', title: 'Детская зона', text: 'Безопасное пространство для детей', sortOrder: 1 },
-    { pageKey: 'CAFE_KIDS', blockKey: 'games', title: 'Игры', text: 'PS4, настольные игры, игровая зона', sortOrder: 2 },
+    { id: '00000000-0000-0000-0000-300000000080', pageKey: 'CAFE_KIDS', blockKey: 'hero', title: 'Детская зона', text: 'Безопасное пространство для детей', sortOrder: 1 },
+    { id: '00000000-0000-0000-0000-300000000081', pageKey: 'CAFE_KIDS', blockKey: 'games', title: 'Игры', text: 'PS4, настольные игры, игровая зона', sortOrder: 2 },
   ];
 
   const allPageBlocks = [...homePageBlocks, ...otherPageBlocks];
   for (const block of allPageBlocks) {
-    const created = await prisma.pageBlock.create({ data: block });
-    console.log('✅ Создан блок:', created.pageKey, '-', created.blockKey);
+    await prisma.pageBlock.upsert({
+      where: { id: block.id },
+      update: {
+        pageKey: block.pageKey,
+        blockKey: block.blockKey,
+        title: block.title,
+        text: block.text,
+        extraJson: block.extraJson,
+        sortOrder: block.sortOrder,
+      },
+      create: block,
+    });
+    console.log('✅ Создан/обновлен блок:', block.pageKey, '-', block.blockKey);
   }
 
   // 9. Создаем поставщика
