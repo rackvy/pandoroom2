@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getBranches, getTablesSchedule, Table, TableZone, QuestSlot } from '../api/schedule';
+import { getBranches, getTablesSchedule, Table, TableZone, QuestSlot, type Branch } from '../api/schedule';
 import api from '../lib/axios';
 import TableSelectorModal from './schedule/TableSelectorModal';
 import QuestSelectorModal from './schedule/QuestSelectorModal';
@@ -45,6 +45,7 @@ interface SelectedFood {
   menuItemName: string;
   quantity: number;
   servingTime: string;
+  department: string;
 }
 
 interface SelectedExtra {
@@ -58,7 +59,7 @@ interface SelectedExtra {
 
 export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderModalProps) {
   const [step, setStep] = useState(1);
-  const [branches, setBranches] = useState<any[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [eventStartTime, setEventStartTime] = useState('10:00');
@@ -92,6 +93,17 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
   const [availableSuppliers, setAvailableSuppliers] = useState<any[]>([]);
   
   const [saving, setSaving] = useState(false);
+
+  // Resolve full branch object for conditional rendering
+  const currentBranch = branches.find(b => b.id === selectedBranch);
+  const branchHasTables = !!(currentBranch?.hasCafe || currentBranch?.hasLounge || currentBranch?.hasKids);
+  const branchHasQuests = !!currentBranch?.hasQuests;
+  const branchHasVR = !!currentBranch?.hasVR;
+  const isVROnly = branchHasVR && !branchHasTables && !branchHasQuests;
+  const step2HasSelections = isVROnly
+    ? true
+    : (branchHasTables ? selectedTables.length > 0 : false) ||
+      (branchHasQuests ? selectedQuests.length > 0 : false);
 
   useEffect(() => {
     if (isOpen) {
@@ -238,6 +250,7 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
       menuItemName: item.name,
       quantity: extraData.quantity || 1,
       servingTime: extraData.servingTime || '15:00',
+      department: extraData.department || '',
     }]);
   };
 
@@ -284,7 +297,7 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
       return;
     }
     
-    if (selectedTables.length === 0 && selectedQuests.length === 0) {
+    if (selectedTables.length === 0 && selectedQuests.length === 0 && !isVROnly) {
       toast.error('Добавьте хотя бы один стол или квест');
       return;
     }
@@ -350,6 +363,7 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
           title: food.menuItemName,
           quantity: food.quantity,
           servingTime: food.servingTime,
+          department: food.department || null,
         });
       }
       
@@ -532,57 +546,80 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
             </div>
           )}
           
-          {/* Step 2: Tables & Quests */}
+          {/* Step 2: Branch-aware services */}
           {step === 2 && (
             <div className={styles.step}>
-              <h3>2. Столы и квесты</h3>
-              
-              <div className={styles.section}>
-                <h4>Столы</h4>
-                {selectedTables.map((table, idx) => (
-                  <div key={idx} className={styles.selectedItem}>
-                    <span className={styles.itemTag}>{table.zoneName} / {table.tableTitle}</span>
-                    <span className={styles.itemTime}>{table.startTime} — {table.endTime}</span>
-                    <button 
-                      className={styles.removeBtn}
-                      onClick={() => handleRemoveTable(idx)}
-                    >
-                      ×
-                    </button>
+              <h3>2. Услуги</h3>
+
+              {/* Tables section — only for cafe/lounge/kids branches */}
+              {branchHasTables && (
+                <div className={styles.section}>
+                  <h4>Столы</h4>
+                  {selectedTables.map((table, idx) => (
+                    <div key={idx} className={styles.selectedItem}>
+                      <span className={styles.itemTag}>{table.zoneName} / {table.tableTitle}</span>
+                      <span className={styles.itemTime}>{table.startTime} — {table.endTime}</span>
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() => handleRemoveTable(idx)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button className={styles.addButton} onClick={handleAddTable}>
+                    + добавить стол
+                  </button>
+                </div>
+              )}
+
+              {/* Quests section — only for branches with quests */}
+              {branchHasQuests && (
+                <div className={styles.section}>
+                  <h4>Квесты</h4>
+                  {selectedQuests.map((quest, idx) => (
+                    <div key={idx} className={styles.selectedItem}>
+                      <span className={styles.itemTag}>{quest.questName}</span>
+                      <span className={styles.itemTime}>{quest.startTime}</span>
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() => handleRemoveQuest(idx)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button className={styles.addButton} onClick={handleAddQuest}>
+                    + добавить квест
+                  </button>
+                </div>
+              )}
+
+              {/* VR section — placeholder */}
+              {branchHasVR && (
+                <div className={styles.section}>
+                  <h4>VR Залы</h4>
+                  <div className={styles.vrPlaceholder}>
+                    VR залы — выберите в VR сетке
                   </div>
-                ))}
-                <button className={styles.addButton} onClick={handleAddTable}>
-                  + добавить стол
-                </button>
-              </div>
-              
-              <div className={styles.section}>
-                <h4>Квесты</h4>
-                {selectedQuests.map((quest, idx) => (
-                  <div key={idx} className={styles.selectedItem}>
-                    <span className={styles.itemTag}>{quest.questName}</span>
-                    <span className={styles.itemTime}>{quest.startTime}</span>
-                    <button 
-                      className={styles.removeBtn}
-                      onClick={() => handleRemoveQuest(idx)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <button className={styles.addButton} onClick={handleAddQuest}>
-                  + добавить квест
-                </button>
-              </div>
-              
+                </div>
+              )}
+
+              {/* No services available */}
+              {!branchHasTables && !branchHasQuests && !branchHasVR && (
+                <div className={styles.noServices}>
+                  Нет доступных сервисов для этого филиала
+                </div>
+              )}
+
               <div className={styles.stepActions}>
                 <button className={styles.backButton} onClick={() => setStep(1)}>
                   ← Назад
                 </button>
-                <button 
+                <button
                   className={styles.nextButton}
                   onClick={() => setStep(3)}
-                  disabled={selectedTables.length === 0 && selectedQuests.length === 0}
+                  disabled={!step2HasSelections && !(!branchHasTables && !branchHasQuests && !branchHasVR)}
                 >
                   Далее →
                 </button>
@@ -595,51 +632,55 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
             <div className={styles.step}>
               <h3>3. Дополнения</h3>
               
-              <div className={styles.section}>
-                <h4>Торты</h4>
-                {selectedCakes.map((cake, idx) => (
-                  <div key={idx} className={styles.selectedItem}>
-                    <span className={styles.itemTag}>{cake.cakeName} {cake.weightKg} кг</span>
-                    {cake.inscription && <span className={styles.itemDetail}>"{cake.inscription}"</span>}
-                    <button 
-                      className={styles.removeBtn}
-                      onClick={() => handleRemoveCake(idx)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <button className={styles.addButton} onClick={handleAddCake}>
-                  + добавить торт
-                </button>
-              </div>
-              
-              <div className={styles.section}>
-                <h4>Украшения зала</h4>
-                {selectedDecorations.map((decor, idx) => (
-                  <div key={idx} className={styles.selectedItem}>
-                    <span className={styles.itemTag}>{decor.decorationName}</span>
-                    <span className={styles.itemDetail}>{decor.quantity} шт</span>
-                    <button 
-                      className={styles.removeBtn}
-                      onClick={() => handleRemoveDecoration(idx)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <button className={styles.addButton} onClick={handleAddDecoration}>
-                  + добавить украшение
-                </button>
-              </div>
+              {!isVROnly && (
+                <div className={styles.section}>
+                  <h4>Торты</h4>
+                  {selectedCakes.map((cake, idx) => (
+                    <div key={idx} className={styles.selectedItem}>
+                      <span className={styles.itemTag}>{cake.cakeName} {cake.weightKg} кг</span>
+                      {cake.inscription && <span className={styles.itemDetail}>"{cake.inscription}"</span>}
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() => handleRemoveCake(idx)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button className={styles.addButton} onClick={handleAddCake}>
+                    + добавить торт
+                  </button>
+                </div>
+              )}
+
+              {!isVROnly && (
+                <div className={styles.section}>
+                  <h4>Украшения зала</h4>
+                  {selectedDecorations.map((decor, idx) => (
+                    <div key={idx} className={styles.selectedItem}>
+                      <span className={styles.itemTag}>{decor.decorationName}</span>
+                      <span className={styles.itemDetail}>{decor.quantity} шт</span>
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() => handleRemoveDecoration(idx)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button className={styles.addButton} onClick={handleAddDecoration}>
+                    + добавить украшение
+                  </button>
+                </div>
+              )}
               
               <div className={styles.section}>
                 <h4>Еда и напитки</h4>
                 {selectedFood.map((food, idx) => (
                   <div key={idx} className={styles.selectedItem}>
                     <span className={styles.itemTag}>{food.menuItemName}</span>
-                    <span className={styles.itemDetail}>{food.quantity} шт в {food.servingTime}</span>
-                    <button 
+                    <span className={styles.itemDetail}>{food.quantity} шт в {food.servingTime}{food.department ? ` (${food.department})` : ''}</span>
+                    <button
                       className={styles.removeBtn}
                       onClick={() => handleRemoveFood(idx)}
                     >
@@ -650,6 +691,9 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
                 <button className={styles.addButton} onClick={handleAddFood}>
                   + добавить блюдо
                 </button>
+                <div className={styles.iikoNote}>
+                  Полное меню iiko доступно в справочнике: Справочники → Меню iiko
+                </div>
               </div>
               
               <div className={styles.section}>
@@ -745,6 +789,18 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
           extraFields={[
             { name: 'quantity', label: 'Количество', type: 'number', defaultValue: 1 },
             { name: 'servingTime', label: 'Время подачи', type: 'time', defaultValue: '15:00' },
+            {
+              name: 'department',
+              label: 'Цех',
+              type: 'select',
+              defaultValue: '',
+              options: [
+                { value: 'bar', label: 'Бар' },
+                { value: 'pizza', label: 'Пицца' },
+                { value: 'hot_kitchen', label: 'Горячий цех' },
+                { value: 'cold_kitchen', label: 'Холодный цех' },
+              ],
+            },
           ]}
         />
         

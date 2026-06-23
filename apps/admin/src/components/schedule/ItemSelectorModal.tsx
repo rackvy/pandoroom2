@@ -18,9 +18,10 @@ interface ItemSelectorModalProps {
   extraFields?: {
     name: string;
     label: string;
-    type: 'text' | 'number' | 'time';
+    type: 'text' | 'number' | 'time' | 'select';
     defaultValue?: string | number;
     required?: boolean;
+    options?: { value: string; label: string }[];
   }[];
 }
 
@@ -126,17 +127,33 @@ export default function ItemSelectorModal({
             {extraFields.map(field => (
               <div key={field.name} className={styles.field}>
                 <label>{field.label}</label>
-                <input
-                  type={field.type}
-                  value={extraData[field.name] ?? ''}
-                  onChange={e => setExtraData({
-                    ...extraData,
-                    [field.name]: field.type === 'number' 
-                      ? parseFloat(e.target.value) || 0 
-                      : e.target.value
-                  })}
-                  className={styles.input}
-                />
+                {field.type === 'select' ? (
+                  <select
+                    value={extraData[field.name] ?? ''}
+                    onChange={e => setExtraData({
+                      ...extraData,
+                      [field.name]: e.target.value,
+                    })}
+                    className={styles.input}
+                  >
+                    <option value="">—</option>
+                    {field.options?.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type={field.type}
+                    value={extraData[field.name] ?? ''}
+                    onChange={e => setExtraData({
+                      ...extraData,
+                      [field.name]: field.type === 'number'
+                        ? parseFloat(e.target.value) || 0
+                        : e.target.value
+                    })}
+                    className={styles.input}
+                  />
+                )}
               </div>
             ))}
 

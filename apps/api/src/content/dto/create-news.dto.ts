@@ -13,4 +13,20 @@ export class CreateNewsDto {
 
   @IsString({ message: 'Содержание должно быть строкой' })
   content: string;
+
+  @IsOptional()
+  @IsString({ message: 'Заголовок карточки должен быть строкой' })
+  coverTitle?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Подзаголовок карточки должен быть строкой' })
+  coverSub?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Вариант карточки должен быть строкой' })
+  coverVariant?: string;
+
+  @IsOptional()
+  @IsString({ message: 'CSS-градиент фона должен быть строкой' })
+  cardBg?: string;
 }

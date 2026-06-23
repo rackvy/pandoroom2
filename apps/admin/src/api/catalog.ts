@@ -7,6 +7,11 @@ export interface Branch {
   address: string;
   phone: string;
   email: string;
+  geoLat: number | null;
+  geoLng: number | null;
+  whatsapp: string | null;
+  telegram: string | null;
+  max: string | null;
   sortOrder: number;
   isActive: boolean;
   // Zone flags
@@ -128,6 +133,9 @@ export interface Quest {
   safety: string;
   extraServices: string;
   extraPlayerPrice: number;
+  hasActors: boolean;
+  ageRestriction: string | null;
+  subtitle: string | null;
   branch: Branch;
   previewImage?: {
     id: string;
@@ -168,4 +176,46 @@ export async function updateQuest(id: string, data: UpdateQuestData): Promise<Qu
 
 export async function deleteQuest(id: string): Promise<void> {
   await api.delete(`/api/admin/catalog/quests/${id}`);
+}
+
+// VR Games
+export interface VRGame {
+  id: string;
+  name: string;
+  description: string | null;
+  genre: string | null;
+  minPlayers: number;
+  maxPlayers: number;
+  durationMinutes: number | null;
+  previewImageId: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  previewImage?: { id: string; url: string } | null;
+}
+
+export type CreateVRGameData = Omit<VRGame, 'id' | 'previewImage'>;
+export type UpdateVRGameData = Partial<CreateVRGameData>;
+
+export async function getVRGames(): Promise<VRGame[]> {
+  const response = await api.get('/api/admin/catalog/vr-games');
+  return response.data;
+}
+
+export async function getVRGame(id: string): Promise<VRGame> {
+  const response = await api.get(`/api/admin/catalog/vr-games/${id}`);
+  return response.data;
+}
+
+export async function createVRGame(data: CreateVRGameData): Promise<VRGame> {
+  const response = await api.post('/api/admin/catalog/vr-games', data);
+  return response.data;
+}
+
+export async function updateVRGame(id: string, data: UpdateVRGameData): Promise<VRGame> {
+  const response = await api.patch(`/api/admin/catalog/vr-games/${id}`, data);
+  return response.data;
+}
+
+export async function deleteVRGame(id: string): Promise<void> {
+  await api.delete(`/api/admin/catalog/vr-games/${id}`);
 }

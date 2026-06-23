@@ -1,7 +1,5 @@
-import Link from 'next/link'
 import Image from 'next/image'
 import { fetchApi, type PageBlock } from '@/lib/api'
-import styles from '../page.module.css'
 import contentStyles from './cafe.module.css'
 
 export const metadata = {
@@ -22,21 +20,10 @@ export default async function CafePage() {
   const blocks = await getCafeContent()
 
   return (
-    <main className={styles.main}>
-      <header className={styles.header}>
-        <Link href="/" className={styles.logo}>Pandoroom</Link>
-        <nav className={styles.nav}>
-          <Link href="/quests" className={styles.navLink}>Квесты</Link>
-          <Link href="/cafe" className={styles.navLink}>Кафе</Link>
-          <Link href="/guide" className={styles.navLink}>Праздник-гид</Link>
-          <Link href="/news" className={styles.navLink}>Новости</Link>
-          <Link href="/reviews" className={styles.navLink}>Отзывы</Link>
-        </nav>
-      </header>
-
-      <section className={styles.hero}>
-        <h2 className={styles.heroTitle}>Наше кафе</h2>
-        <p className={styles.heroSubtitle}>
+    <main style={{ minHeight: '60vh' }}>
+      <section className={contentStyles.pageHero}>
+        <h1 className={contentStyles.pageTitle}>Наше кафе</h1>
+        <p className={contentStyles.pageSubtitle}>
           Уютное кафе с авторской кухней и напитками
         </p>
       </section>
@@ -52,25 +39,23 @@ export default async function CafePage() {
             {blocks.map((block) => (
               <div key={block.id} className={contentStyles.block}>
                 {block.title && <h3>{block.title}</h3>}
-                {block.content && (
-                  <div 
+                {block.text && (
+                  <div
                     className={contentStyles.blockContent}
-                    dangerouslySetInnerHTML={{ __html: block.content }}
+                    dangerouslySetInnerHTML={{ __html: block.text }}
                   />
                 )}
-                {block.media && block.media.length > 0 && (
+                {block.image && (
                   <div className={contentStyles.mediaGrid}>
-                    {block.media.map((media) => (
-                      <div key={media.id} className={contentStyles.mediaItem}>
-                        <Image
-                          src={media.url}
-                          alt={media.alt || ''}
-                          width={400}
-                          height={300}
-                          className={contentStyles.mediaImage}
-                        />
-                      </div>
-                    ))}
+                    <div className={contentStyles.mediaItem}>
+                      <Image
+                        src={block.image.url}
+                        alt={block.title || ''}
+                        width={400}
+                        height={300}
+                        className={contentStyles.mediaImage}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

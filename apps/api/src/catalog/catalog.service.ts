@@ -351,4 +351,36 @@ export class CatalogService {
     await this.prisma.table.delete({ where: { id } });
     return { message: 'Стол удален' };
   }
+
+  // ==================== VR GAMES ====================
+  async findAllVRGames() {
+    return this.prisma.vRGame.findMany({
+      include: { previewImage: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+  }
+
+  async findOneVRGame(id: string) {
+    const game = await this.prisma.vRGame.findUnique({
+      where: { id },
+      include: { previewImage: true },
+    });
+    if (!game) throw new NotFoundException('VR Game not found');
+    return game;
+  }
+
+  async createVRGame(data: any) {
+    return this.prisma.vRGame.create({ data });
+  }
+
+  async updateVRGame(id: string, data: any) {
+    await this.findOneVRGame(id);
+    return this.prisma.vRGame.update({ where: { id }, data });
+  }
+
+  async removeVRGame(id: string) {
+    await this.findOneVRGame(id);
+    await this.prisma.vRGame.delete({ where: { id } });
+    return { message: 'VR Game deleted' };
+  }
 }

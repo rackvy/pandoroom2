@@ -8,6 +8,10 @@ export interface News {
   date: string;
   imageId: string | null;
   content: string;
+  coverTitle: string | null;
+  coverSub: string | null;
+  coverVariant: string | null;
+  cardBg: string | null;
   image?: {
     id: string;
     url: string;
@@ -19,6 +23,10 @@ export interface CreateNewsData {
   date: string;
   imageId?: string | null;
   content: string;
+  coverTitle?: string | null;
+  coverSub?: string | null;
+  coverVariant?: string | null;
+  cardBg?: string | null;
 }
 
 export type UpdateNewsData = Partial<CreateNewsData>;

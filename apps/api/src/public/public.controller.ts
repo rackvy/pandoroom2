@@ -19,8 +19,11 @@ export class PublicController {
   }
 
   @Get('quests')
-  findAllQuests() {
-    return this.publicService.findAllQuests();
+  findAllQuests(
+    @Query('hasActors') hasActors?: string,
+    @Query('ageRestriction') ageRestriction?: string,
+  ) {
+    return this.publicService.findAllQuests({ hasActors, ageRestriction });
   }
 
   @Get('quests/:id')
@@ -51,5 +54,15 @@ export class PublicController {
   @Get('about-facts')
   findAllAboutFacts() {
     return this.publicService.findAllAboutFacts();
+  }
+
+  @Get('vr-games')
+  getVRGames() {
+    return this.publicService.getVRGames();
+  }
+
+  @Get('vr-games/:id')
+  getVRGame(@Param('id') id: string) {
+    return this.publicService.getVRGame(id);
   }
 }

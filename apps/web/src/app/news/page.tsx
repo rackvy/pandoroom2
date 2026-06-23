@@ -1,7 +1,5 @@
-import Link from 'next/link'
 import Image from 'next/image'
-import { fetchApi, type News } from '@/lib/api'
-import styles from '../page.module.css'
+import { fetchApi, type NewsItem } from '@/lib/api'
 import newsStyles from './news.module.css'
 
 export const metadata = {
@@ -9,7 +7,7 @@ export const metadata = {
   description: 'Последние новости и события',
 }
 
-async function getNews(): Promise<News[]> {
+async function getNews(): Promise<NewsItem[]> {
   try {
     return await fetchApi('/news')
   } catch (error) {
@@ -22,21 +20,10 @@ export default async function NewsPage() {
   const news = await getNews()
 
   return (
-    <main className={styles.main}>
-      <header className={styles.header}>
-        <Link href="/" className={styles.logo}>Pandoroom</Link>
-        <nav className={styles.nav}>
-          <Link href="/quests" className={styles.navLink}>Квесты</Link>
-          <Link href="/cafe" className={styles.navLink}>Кафе</Link>
-          <Link href="/guide" className={styles.navLink}>Праздник-гид</Link>
-          <Link href="/news" className={styles.navLink}>Новости</Link>
-          <Link href="/reviews" className={styles.navLink}>Отзывы</Link>
-        </nav>
-      </header>
-
-      <section className={styles.hero}>
-        <h2 className={styles.heroTitle}>Новости</h2>
-        <p className={styles.heroSubtitle}>
+    <main style={{ minHeight: '60vh' }}>
+      <section className={newsStyles.pageHero}>
+        <h1 className={newsStyles.pageTitle}>Новости</h1>
+        <p className={newsStyles.pageSubtitle}>
           Последние новости и события Pandoroom
         </p>
       </section>
@@ -51,11 +38,11 @@ export default async function NewsPage() {
           <div className={newsStyles.newsGrid}>
             {news.map((item) => (
               <article key={item.id} className={newsStyles.newsCard}>
-                {item.coverImage ? (
+                {item.image ? (
                   <div className={newsStyles.imageWrapper}>
                     <Image
-                      src={item.coverImage.url}
-                      alt={item.coverImage.alt || item.title}
+                      src={item.image.url}
+                      alt={item.title}
                       fill
                       className={newsStyles.image}
                     />
@@ -67,7 +54,7 @@ export default async function NewsPage() {
                 )}
                 <div className={newsStyles.content}>
                   <time className={newsStyles.date}>
-                    {new Date(item.publishedAt || item.createdAt).toLocaleDateString('ru-RU', {
+                    {new Date(item.date).toLocaleDateString('ru-RU', {
                       day: 'numeric',
                       month: 'long',
                       year: 'numeric',
@@ -75,7 +62,7 @@ export default async function NewsPage() {
                   </time>
                   <h3>{item.title}</h3>
                   <p className={newsStyles.excerpt}>
-                    {item.excerpt || item.content.substring(0, 150)}...
+                    {item.content.substring(0, 150)}...
                   </p>
                 </div>
               </article>

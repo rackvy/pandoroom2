@@ -9,7 +9,6 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { EmployeeRole, PageKey } from '@prisma/client';
 import { ContentService } from './content.service';
 import { CreateNewsDto } from './dto/create-news.dto';
 import { CreatePageBlockDto } from './dto/create-page-block.dto';
@@ -17,6 +16,14 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+
+// Local type definitions
+type PageKey = 'HOME' | 'PARTY_GUIDE' | 'PARTY_GUIDE_KIDS' | 'PARTY_GUIDE_6_10' | 'PARTY_GUIDE_10_15' | 'CAFE' | 'CAFE_KAFE' | 'CAFE_LOUNGE' | 'CAFE_KIDS';
+const EmployeeRole = {
+  ADMIN: 'ADMIN',
+  CONTENT: 'CONTENT',
+  MANAGER: 'MANAGER',
+} as const;
 
 @Controller('api/admin/content')
 @UseGuards(JwtAuthGuard, RolesGuard)

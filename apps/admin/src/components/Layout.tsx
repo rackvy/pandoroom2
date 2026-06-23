@@ -9,10 +9,12 @@ const menuItems = [
   { path: '/registry', label: 'Реестр' },
   { path: '/table-grid', label: 'Сетка столов' },
   { path: '/quest-grid', label: 'Сетка квестов' },
+  { path: '/vr-grid', label: 'VR Сетка' },
   { path: '/clients', label: 'Клиенты' },
   { path: '/content', label: 'Контент' },
   { path: '/reference', label: 'Справочники' },
   { path: '/employees', label: 'Сотрудники' },
+  { path: '/reports', label: 'Отчёты' },
   { path: '/settings', label: 'Настройки' },
 ]
 

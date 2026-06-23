@@ -13,6 +13,7 @@ const referenceEntities: EntityItem[] = [
   { id: 'cakes', name: 'Торты', path: '/reference/cakes', icon: '🎂' },
   { id: 'show-programs', name: 'Шоу-программы', path: '/reference/show-programs', icon: '🎭' },
   { id: 'decorations', name: 'Декорации', path: '/reference/decorations', icon: '🎨' },
+  { id: 'iiko-menu', name: 'Меню iiko', path: '/reference/iiko-menu', icon: '🍽️' },
 ];
 
 export default function ReferenceLayout() {

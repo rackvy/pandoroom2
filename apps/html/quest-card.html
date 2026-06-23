@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANDOROOM — Чумной доктор · Мистический квест во Владивостоке</title>
+    <meta name="description" content="Квест «Чумной доктор» — мистический квест-перформанс. Вам предстоит отправиться в ноябрь 1348 года, где страшная эпидемия чумы захлестнула город.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles/variables.css">
+    <link rel="stylesheet" href="./styles/global.css">
+    <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<header class="header">
+    <div class="header__top">
+        <div class="container header__top-inner">
+            <nav class="header__nav header__nav--utility" aria-label="Дополнительная навигация">
+                <a href="#" class="header__top-link">О центре</a>
+                <a href="#" class="header__top-link">Новости и акции</a>
+                <a href="#" class="header__top-link">Правила</a>
+                <a href="#" class="header__top-link">Программа лояльности</a>
+                <a href="#" class="header__top-link">Контакты</a>
+            </nav>
+        </div>
+    </div>
+    <div class="header__main">
+        <div class="container header__inner">
+            <a href="index.html" class="header__logo" aria-label="PANDOROOM"><img src="./assets/icons/logo.svg" alt="PANDOROOM" class="header__logo-img"></a>
+            <nav class="header__nav header__nav--main" aria-label="Основная навигация">
+                <a href="quests.html" class="header__link">Квесты</a>
+                <a href="holidays.html" class="header__link">Праздники</a>
+                <a href="#cafe" class="header__link">Кафе</a>
+                <a href="#kids" class="header__link">Игровая для детей</a>
+            </nav>
+            <button class="header__profile" aria-label="Личный кабинет"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></button>
+            <div class="header__contacts">
+                <div class="header__address"><span class="header__address-label">Нижнепортовая, 1 / Посьетская, 27 стр. 2</span><a href="tel:+74232022696" class="header__phone">8 423 202 26 96</a></div>
+                <div class="header__address"><span class="header__address-label">Алеутская 17а</span><a href="tel:+74232054458" class="header__phone">8 423 205 44 58</a></div>
+            </div>
+            <button class="header__burger" aria-label="Открыть меню"><span></span><span></span><span></span></button>
+        </div>
+    </div>
+</header>
+
+<!-- ==================== HERO КВЕСТА ==================== -->
+<section class="qdetail-hero" style="background-image: url('./assets/images/quests/plague-doctor-hero.jpg');">
+    <div class="container qdetail-hero__inner">
+        <div class="qdetail-hero__heading">
+            <!-- MEDIA_REQUEST: assets/images/quests/plague-doctor-logo.png — логотип квеста -->
+            <img src="./assets/images/quests/plague-doctor-logo.png" alt="" class="qdetail-hero__logo">
+            <div class="qdetail-hero__text">
+                <h1 class="qdetail-hero__title">Чумной доктор</h1>
+                <div class="qdetail-hero__tags">
+                    <span class="qdetail-hero__tag">мистический</span>
+                    <span class="qdetail-hero__tag">С актёрами</span>
+                    <span class="qdetail-hero__tag">18+</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== ПРЕВЬЮ ГАЛЕРЕЯ ==================== -->
+<section class="section qdetail-gallery">
+    <div class="container">
+        <div class="qdetail-gallery__thumbs">
+            <button class="qdetail-gallery__thumb" data-index="0">
+                <img src="./assets/images/quests/plague-doctor-1.jpg" alt="Фото квеста 1">
+            </button>
+            <button class="qdetail-gallery__thumb" data-index="1">
+                <img src="./assets/images/quests/plague-doctor-2.jpg" alt="Фото квеста 2">
+            </button>
+            <button class="qdetail-gallery__thumb" data-index="2">
+                <img src="./assets/images/quests/plague-doctor-3.jpg" alt="Фото квеста 3">
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== ТАБЫ + ИНФО ==================== -->
+<section class="section qdetail-info">
+    <div class="container">
+        <div class="qdetail-tabs">
+            <button class="qdetail-tabs__btn qdetail-tabs__btn--active" data-tab="description">Описание квеста</button>
+            <button class="qdetail-tabs__btn" data-tab="rules">Правила</button>
+            <button class="qdetail-tabs__btn" data-tab="safety">Безопасность</button>
+            <button class="qdetail-tabs__btn" data-tab="extras">Дополнительные услуги</button>
+        </div>
+
+        <div class="qdetail-content">
+            <div class="qdetail-content__main">
+                <!-- Описание -->
+                <div class="qdetail-tab-panel qdetail-tab-panel--active" data-panel="description">
+                    <p>«Чумной доктор» — мистический квест-перформанс.</p>
+                    <p>Вам предстоит отправиться в ноябрь 1348 года, где страшная эпидемия чумы захлестнула город и унесла сотни жизней. Все здания закрыты, на пустых улицах и площадях тишина. Только юркие крысиные лапки и полоса с большими клювами-масками.</p>
+                    <p>Дома, в которых есть заражённые, помечают кресты. Однако, в них были обнаружены и те, кто, несмотря на тесный контакт с больными, не подаёт ни малейших признаков заражения. В числе этих «счастливчиков» оказались и вы.</p>
+                    <p>По приказу градоначальника вас доставили к врачу для выяснения причин устойчивости к заболеванию.</p>
+                    <p>И, кажется, ради решения этой загадки, он готов пожертвовать вашими жизнями.</p>
+                </div>
+                <div class="qdetail-tab-panel" data-panel="rules">
+                    <p>Правила прохождения квеста «Чумной доктор»:</p>
+                    <ul>
+                        <li>Приходите за 10 минут до начала игры</li>
+                        <li>Возьмите с собой удобную обувь</li>
+                        <li>Запрещено проносить еду и напитки</li>
+                        <li>Следуйте инструкциям оператора</li>
+                        <li>Не применяйте физическую силу к реквизиту и актёрам</li>
+                    </ul>
+                </div>
+                <div class="qdetail-tab-panel" data-panel="safety">
+                    <p>Безопасность участников — наш главный приоритет:</p>
+                    <ul>
+                        <li>Все помещения оборудованы аварийным освещением</li>
+                        <li>Оператор наблюдает за вами через камеры в реальном времени</li>
+                        <li>В любой момент вы можете попросить остановить игру</li>
+                        <li>Все декорации проходят проверку на безопасность</li>
+                    </ul>
+                </div>
+                <div class="qdetail-tab-panel" data-panel="extras">
+                    <p>Дополнительные услуги:</p>
+                    <ul>
+                        <li>Фото- и видеосъёмка прохождения — 1 500 ₽</li>
+                        <li>Дополнительный игрок (5-й и 6-й) — 800 ₽/чел.</li>
+                        <li>Праздничное оформление зала — от 3 000 ₽</li>
+                        <li>Бронирование кафе после квеста — бесплатно</li>
+                    </ul>
+                </div>
+            </div>
+
+            <aside class="qdetail-content__sidebar">
+                <div class="qdetail-specs">
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">Сложность</span><span class="qdetail-spec__value">высокая</span></div>
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">С актёрами</span><span class="qdetail-spec__value">нет</span></div>
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">Игроки</span><span class="qdetail-spec__value">2-4 игроков</span></div>
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">Доп.игроки</span><span class="qdetail-spec__value">до 2</span></div>
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">Возраст</span><span class="qdetail-spec__value">16+</span></div>
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">Время игры</span><span class="qdetail-spec__value">60 минут</span></div>
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">Жанр</span><span class="qdetail-spec__value">Мистический</span></div>
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">Адрес</span><span class="qdetail-spec__value">Алеутская 17А</span></div>
+                    <div class="qdetail-spec"><span class="qdetail-spec__label">Цена</span><span class="qdetail-spec__value qdetail-spec__value--accent">от 4 500 руб.</span></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== РАСПИСАНИЕ / БРОНИРОВАНИЕ ==================== -->
+<section class="section qdetail-schedule">
+    <div class="container">
+        <h2 class="qdetail-schedule__title">Выберите дату и время</h2>
+        <div class="qdetail-schedule__grid">
+            <div class="schedule-row">
+                <div class="schedule-row__date"><span class="schedule-row__day">26</span><span class="schedule-row__month">/ 09</span><br><span class="schedule-row__weekday">понедельник</span></div>
+                <div class="schedule-row__slots">
+                    <button class="slot">12<sub>30</sub></button>
+                    <button class="slot">13<sub>00</sub></button>
+                    <button class="slot">14<sub>50</sub></button>
+                    <button class="slot">16<sub>10</sub></button>
+                    <button class="slot">17<sub>30</sub></button>
+                    <button class="slot">18<sub>50</sub></button>
+                    <button class="slot">20<sub>00</sub></button>
+                    <button class="slot">21<sub>30</sub></button>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <div class="schedule-row__date"><span class="schedule-row__day">27</span><span class="schedule-row__month">/ 09</span><br><span class="schedule-row__weekday">вторник</span></div>
+                <div class="schedule-row__slots">
+                    <button class="slot slot--booked" disabled>10<sub>50</sub></button>
+                    <button class="slot">12<sub>10</sub></button>
+                    <button class="slot">13<sub>30</sub></button>
+                    <button class="slot">14<sub>50</sub></button>
+                    <button class="slot">16<sub>10</sub></button>
+                    <button class="slot slot--booked" disabled>17<sub>30</sub></button>
+                    <button class="slot">18<sub>50</sub></button>
+                    <button class="slot">20<sub>00</sub></button>
+                    <button class="slot">21<sub>30</sub></button>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <div class="schedule-row__date"><span class="schedule-row__day">28</span><span class="schedule-row__month">/ 09</span><br><span class="schedule-row__weekday">среда</span></div>
+                <div class="schedule-row__slots">
+                    <button class="slot slot--booked" disabled>09<sub>30</sub></button>
+                    <button class="slot">10<sub>50</sub></button>
+                    <button class="slot">12<sub>10</sub></button>
+                    <button class="slot slot--booked" disabled>13<sub>30</sub></button>
+                    <button class="slot">14<sub>50</sub></button>
+                    <button class="slot slot--booked" disabled>16<sub>10</sub></button>
+                    <button class="slot">17<sub>30</sub></button>
+                    <button class="slot">18<sub>50</sub></button>
+                    <button class="slot">20<sub>00</sub></button>
+                    <button class="slot">21<sub>30</sub></button>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <div class="schedule-row__date"><span class="schedule-row__day">29</span><span class="schedule-row__month">/ 09</span><br><span class="schedule-row__weekday">четверг</span></div>
+                <div class="schedule-row__slots">
+                    <button class="slot slot--booked" disabled>09<sub>30</sub></button>
+                    <button class="slot">10<sub>50</sub></button>
+                    <button class="slot">12<sub>10</sub></button>
+                    <button class="slot slot--booked" disabled>13<sub>30</sub></button>
+                    <button class="slot slot--booked" disabled>14<sub>50</sub></button>
+                    <button class="slot">16<sub>10</sub></button>
+                    <button class="slot">17<sub>30</sub></button>
+                    <button class="slot">18<sub>50</sub></button>
+                    <button class="slot">20<sub>00</sub></button>
+                    <button class="slot">21<sub>30</sub></button>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <div class="schedule-row__date"><span class="schedule-row__day">30</span><span class="schedule-row__month">/ 09</span><br><span class="schedule-row__weekday">пятница</span></div>
+                <div class="schedule-row__slots">
+                    <button class="slot">10<sub>50</sub></button>
+                    <button class="slot">12<sub>10</sub></button>
+                    <button class="slot">13<sub>30</sub></button>
+                    <button class="slot">14<sub>50</sub></button>
+                    <button class="slot">16<sub>10</sub></button>
+                    <button class="slot">17<sub>30</sub></button>
+                    <button class="slot">18<sub>50</sub></button>
+                    <button class="slot">20<sub>00</sub></button>
+                    <button class="slot slot--booked" disabled>21<sub>30</sub></button>
+                </div>
+            </div>
+            <div class="schedule-row">
+                <div class="schedule-row__date"><span class="schedule-row__day">01</span><span class="schedule-row__month">/ 10</span><br><span class="schedule-row__weekday">суббота</span></div>
+                <div class="schedule-row__slots">
+                    <button class="slot slot--booked" disabled>10<sub>50</sub></button>
+                    <button class="slot slot--booked" disabled>12<sub>10</sub></button>
+                    <button class="slot">13<sub>30</sub></button>
+                    <button class="slot">14<sub>50</sub></button>
+                    <button class="slot">16<sub>10</sub></button>
+                    <button class="slot">17<sub>30</sub></button>
+                    <button class="slot">18<sub>50</sub></button>
+                    <button class="slot slot--booked" disabled>20<sub>00</sub></button>
+                    <button class="slot slot--booked" disabled>21<sub>30</sub></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== ОТЗЫВЫ ==================== -->
+<section class="section section--reviews">
+    <div class="container">
+        <h2 class="section__title title-effect">Отзывы гостей</h2>
+        <div class="reviews-slider">
+            <button class="slider-arrow slider-arrow--prev" aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <div class="reviews-slider__track">
+                <article class="review-card"><div class="review-card__header"><span class="review-card__name">Кристина</span><span class="review-card__date">12 августа 2024</span></div><div class="review-card__stars">★★★★★</div><p class="review-card__text">Вот уже много лет отмечаем праздники здесь. Невероятно крутое место для детей и взрослых.</p><span class="review-card__source">VL.RU</span></article>
+                <article class="review-card"><div class="review-card__header"><span class="review-card__name">Пелагея Ганчикова</span><span class="review-card__date">6 августа 2024</span></div><div class="review-card__stars">★★★★★</div><p class="review-card__text">Были с детьми, всё организовано отлично. Остались довольны!</p><span class="review-card__source">2GIS</span></article>
+                <article class="review-card"><div class="review-card__header"><span class="review-card__name">Роксолана Скрипка</span><span class="review-card__date">1 августа 2024</span></div><div class="review-card__stars">★★★★★</div><p class="review-card__text">Отличное место для празднования с друзьями, семьей. Отличная кухня и бар :)</p><span class="review-card__source">2GIS</span></article>
+                <article class="review-card"><div class="review-card__header"><span class="review-card__name">Карина Белоснежкина</span><span class="review-card__date">29 июля 2024</span></div><div class="review-card__stars">★★★★★</div><p class="review-card__text">Спасибо за хорошо организованный праздник! Настроение на все 5+.</p><span class="review-card__source">2GIS</span></article>
+            </div>
+            <button class="slider-arrow slider-arrow--next" aria-label="Вперед"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== НОВОСТИ ==================== -->
+<section class="section section--news">
+    <div class="container">
+        <h2 class="section__title title-effect">Новости и акции</h2>
+        <div class="news-grid">
+            <article class="news-card" style="--card-bg: linear-gradient(180deg, #1a2010 0%, #07080a 100%);"><div class="news-card__cover"><span class="news-card__cover-title">ДЕНЬ РОЖДЕНИЯ<br>В КВЕСТЕ</span></div><div class="news-card__content"><span class="news-card__date">25 августа 2024</span><h3 class="news-card__title">День рождения в квесте</h3><p class="news-card__text">Празднуем у нас — это такой праздник, который останется в памяти навсегда!</p><a href="#" class="news-card__link">подробнее</a></div></article>
+            <article class="news-card" style="--card-bg: linear-gradient(180deg, #20180a 0%, #08070a 100%);"><div class="news-card__cover news-card__cover--mummy"><span class="news-card__cover-title">МУМИЯ<br><span class="news-card__cover-sub">СКОРО ОТКРЫТИЕ</span></span></div><div class="news-card__content"><span class="news-card__date">1 ноября 2024</span><h3 class="news-card__title">Новый квест — Мумия</h3><p class="news-card__text">А мы уже готовимся к открытию нового квеста!</p><a href="#" class="news-card__link">подробнее</a></div></article>
+            <article class="news-card" style="--card-bg: linear-gradient(180deg, #15101f 0%, #050514 100%);"><div class="news-card__cover news-card__cover--discount"><span class="news-card__cover-title">30%</span><span class="news-card__cover-sub">на квест «Тайна Теслы»</span></div><div class="news-card__content"><span class="news-card__date">19 августа 2024</span><h3 class="news-card__title">Скидка 30% на «Тайна Теслы»</h3><p class="news-card__text">Последняя возможность пройти квест со скидкой 30%</p><a href="#" class="news-card__link">подробнее</a></div></article>
+            <article class="news-card" style="--card-bg: linear-gradient(180deg, #20102a 0%, #070514 100%);"><div class="news-card__cover news-card__cover--may"><span class="news-card__cover-title">ДАРИМ<br>КВЕСТ</span><span class="news-card__cover-sub">на весь май</span></div><div class="news-card__content"><span class="news-card__date">1 мая 2024</span><h3 class="news-card__title">Дарим квест весь май</h3><p class="news-card__text">Продлеваем акцию! Дарим квест при бронировании праздника.</p><a href="#" class="news-card__link">подробнее</a></div></article>
+        </div>
+    </div>
+</section>
+
+<div class="prefooter-divider"></div>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer__menu">
+            <div class="footer__group footer__group--double"><h4 class="footer__group-title">Квесты во Владивостоке</h4><div class="footer__group-cols"><ul class="footer__list"><li><a href="quests.html">Все квесты</a></li><li><a href="quests.html">Квесты с актерами</a></li><li><a href="quests.html">Квесты без актеров</a></li><li><a href="quests.html">Детские квесты</a></li><li><a href="quests.html">Квесты-приключения</a></li></ul><ul class="footer__list"><li><a href="quests.html">Квесты-экшены</a></li><li><a href="quests.html">Мистические квесты</a></li><li><a href="quests.html">Квесты-хорроры</a></li><li><a href="quests.html">Квесты-детективы</a></li></ul></div></div>
+            <div class="footer__group"><h4 class="footer__group-title">Праздники во Владивостоке</h4><ul class="footer__list"><li><a href="holidays.html">Праздник для малышей</a></li><li><a href="holidays.html">Праздник для детей 6-10 лет</a></li><li><a href="holidays.html">Праздник для детей 10-15 лет</a></li></ul><ul class="footer__list footer__list--spaced"><li><a href="holidays.html">Индивидуальный расчет праздника</a></li></ul></div>
+            <div class="footer__group footer__group--double"><h4 class="footer__group-title">Семейный центр Пандорум</h4><div class="footer__group-cols"><ul class="footer__list"><li><a href="#">О центре</a></li><li><a href="#cafe">Кафе</a></li><li><a href="#kids">Игровая</a></li><li><a href="#">Меню</a></li><li><a href="#">Правила</a></li></ul><ul class="footer__list"><li><a href="#">Программа лояльности</a></li><li><a href="#">Акции и новости</a></li><li><a href="#">Контакты</a></li></ul></div></div>
+        </div>
+        <div class="footer__main">
+            <div class="footer__brand"><a href="index.html" class="footer__logo" aria-label="PANDOROOM"><img src="./assets/icons/logo.svg" alt="PANDOROOM" class="footer__logo-img"></a><p class="footer__about">Семейное кафе и квесты Pandoroom (Пандорум) — это огромный центр отдыха для семьи, компаний друзей и детей.</p></div>
+            <div class="footer__contacts"><div class="footer__address"><span class="footer__address-label">Нижнепортовая, 1 / Посьетская, 27 стр. 2</span><a href="tel:+74232022696" class="footer__phone">8 423 202 26 96</a></div><div class="footer__address"><span class="footer__address-label">Алеутская 17а</span><a href="tel:+74232054458" class="footer__phone">8 423 205 44 58</a></div></div>
+        </div>
+        <div class="footer__bottom">
+            <div class="footer__legal"><span>2015 — 2024</span><span class="footer__legal-sep">|</span><span>ООО «Пандорум»</span><span class="footer__legal-sep">|</span><a href="#" class="footer__legal-link">Политика конфиденциальности</a></div>
+            <div class="footer__follow"><span class="footer__follow-text">следите за нами в соц.сетях</span><span class="footer__follow-dash">—</span><div class="footer__socials"><a href="#" aria-label="Instagram"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a><a href="#" aria-label="Telegram"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21.94 4.32 18.6 19.78c-.25 1.12-.92 1.4-1.86.87l-5.13-3.78-2.47 2.38c-.27.27-.5.5-1.03.5l.37-5.22 9.5-8.59c.41-.37-.09-.57-.64-.21L6.6 12.99l-5.06-1.58c-1.1-.34-1.12-1.1.23-1.63L20.65 2.7c.92-.34 1.72.21 1.29 1.62Z"/></svg></a><a href="#" aria-label="VK"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12.79 17.4h1.18s.36-.04.54-.24c.17-.18.16-.52.16-.52s-.02-1.6.72-1.84c.73-.23 1.67 1.55 2.66 2.23.75.52 1.32.41 1.32.41l2.65-.04s1.39-.09.73-1.18c-.05-.09-.39-.81-2-2.31-1.69-1.57-1.46-1.31.57-4.02 1.24-1.65 1.74-2.66 1.58-3.09-.15-.41-1.06-.3-1.06-.3l-2.99.02s-.22-.03-.39.07c-.16.1-.27.34-.27.34s-.49 1.31-1.14 2.42c-1.38 2.34-1.93 2.46-2.16 2.32-.52-.34-.39-1.34-.39-2.06 0-2.23.34-3.16-.65-3.4-.33-.08-.57-.13-1.41-.14-1.07-.01-1.97 0-2.49.25-.34.17-.61.55-.45.57.2.03.65.12.89.45.31.42.3 1.36.3 1.36s.18 2.6-.42 2.92c-.41.22-.97-.23-2.2-2.36-.63-1.09-1.11-2.3-1.11-2.3s-.09-.23-.25-.34c-.19-.14-.46-.18-.46-.18l-2.84.02s-.43.01-.59.2c-.14.16-.01.5-.01.5s2.22 5.21 4.74 7.83c2.31 2.41 4.94 2.25 4.94 2.25Z"/></svg></a></div></div>
+        </div>
+        <div class="footer__credits">
+            <div class="footer__credit"><span class="footer__credit-label">Разработка сайта —</span><a href="https://shelikhov.me" target="_blank" rel="noopener" class="footer__credit-logo"><img src="./assets/images/footer/shelikhov.svg" alt="Shelikhov.me"></a></div>
+            <div class="footer__credit"><span class="footer__credit-label">Дизайн сайта —</span><a href="#" class="footer__credit-logo"><img src="./assets/images/footer/korableff.svg" alt="Korableff"></a></div>
+        </div>
+    </div>
+</footer>
+
+<!-- ==================== МОДАЛКА БРОНИРОВАНИЯ ==================== -->
+<div class="booking-modal" id="bookingModal" hidden>
+    <div class="booking-modal__overlay"></div>
+    <div class="booking-modal__dialog">
+        <button class="booking-modal__close" aria-label="Закрыть">&times;</button>
+        <h3 class="booking-modal__title">Забронировать квест</h3>
+        <p class="booking-modal__slot-info" id="bookingSlotInfo"></p>
+        <form class="booking-form" id="bookingForm">
+            <input type="text" class="booking-form__input" name="name" placeholder="Ваше имя" required>
+            <input type="tel" class="booking-form__input" name="phone" placeholder="Телефон" required>
+            <label class="booking-form__consent">
+                <input type="checkbox" required>
+                <span>Я даю согласие на обработку персональных данных</span>
+            </label>
+            <button type="submit" class="btn btn--green btn--full">Забронировать</button>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== LIGHTBOX ==================== -->
+<div class="lightbox" id="lightbox" hidden>
+    <div class="lightbox__overlay"></div>
+    <button class="lightbox__close" aria-label="Закрыть">&times;</button>
+    <button class="lightbox__prev" aria-label="Назад"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <img class="lightbox__img" id="lightboxImg" src="" alt="">
+    <button class="lightbox__next" aria-label="Вперед"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+</div>
+
+<script src="./scripts/main.js"></script>
+<script src="./scripts/quest-card.js"></script>
+</body>
+</html>

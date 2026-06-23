@@ -7,6 +7,9 @@ export interface Client {
   email: string | null;
   birthday: string | null;
   notes: string | null;
+  telegramChatId: string | null;
+  maxChatId: string | null;
+  preferredChannel: string | null;
   createdAt: string;
   updatedAt: string;
   _count?: {
@@ -51,6 +54,9 @@ export interface CreateClientData {
   email?: string;
   birthday?: string;
   notes?: string;
+  telegramChatId?: string;
+  maxChatId?: string;
+  preferredChannel?: string;
 }
 
 export interface UpdateClientData {
@@ -59,6 +65,9 @@ export interface UpdateClientData {
   email?: string;
   birthday?: string;
   notes?: string;
+  telegramChatId?: string;
+  maxChatId?: string;
+  preferredChannel?: string;
 }
 
 export interface ClientsResponse {

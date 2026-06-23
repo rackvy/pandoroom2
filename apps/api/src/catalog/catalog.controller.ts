@@ -241,4 +241,33 @@ export class CatalogController {
   removeTable(@Param('id') id: string) {
     return this.catalogService.removeTable(id);
   }
+
+  // ==================== VR GAMES ====================
+  @Get('vr-games')
+  findAllVRGames() {
+    return this.catalogService.findAllVRGames();
+  }
+
+  @Get('vr-games/:id')
+  findOneVRGame(@Param('id') id: string) {
+    return this.catalogService.findOneVRGame(id);
+  }
+
+  @Post('vr-games')
+  @Roles(EmployeeRole.ADMIN)
+  createVRGame(@Body() data: any) {
+    return this.catalogService.createVRGame(data);
+  }
+
+  @Patch('vr-games/:id')
+  @Roles(EmployeeRole.ADMIN)
+  updateVRGame(@Param('id') id: string, @Body() data: any) {
+    return this.catalogService.updateVRGame(id, data);
+  }
+
+  @Delete('vr-games/:id')
+  @Roles(EmployeeRole.ADMIN)
+  removeVRGame(@Param('id') id: string) {
+    return this.catalogService.removeVRGame(id);
+  }
 }

@@ -161,6 +161,9 @@ export interface BookingFullDetails {
   bookingCakes: any[];
   decorationItems: any[];
   foodItems: any[];
+  googleEventId: string | null;
+  iikoOrderId: string | null;
+  iikoOrderStatus: string | null;
 }
 
 export interface UpdateBookingBasicRequest {

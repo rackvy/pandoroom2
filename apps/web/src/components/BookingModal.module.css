@@ -1,0 +1,124 @@
+/* Booking Modal */
+.bookingModal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.dialog {
+  position: relative;
+  background: #1a1a1a;
+  border-radius: 16px;
+  padding: 36px 32px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 28px;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close:hover {
+  color: var(--color-text);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 8px 0;
+}
+
+.slotInfo {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-cta-green);
+  margin: 0 0 24px 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.input {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  font-family: var(--font-primary);
+  font-size: 15px;
+  color: var(--color-text);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.input:focus {
+  border-color: var(--color-cta-green);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-family: var(--font-primary);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.consent input {
+  margin-top: 2px;
+  accent-color: var(--color-cta-green);
+}
+
+.submitBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 26px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  line-height: 1.2;
+  text-align: center;
+  background-color: var(--color-cta-green);
+  color: #0a0a0a;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  transition:
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.submitBtn:hover {
+  background-color: #c5f52d;
+  transform: translateY(-1px);
+}

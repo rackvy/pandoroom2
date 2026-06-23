@@ -1,0 +1,335 @@
+/* ==================== QUEST DETAIL PAGE STYLES ==================== */
+/* Ported from apps/html/styles/main.css — qdetail, schedule, slot sections */
+
+/* ---- Hero ---- */
+.hero {
+  position: relative;
+  min-height: 340px;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: flex-end;
+  padding: 60px 0 40px;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.75) 100%);
+  pointer-events: none;
+}
+
+.heroInner {
+  position: relative;
+  z-index: 1;
+}
+
+.heroHeading {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+}
+
+.heroLogoPlaceholder {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--color-cta-green);
+}
+
+.heroTitle {
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 8px 0;
+}
+
+.heroTags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.heroTag {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-cta-green);
+  color: #000;
+  font-family: var(--font-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---- Gallery ---- */
+.gallery {
+  padding-top: 24px;
+  padding-bottom: 0;
+}
+
+.galleryThumbs {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.galleryThumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.galleryThumb {
+  flex-shrink: 0;
+  width: 180px;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+  background: none;
+  padding: 0;
+}
+
+.galleryThumb:hover {
+  border-color: var(--color-cta-green);
+  transform: scale(1.03);
+}
+
+.galleryThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- Tabs + Info ---- */
+.info {
+  padding-top: 32px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 28px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tabBtn {
+  padding: 12px 20px;
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.tabBtn:hover {
+  color: var(--color-text);
+}
+
+.tabBtnActive {
+  color: var(--color-text);
+  border-bottom-color: var(--color-cta-green);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Content grid */
+.content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+
+@media (min-width: 900px) {
+  .content {
+    grid-template-columns: 1fr 280px;
+  }
+}
+
+.contentMain {
+  font-family: var(--font-primary);
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.contentMain p {
+  margin: 0 0 14px 0;
+}
+
+.contentMain ul {
+  padding-left: 20px;
+  margin: 0 0 14px 0;
+  list-style: disc;
+}
+
+.contentMain li {
+  margin-bottom: 8px;
+}
+
+.tabPanel {
+  display: none;
+}
+
+.tabPanelActive {
+  display: block;
+}
+
+/* ---- Specs Sidebar ---- */
+.specs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+}
+
+.spec {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.specLabel {
+  font-family: var(--font-primary);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.specValue {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.specValueAccent {
+  color: var(--color-cta-green);
+}
+
+/* ---- Schedule ---- */
+.schedule {
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
+
+.scheduleTitle {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  margin: 0 0 24px 0;
+}
+
+.scheduleGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.scheduleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.scheduleDate {
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.scheduleDay {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.scheduleMonth {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.scheduleWeekday {
+  font-family: var(--font-primary);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.scheduleSlots {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.slot {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-cta-green);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.slot:hover {
+  background: rgba(181, 230, 29, 0.12);
+  border-color: var(--color-cta-green);
+  transform: scale(1.05);
+}
+
+.slot sub {
+  font-size: 10px;
+  vertical-align: super;
+}
+
+.slotBooked {
+  opacity: 0.25;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Back link */
+.backLink {
+  display: inline-block;
+  color: var(--color-cta-green);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  transition: opacity var(--transition-fast);
+}
+
+.backLink:hover {
+  opacity: 0.8;
+}

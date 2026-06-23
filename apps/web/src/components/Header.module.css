@@ -1,0 +1,242 @@
+/* ==================== HEADER ==================== */
+
+.header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  width: 100%;
+}
+
+/* Top utility bar - black, full width */
+.topBar {
+  background-color: #000000;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.topInner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 44px;
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+.utilityNav {
+  display: none;
+  align-items: center;
+  gap: 36px;
+}
+
+.topLink {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular);
+  color: rgba(255, 255, 255, 0.85);
+  transition: color var(--transition-fast);
+  line-height: 1;
+  padding: 12px 0;
+  text-decoration: none;
+}
+
+.topLink:hover {
+  color: var(--color-cta-green);
+}
+
+/* Main bar - transparent, overlays hero */
+.mainBar {
+  background-color: transparent;
+}
+
+.mainInner {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding-top: 18px;
+  padding-bottom: 18px;
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.logoImg {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+
+.mainNav {
+  display: none;
+  align-items: center;
+  gap: 36px;
+}
+
+.mainLink {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  transition: color var(--transition-fast);
+  text-decoration: none;
+}
+
+.mainLink:hover {
+  color: var(--color-primary);
+}
+
+.profile {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--color-text);
+  margin-left: auto;
+  transition: all var(--transition-fast);
+  border: none;
+  cursor: pointer;
+}
+
+.profile:hover {
+  background-color: var(--color-cta-green);
+  color: #0a0a0a;
+}
+
+.contacts {
+  display: none;
+  align-items: center;
+  gap: 28px;
+}
+
+.address {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.25;
+}
+
+.addressLabel {
+  font-family: var(--font-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.phone {
+  font-family: var(--font-heading);
+  font-size: 21px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  transition: color var(--transition-fast);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.phone:hover {
+  color: var(--color-primary);
+}
+
+/* Burger button - visible on mobile only */
+.burger {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 28px;
+  padding: 4px;
+  margin-left: auto;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.burger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-text);
+  border-radius: 2px;
+}
+
+/* Mobile menu */
+.mobileMenu {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px var(--container-padding) 32px;
+  background-color: #0a0a0a;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobileNav {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobileLink {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.mobileLink:hover {
+  color: var(--color-primary);
+}
+
+.mobileContacts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobileAddress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobileUtility {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Desktop: show nav, hide burger */
+@media (min-width: 1024px) {
+  .mainNav,
+  .utilityNav,
+  .contacts,
+  .profile {
+    display: flex;
+  }
+
+  .burger {
+    display: none;
+  }
+
+  .mobileMenu {
+    display: none;
+  }
+}

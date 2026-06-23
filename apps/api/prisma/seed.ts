@@ -1,7 +1,10 @@
-import { PrismaClient, EmployeeRole, Difficulty, BookingStatus, TableZoneKey } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
+
+// Type for PageKey
+type PageKeyType = 'HOME' | 'PARTY_GUIDE' | 'PARTY_GUIDE_KIDS' | 'PARTY_GUIDE_6_10' | 'PARTY_GUIDE_10_15' | 'CAFE' | 'CAFE_KAFE' | 'CAFE_LOUNGE' | 'CAFE_KIDS';
 
 async function main() {
   console.log('🌱 Начинаем seed...');
@@ -18,7 +21,7 @@ async function main() {
       fullName: 'Администратор',
       phone: '+7 (999) 999-99-99',
       position: 'Главный администратор',
-      role: EmployeeRole.ADMIN,
+      role: 'ADMIN',
       isActive: true,
     },
   });
@@ -40,28 +43,254 @@ async function main() {
   });
   console.log('✅ Создан филиал:', branch.name);
 
-  // 3. Создаем квест
-  const quest = await prisma.quest.upsert({
-    where: { id: '00000000-0000-0000-0000-000000000002' },
-    update: {},
-    create: {
-      id: '00000000-0000-0000-0000-000000000002',
+  // 3. Создаем квесты (idempotent: deleteMany + create)
+  await prisma.quest.deleteMany({});
+
+  const questData = [
+    // === Quests with actors (hasActors: true) ===
+    {
+      id: '00000000-0000-0000-0000-100000000001',
       branchId: branch.id,
-      name: 'Тайна заброшенного особняка',
-      genre: 'Мистика',
-      difficulty: Difficulty.medium,
+      name: 'Гарри Поттер',
+      subtitle: 'и Философский камень',
+      genre: 'приключение',
+      difficulty: 'medium' as const,
+      hasActors: true,
+      ageRestriction: '12+',
       address: 'ул. Примерная, д. 1',
       minPlayers: 2,
       maxPlayers: 6,
       durationMinutes: 60,
-      description: 'Вы попадаете в старый особняк, полный тайн и загадок. Сможете ли вы разгадать его секреты и выбраться за 60 минут?',
-      rules: 'Запрещено использовать физическую силу. Нельзя ломать декорации.',
-      safety: 'В комнате есть кнопка экстренного выхода.',
+      description: 'Описание квеста Гарри Поттер — и Философский камень',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
       extraServices: 'Фото на память, чай/кофе после квеста',
       extraPlayerPrice: 500,
     },
-  });
-  console.log('✅ Создан квест:', quest.name);
+    {
+      id: '00000000-0000-0000-0000-100000000002',
+      branchId: branch.id,
+      name: 'Чумной доктор',
+      genre: 'мистический',
+      difficulty: 'medium' as const,
+      hasActors: true,
+      ageRestriction: '12+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 60,
+      description: 'Описание квеста Чумной доктор',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000003',
+      branchId: branch.id,
+      name: 'Сокровища пиратов',
+      genre: 'приключение',
+      difficulty: 'easy' as const,
+      hasActors: true,
+      ageRestriction: '12+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 60,
+      description: 'Описание квеста Сокровища пиратов',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000004',
+      branchId: branch.id,
+      name: 'Resident Evil',
+      genre: 'хоррор',
+      difficulty: 'medium' as const,
+      hasActors: true,
+      ageRestriction: '12+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 80,
+      description: 'Описание квеста Resident Evil',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000005',
+      branchId: branch.id,
+      name: 'Код Да Винчи',
+      genre: 'приключение',
+      difficulty: 'medium' as const,
+      hasActors: true,
+      ageRestriction: '12+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 60,
+      description: 'Описание квеста Код Да Винчи',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    // === Quests without actors (hasActors: false, ageRestriction NOT "0+") ===
+    {
+      id: '00000000-0000-0000-0000-100000000006',
+      branchId: branch.id,
+      name: 'Инквизиция',
+      genre: 'мистический',
+      difficulty: 'hard' as const,
+      hasActors: false,
+      ageRestriction: '14+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 60,
+      description: 'Описание квеста Инквизиция',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000007',
+      branchId: branch.id,
+      name: 'Silent Hill',
+      genre: 'хоррор',
+      difficulty: 'hard' as const,
+      hasActors: false,
+      ageRestriction: '16+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 80,
+      description: 'Описание квеста Silent Hill',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000008',
+      branchId: branch.id,
+      name: 'Секретный эксперимент',
+      genre: 'детектив',
+      difficulty: 'hard' as const,
+      hasActors: false,
+      ageRestriction: '12+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 70,
+      description: 'Описание квеста Секретный эксперимент',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000009',
+      branchId: branch.id,
+      name: 'Тайна старого театра',
+      genre: 'мистический',
+      difficulty: 'medium' as const,
+      hasActors: false,
+      ageRestriction: '12+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 60,
+      description: 'Описание квеста Тайна старого театра',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000010',
+      branchId: branch.id,
+      name: 'Охотники',
+      genre: 'хоррор',
+      difficulty: 'hard' as const,
+      hasActors: false,
+      ageRestriction: '14+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 2,
+      maxPlayers: 6,
+      durationMinutes: 60,
+      description: 'Описание квеста Охотники',
+      rules: 'Правила квеста: запрещено использовать физическую силу, нельзя ломать декорации.',
+      safety: 'В комнате есть кнопка экстренного выхода. Следуйте инструкциям ведущего.',
+      extraServices: 'Фото на память, чай/кофе после квеста',
+      extraPlayerPrice: 500,
+    },
+    // === Kids quests (ageRestriction: "0+", hasActors: false) ===
+    {
+      id: '00000000-0000-0000-0000-100000000011',
+      branchId: branch.id,
+      name: 'Лазертаг',
+      genre: 'детский',
+      difficulty: 'easy' as const,
+      hasActors: false,
+      ageRestriction: '0+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 4,
+      maxPlayers: 12,
+      durationMinutes: 30,
+      description: 'Описание квеста Лазертаг',
+      rules: 'Правила квеста: следуйте инструкциям инструктора.',
+      safety: 'Безопасное оборудование, мягкие препятствия. Родители могут наблюдать.',
+      extraServices: 'Фото на память, сок/вода после игры',
+      extraPlayerPrice: 300,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000012',
+      branchId: branch.id,
+      name: 'Ограбление века',
+      genre: 'детский',
+      difficulty: 'medium' as const,
+      hasActors: false,
+      ageRestriction: '0+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 4,
+      maxPlayers: 8,
+      durationMinutes: 60,
+      description: 'Описание квеста Ограбление века',
+      rules: 'Правила квеста: следуйте инструкциям инструктора.',
+      safety: 'Безопасная игровая среда. Родители могут наблюдать.',
+      extraServices: 'Фото на память, сок/вода после игры',
+      extraPlayerPrice: 300,
+    },
+    {
+      id: '00000000-0000-0000-0000-100000000013',
+      branchId: branch.id,
+      name: 'Вий',
+      genre: 'детский',
+      difficulty: 'medium' as const,
+      hasActors: false,
+      ageRestriction: '0+',
+      address: 'ул. Примерная, д. 1',
+      minPlayers: 4,
+      maxPlayers: 8,
+      durationMinutes: 45,
+      description: 'Описание квеста Вий',
+      rules: 'Правила квеста: следуйте инструкциям инструктора.',
+      safety: 'Безопасная игровая среда. Родители могут наблюдать.',
+      extraServices: 'Фото на память, сок/вода после игры',
+      extraPlayerPrice: 300,
+    },
+  ];
+
+  for (const q of questData) {
+    await prisma.quest.create({ data: q });
+    console.log('✅ Создан квест:', q.name);
+  }
 
   // 4. Создаем источник отзывов
   const reviewSource = await prisma.reviewSource.upsert({
@@ -94,34 +323,124 @@ async function main() {
   });
   console.log('✅ Создан факт:', aboutFact.text.substring(0, 30) + '...');
 
-  // 7. Создаем новость
-  const news = await prisma.news.create({
-    data: {
-      title: 'Открытие нового квеста!',
-      date: new Date(),
-      content: 'Мы рады сообщить об открытии нового квеста "Тайна заброшенного особняка". Приходите и испытайте свои силы!',
-    },
-  });
-  console.log('✅ Создана новость:', news.title);
+  // 7. Создаем новости (idempotent: deleteMany + create)
+  await prisma.news.deleteMany({});
 
-  // 8. Создаем PageBlock для главной страницы
-  const pageBlock = await prisma.pageBlock.create({
-    data: {
+  const newsData = [
+    {
+      title: 'День рождения в квесте',
+      date: new Date('2024-08-25'),
+      content: 'Проведите день рождения в наших квестах со скидкой 20%',
+      coverTitle: 'ДЕНЬ РОЖДЕНИЯ\nВ КВЕСТЕ',
+      cardBg: 'linear-gradient(180deg, #1a2010 0%, #07080a 100%)',
+    },
+    {
+      title: 'Новый квест — Мумия',
+      date: new Date('2024-11-01'),
+      content: 'Скоро открытие нового квеста в египетском стиле',
+      coverTitle: 'МУМИЯ',
+      coverSub: 'СКОРО ОТКРЫТИЕ',
+      cardBg: 'linear-gradient(180deg, #2a1a0a 0%, #0a0807 100%)',
+    },
+    {
+      title: 'Скидка 30% на «Тайна Теслы»',
+      date: new Date('2024-08-19'),
+      content: 'Специальное предложение на популярный квест',
+      coverTitle: '30%',
+      coverSub: 'на квест «Тайна Теслы»',
+      coverVariant: 'discount',
+      cardBg: 'linear-gradient(180deg, #0a1a2a 0%, #070a08 100%)',
+    },
+    {
+      title: 'Дарим квест весь май',
+      date: new Date('2024-05-01'),
+      content: 'Каждый день — новая история!',
+      coverTitle: 'ДАРИМ\nКВЕСТ',
+      coverSub: 'на весь май',
+      cardBg: 'linear-gradient(180deg, #1a0a2a 0%, #08070a 100%)',
+    },
+  ];
+
+  for (const n of newsData) {
+    const created = await prisma.news.create({ data: n });
+    console.log('✅ Создана новость:', created.title);
+  }
+
+  // 8. Создаем PageBlock-и (idempotent: deleteMany + create)
+  await prisma.pageBlock.deleteMany({});
+
+  // HOME page blocks
+  const homePageBlocks: {
+    pageKey: PageKeyType;
+    blockKey: string;
+    title?: string;
+    text?: string;
+    extraJson?: any;
+    sortOrder: number;
+  }[] = [
+    // Hero section
+    {
       pageKey: 'HOME',
-      blockKey: 'hero',
-      title: 'Добро пожаловать в Pandoroom',
-      text: 'Погрузитесь в мир захватывающих квестов и незабываемых эмоций',
+      blockKey: 'hero_title',
+      title: 'Самый большой квеструм и площадки для праздников во Владивостоке',
+      sortOrder: 0,
+    },
+    {
+      pageKey: 'HOME',
+      blockKey: 'hero_features',
+      extraJson: [
+        '16 разнообразных квестов для любой компании',
+        'три зала кафе, площадью более 350 м²',
+        'ваш праздник «под ключ»',
+        'работаем с 2015 года',
+      ],
       sortOrder: 1,
     },
-  });
-  console.log('✅ Создан блок страницы:', pageBlock.blockKey);
+    {
+      pageKey: 'HOME',
+      blockKey: 'hero_cta_text',
+      title: 'Забронируйте праздник прямо сейчас',
+      sortOrder: 2,
+    },
+    // Holiday cards
+    {
+      pageKey: 'HOME',
+      blockKey: 'holiday_cards',
+      extraJson: [
+        { kicker: 'праздники', title: 'для малышей', poster: '/images/main/6.png' },
+        { kicker: 'праздники для детей', title: '6 — 10 лет', poster: '/images/main/5.png' },
+        { kicker: 'праздники для детей', title: '10 — 15 лет', poster: '/images/main/4.png' },
+        { kicker: 'организовываем', title: 'Выпускные\nиз детсада', poster: '/images/main/3.png' },
+        { kicker: 'отпразднуем', title: 'Поступление\nв школу', poster: '/images/main/2.png' },
+        { kicker: 'устроим праздник', title: 'По любому\nповоду! :)', poster: '/images/main/1.png' },
+      ],
+      sortOrder: 3,
+    },
+    // Services
+    {
+      pageKey: 'HOME',
+      blockKey: 'services',
+      extraJson: [
+        { icon: '🛋️', title: 'Lounge' },
+        { icon: '🎮', title: 'Игровая' },
+        { icon: '☕', title: 'Кафе' },
+        { icon: '🎭', title: 'Шоу-программы' },
+        { icon: '🎲', title: 'Квесты' },
+        { icon: '🎂', title: 'Торты' },
+        { icon: '🎉', title: 'Праздники' },
+      ],
+      sortOrder: 4,
+    },
+  ];
 
-  // 8.1 Создаем блоки для всех страниц
-  const pageBlocks = [
-    // HOME
-    { pageKey: 'HOME', blockKey: 'about', title: 'О нас', text: 'Pandoroom - это сеть квест-комнат с уникальными сценариями', sortOrder: 2 },
-    { pageKey: 'HOME', blockKey: 'features', title: 'Почему мы', text: 'Уникальные квесты, профессиональные актеры, незабываемые эмоции', sortOrder: 3 },
-    { pageKey: 'HOME', blockKey: 'cta', title: 'Забронируйте сейчас', text: 'Подарите себе и близким незабываемые впечатления', sortOrder: 4 },
+  // Non-HOME page blocks (preserved from original seed)
+  const otherPageBlocks: {
+    pageKey: PageKeyType;
+    blockKey: string;
+    title: string;
+    text: string;
+    sortOrder: number;
+  }[] = [
     // PARTY_GUIDE
     { pageKey: 'PARTY_GUIDE', blockKey: 'hero', title: 'Гид по праздникам', text: 'Все, что нужно знать для идеального праздника', sortOrder: 1 },
     { pageKey: 'PARTY_GUIDE', blockKey: 'steps', title: 'Этапы организации', text: 'Планирование, подготовка, проведение, воспоминания', sortOrder: 2 },
@@ -150,7 +469,8 @@ async function main() {
     { pageKey: 'CAFE_KIDS', blockKey: 'games', title: 'Игры', text: 'PS4, настольные игры, игровая зона', sortOrder: 2 },
   ];
 
-  for (const block of pageBlocks) {
+  const allPageBlocks = [...homePageBlocks, ...otherPageBlocks];
+  for (const block of allPageBlocks) {
     const created = await prisma.pageBlock.create({ data: block });
     console.log('✅ Создан блок:', created.pageKey, '-', created.blockKey);
   }
@@ -181,7 +501,7 @@ async function main() {
   const cafeZone = await prisma.tableZone.create({
     data: {
       branchId: branch.id,
-      key: TableZoneKey.CAFE,
+      key: 'CAFE',
       name: 'Кафе',
       sortOrder: 1,
     },
@@ -191,7 +511,7 @@ async function main() {
   const loungeZone = await prisma.tableZone.create({
     data: {
       branchId: branch.id,
-      key: TableZoneKey.LOUNGE,
+      key: 'LOUNGE',
       name: 'Лаунж',
       sortOrder: 2,
     },
@@ -201,7 +521,7 @@ async function main() {
   const kidsZone = await prisma.tableZone.create({
     data: {
       branchId: branch.id,
-      key: TableZoneKey.KIDS,
+      key: 'KIDS',
       name: 'Детская зона',
       sortOrder: 3,
     },

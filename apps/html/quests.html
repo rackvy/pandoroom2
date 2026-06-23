@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANDOROOM — Все квесты во Владивостоке</title>
+    <meta name="description" content="16 разнообразных квестов для любой компании. Квесты с актёрами и без, детские, хорроры, приключения. Забронируйте онлайн!">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles/variables.css">
+    <link rel="stylesheet" href="./styles/global.css">
+    <link rel="stylesheet" href="./styles/main.css">
+</head>
+<body>
+
+<!-- ==================== HEADER ==================== -->
+<header class="header">
+    <div class="header__top">
+        <div class="container header__top-inner">
+            <nav class="header__nav header__nav--utility" aria-label="Дополнительная навигация">
+                <a href="#" class="header__top-link">О центре</a>
+                <a href="#" class="header__top-link">Новости и акции</a>
+                <a href="#" class="header__top-link">Правила</a>
+                <a href="#" class="header__top-link">Программа лояльности</a>
+                <a href="#" class="header__top-link">Контакты</a>
+            </nav>
+        </div>
+    </div>
+    <div class="header__main">
+        <div class="container header__inner">
+            <a href="index.html" class="header__logo" aria-label="PANDOROOM">
+                <img src="./assets/icons/logo.svg" alt="PANDOROOM" class="header__logo-img">
+            </a>
+            <nav class="header__nav header__nav--main" aria-label="Основная навигация">
+                <a href="quests.html" class="header__link">Квесты</a>
+                <a href="holidays.html" class="header__link">Праздники</a>
+                <a href="#cafe" class="header__link">Кафе</a>
+                <a href="#kids" class="header__link">Игровая для детей</a>
+            </nav>
+            <button class="header__profile" aria-label="Личный кабинет">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>
+            </button>
+            <div class="header__contacts">
+                <div class="header__address">
+                    <span class="header__address-label">Нижнепортовая, 1 / Посьетская, 27 стр. 2</span>
+                    <a href="tel:+74232022696" class="header__phone">8 423 202 26 96</a>
+                </div>
+                <div class="header__address">
+                    <span class="header__address-label">Алеутская 17а</span>
+                    <a href="tel:+74232054458" class="header__phone">8 423 205 44 58</a>
+                </div>
+            </div>
+            <button class="header__burger" aria-label="Открыть меню">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- ==================== КАТАЛОГ: ЗАГОЛОВОК + ФИЛЬТРЫ ==================== -->
+<section class="section section--catalog">
+    <div class="container">
+        <nav class="breadcrumb" aria-label="Навигация">
+            <a href="index.html" class="breadcrumb__link">Главная</a>
+            <span class="breadcrumb__sep">/</span>
+            <span class="breadcrumb__current">Квесты</span>
+        </nav>
+        <h1 class="catalog__title">Выберите квест во Владивостоке</h1>
+
+        <!-- Фильтры -->
+        <div class="catalog-filters">
+            <div class="catalog-filters__row">
+                <button class="filter-chip filter-chip--active">Все квесты</button>
+                <button class="filter-chip">Начинающие</button>
+                <button class="filter-chip">Азартные</button>
+                <button class="filter-chip">Ходилки</button>
+            </div>
+            <div class="catalog-filters__row">
+                <div class="catalog-filters__genres">
+                    <button class="genre-chip genre-chip--active">все жанры</button>
+                    <button class="genre-chip">Приключение</button>
+                    <button class="genre-chip">Экшен</button>
+                    <button class="genre-chip">Мистический</button>
+                    <button class="genre-chip">Хоррор</button>
+                    <button class="genre-chip">Детектив</button>
+                    <button class="genre-chip">Для детей</button>
+                </div>
+                <label class="filter-toggle">
+                    <input type="checkbox" class="filter-toggle__input">
+                    <span class="filter-toggle__label">Квесты с актерами</span>
+                </label>
+            </div>
+            <div class="catalog-filters__row catalog-filters__row--params">
+                <div class="filter-param">
+                    <span class="filter-param__label">Игроков:</span>
+                    <span class="filter-param__dots"><i class="filter-dot filter-dot--on"></i><i class="filter-dot filter-dot--on"></i><i class="filter-dot"></i><i class="filter-dot"></i><i class="filter-dot"></i></span>
+                </div>
+                <div class="filter-param">
+                    <span class="filter-param__label">Сложность</span>
+                    <span class="filter-param__dots"><i class="filter-dot filter-dot--on"></i><i class="filter-dot filter-dot--on"></i><i class="filter-dot filter-dot--on"></i><i class="filter-dot"></i><i class="filter-dot"></i></span>
+                </div>
+                <div class="filter-param">
+                    <span class="filter-param__label">Сортировка</span>
+                    <span class="filter-param__dots"><i class="filter-dot filter-dot--on"></i><i class="filter-dot filter-dot--on"></i><i class="filter-dot filter-dot--on"></i><i class="filter-dot filter-dot--on"></i><i class="filter-dot"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Выбор даты -->
+        <div class="date-picker">
+            <div class="date-picker__track">
+                <button class="date-picker__day"><span class="date-picker__num">17</span><span class="date-picker__weekday">пн</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">18</span><span class="date-picker__weekday">вт</span></button>
+                <button class="date-picker__day date-picker__day--active"><span class="date-picker__num">19</span><span class="date-picker__weekday">ср</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">20</span><span class="date-picker__weekday">чт</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">21</span><span class="date-picker__weekday">пт</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">22</span><span class="date-picker__weekday">сб</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">23</span><span class="date-picker__weekday">вс</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">24</span><span class="date-picker__weekday">пн</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">25</span><span class="date-picker__weekday">вт</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">26</span><span class="date-picker__weekday">ср</span></button>
+                <button class="date-picker__day"><span class="date-picker__num">27</span><span class="date-picker__weekday">чт</span></button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== ГРИД КВЕСТОВ ==================== -->
+<section class="section section--quest-grid">
+    <div class="container">
+        <div class="quest-grid">
+            <article class="qcard" style="--poster: url('./assets/images/main/hp.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Гарри Поттер<br><span class="qcard__sub">и Философский камень</span></h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">12+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>00</sub></span><span class="qcard__slot">18<sub>30</sub></span><span class="qcard__slot">20<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/plague-doctor.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Чумной доктор</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">12+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>00</sub></span><span class="qcard__slot">19<sub>00</sub></span><span class="qcard__slot">21<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/pirates.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Сокровища пиратов</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">12+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">18<sub>00</sub></span><span class="qcard__slot">20<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/resident-evil.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Resident Evil</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">80 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">12+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>30</sub></span><span class="qcard__slot">19<sub>30</sub></span><span class="qcard__slot">21<sub>30</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/da-vinci.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Код Да Винчи</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">12+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>00</sub></span><span class="qcard__slot">19<sub>00</sub></span><span class="qcard__slot">21<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/inquisition.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Инквизиция</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">14+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">18<sub>00</sub></span><span class="qcard__slot">20<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/silent-hill.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Silent Hill</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i></span><span class="qcard__info">80 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">16+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">18<sub>30</sub></span><span class="qcard__slot">21<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/secret-experiment.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Секретный эксперимент</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">70 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">12+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>00</sub></span><span class="qcard__slot">19<sub>30</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/old-theatre.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Тайна старого театра</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">12+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>00</sub></span><span class="qcard__slot">18<sub>30</sub></span><span class="qcard__slot">20<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/hunters.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Охотники</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">14+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">18<sub>00</sub></span><span class="qcard__slot">20<sub>30</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/lasertag.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Лазертаг</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">4-8</span><span class="qcard__info">7+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>00</sub></span><span class="qcard__slot">18<sub>30</sub></span><span class="qcard__slot">20<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/heist.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Ограбление века</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">10+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>00</sub></span><span class="qcard__slot">19<sub>00</sub></span><span class="qcard__slot">21<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/viy.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Вий</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">10+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">18<sub>00</sub></span><span class="qcard__slot">20<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+            <article class="qcard" style="--poster: url('./assets/images/quests/jumanji.jpg');">
+                <div class="qcard__poster"></div>
+                <div class="qcard__body">
+                    <h3 class="qcard__title">Джуманджи</h3>
+                    <div class="qcard__meta"><span class="qcard__difficulty"><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot"></i><i class="qcard__dot qcard__dot--off"></i><i class="qcard__dot qcard__dot--off"></i></span><span class="qcard__info">60 мин</span><span class="qcard__info">2-6</span><span class="qcard__info">10+</span></div>
+                    <div class="qcard__slots"><span class="qcard__slot">17<sub>00</sub></span><span class="qcard__slot">19<sub>00</sub></span><span class="qcard__slot">21<sub>00</sub></span></div>
+                </div>
+                <a href="quest-card.html" class="qcard__link" aria-label="Подробнее"></a>
+            </article>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== ФОНОВЫЙ БЛОК (НОВОСТИ + ОТЗЫВЫ) ==================== -->
+<div class="bg-prefooter" style="background-image: url('./assets/images/main/after-footer-bg.jpg');">
+<section class="section section--news">
+    <div class="container">
+        <h2 class="section__title title-effect">Новости и акции</h2>
+        <div class="news-grid">
+            <article class="news-card" style="--card-bg: linear-gradient(180deg, #1a2010 0%, #07080a 100%);"><div class="news-card__cover"><span class="news-card__cover-title">ДЕНЬ РОЖДЕНИЯ<br>В КВЕСТЕ</span></div><div class="news-card__content"><span class="news-card__date">25 августа 2024</span><h3 class="news-card__title">День рождения в квесте</h3><p class="news-card__text">Празднуем у нас — это такой праздник, который останется в памяти навсегда у вас и вашего ребенка!</p><a href="#" class="news-card__link">подробнее</a></div></article>
+            <article class="news-card" style="--card-bg: linear-gradient(180deg, #20180a 0%, #08070a 100%);"><div class="news-card__cover news-card__cover--mummy"><span class="news-card__cover-title">МУМИЯ<br><span class="news-card__cover-sub">СКОРО ОТКРЫТИЕ</span></span></div><div class="news-card__content"><span class="news-card__date">1 ноября 2024</span><h3 class="news-card__title">Новый квест — Мумия</h3><p class="news-card__text">А мы уже готовимся к открытию нового квеста! Группа архитекторов уже расписала макет.</p><a href="#" class="news-card__link">подробнее</a></div></article>
+            <article class="news-card" style="--card-bg: linear-gradient(180deg, #15101f 0%, #050514 100%);"><div class="news-card__cover news-card__cover--discount"><span class="news-card__cover-title">30%</span><span class="news-card__cover-sub">на квест «Тайна Теслы»</span></div><div class="news-card__content"><span class="news-card__date">19 августа 2024</span><h3 class="news-card__title">Скидка 30% на «Тайна Теслы»</h3><p class="news-card__text">Только на этой неделе у вас есть последняя возможность пройти квест со скидкой 30%</p><a href="#" class="news-card__link">подробнее</a></div></article>
+            <article class="news-card" style="--card-bg: linear-gradient(180deg, #20102a 0%, #070514 100%);"><div class="news-card__cover news-card__cover--may"><span class="news-card__cover-title">ДАРИМ<br>КВЕСТ</span><span class="news-card__cover-sub">на весь май</span></div><div class="news-card__content"><span class="news-card__date">1 мая 2024</span><h3 class="news-card__title">Дарим квест весь май</h3><p class="news-card__text">Продлеваем акцию! На День Рождения примите подарок от PANDOROOM.</p><a href="#" class="news-card__link">подробнее</a></div></article>
+        </div>
+    </div>
+</section>
+<section class="section section--reviews">
+    <div class="container">
+        <h2 class="section__title title-effect">Отзывы гостей</h2>
+        <div class="reviews-slider">
+            <button class="slider-arrow slider-arrow--prev" aria-label="Назад"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <div class="reviews-slider__track">
+                <article class="review-card"><div class="review-card__header"><span class="review-card__name">Кристина</span><span class="review-card__date">12 августа 2024</span></div><div class="review-card__stars">★★★★★</div><p class="review-card__text">Вот уже много лет отмечаем праздники здесь. Невероятно крутое место для детей и взрослых.</p><span class="review-card__source">VL.RU</span></article>
+                <article class="review-card"><div class="review-card__header"><span class="review-card__name">Пелагея Ганчикова</span><span class="review-card__date">6 августа 2024</span></div><div class="review-card__stars">★★★★★</div><p class="review-card__text">Были с детьми, всё организовано отлично. Остались довольны, ушли с подарками — благодарим!</p><span class="review-card__source">2GIS</span></article>
+                <article class="review-card"><div class="review-card__header"><span class="review-card__name">Роксолана Скрипка</span><span class="review-card__date">1 августа 2024</span></div><div class="review-card__stars">★★★★★</div><p class="review-card__text">Отличное место для празднования с друзьями, семьей. Отличная кухня и бар :)</p><span class="review-card__source">2GIS</span></article>
+                <article class="review-card"><div class="review-card__header"><span class="review-card__name">Карина Белоснежкина</span><span class="review-card__date">29 июля 2024</span></div><div class="review-card__stars">★★★★★</div><p class="review-card__text">Спасибо за хорошо организованный праздник! Настроение на все 5+.</p><span class="review-card__source">2GIS</span></article>
+            </div>
+            <button class="slider-arrow slider-arrow--next" aria-label="Вперед"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+        </div>
+    </div>
+</section>
+</div><!-- /.bg-prefooter -->
+
+<div class="prefooter-divider"></div>
+
+<!-- ==================== FOOTER ==================== -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer__menu">
+            <div class="footer__group footer__group--double"><h4 class="footer__group-title">Квесты во Владивостоке</h4><div class="footer__group-cols"><ul class="footer__list"><li><a href="quests.html">Все квесты</a></li><li><a href="quests.html">Квесты с актерами</a></li><li><a href="quests.html">Квесты без актеров</a></li><li><a href="quests.html">Детские квесты</a></li><li><a href="quests.html">Квесты-приключения</a></li></ul><ul class="footer__list"><li><a href="quests.html">Квесты-экшены</a></li><li><a href="quests.html">Мистические квесты</a></li><li><a href="quests.html">Квесты-хорроры</a></li><li><a href="quests.html">Квесты-детективы</a></li></ul></div></div>
+            <div class="footer__group"><h4 class="footer__group-title">Праздники во Владивостоке</h4><ul class="footer__list"><li><a href="holidays.html">Праздник для малышей</a></li><li><a href="holidays.html">Праздник для детей 6-10 лет</a></li><li><a href="holidays.html">Праздник для детей 10-15 лет</a></li></ul><ul class="footer__list footer__list--spaced"><li><a href="holidays.html">Индивидуальный расчет праздника</a></li></ul></div>
+            <div class="footer__group footer__group--double"><h4 class="footer__group-title">Семейный центр Пандорум</h4><div class="footer__group-cols"><ul class="footer__list"><li><a href="#">О центре</a></li><li><a href="#cafe">Кафе</a></li><li><a href="#kids">Игровая</a></li><li><a href="#">Меню</a></li><li><a href="#">Правила</a></li></ul><ul class="footer__list"><li><a href="#">Программа лояльности</a></li><li><a href="#">Акции и новости</a></li><li><a href="#">Контакты</a></li></ul></div></div>
+        </div>
+        <div class="footer__main">
+            <div class="footer__brand"><a href="index.html" class="footer__logo" aria-label="PANDOROOM"><img src="./assets/icons/logo.svg" alt="PANDOROOM" class="footer__logo-img"></a><p class="footer__about">Семейное кафе и квесты Pandoroom (Пандорум) — это огромный центр отдыха для семьи, компаний друзей и детей. В наших филиалах Вас ждет: три зала фирменного кафе, огромный мир квестов для всех возрастов, а также Лазертаг.</p></div>
+            <div class="footer__contacts"><div class="footer__address"><span class="footer__address-label">Нижнепортовая, 1 / Посьетская, 27 стр. 2</span><a href="tel:+74232022696" class="footer__phone">8 423 202 26 96</a></div><div class="footer__address"><span class="footer__address-label">Алеутская 17а</span><a href="tel:+74232054458" class="footer__phone">8 423 205 44 58</a></div></div>
+        </div>
+        <div class="footer__bottom">
+            <div class="footer__legal"><span>2015 — 2024</span><span class="footer__legal-sep">|</span><span>ООО «Пандорум»</span><span class="footer__legal-sep">|</span><a href="#" class="footer__legal-link">Политика конфиденциальности</a></div>
+            <div class="footer__follow"><span class="footer__follow-text">следите за нами в соц.сетях</span><span class="footer__follow-dash">—</span><div class="footer__socials" aria-label="Социальные сети"><a href="#" aria-label="Instagram"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg></a><a href="#" aria-label="Telegram"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M21.94 4.32 18.6 19.78c-.25 1.12-.92 1.4-1.86.87l-5.13-3.78-2.47 2.38c-.27.27-.5.5-1.03.5l.37-5.22 9.5-8.59c.41-.37-.09-.57-.64-.21L6.6 12.99l-5.06-1.58c-1.1-.34-1.12-1.1.23-1.63L20.65 2.7c.92-.34 1.72.21 1.29 1.62Z"/></svg></a><a href="#" aria-label="VK"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12.79 17.4h1.18s.36-.04.54-.24c.17-.18.16-.52.16-.52s-.02-1.6.72-1.84c.73-.23 1.67 1.55 2.66 2.23.75.52 1.32.41 1.32.41l2.65-.04s1.39-.09.73-1.18c-.05-.09-.39-.81-2-2.31-1.69-1.57-1.46-1.31.57-4.02 1.24-1.65 1.74-2.66 1.58-3.09-.15-.41-1.06-.3-1.06-.3l-2.99.02s-.22-.03-.39.07c-.16.1-.27.34-.27.34s-.49 1.31-1.14 2.42c-1.38 2.34-1.93 2.46-2.16 2.32-.52-.34-.39-1.34-.39-2.06 0-2.23.34-3.16-.65-3.4-.33-.08-.57-.13-1.41-.14-1.07-.01-1.97 0-2.49.25-.34.17-.61.55-.45.57.2.03.65.12.89.45.31.42.3 1.36.3 1.36s.18 2.6-.42 2.92c-.41.22-.97-.23-2.2-2.36-.63-1.09-1.11-2.3-1.11-2.3s-.09-.23-.25-.34c-.19-.14-.46-.18-.46-.18l-2.84.02s-.43.01-.59.2c-.14.16-.01.5-.01.5s2.22 5.21 4.74 7.83c2.31 2.41 4.94 2.25 4.94 2.25Z"/></svg></a></div></div>
+        </div>
+        <div class="footer__credits">
+            <div class="footer__credit"><span class="footer__credit-label">Разработка сайта —</span><a href="https://shelikhov.me" target="_blank" rel="noopener" class="footer__credit-logo"><img src="./assets/images/footer/shelikhov.svg" alt="Shelikhov.me"></a></div>
+            <div class="footer__credit"><span class="footer__credit-label">Дизайн сайта —</span><a href="#" class="footer__credit-logo"><img src="./assets/images/footer/korableff.svg" alt="Korableff"></a></div>
+        </div>
+    </div>
+</footer>
+
+<script src="./scripts/main.js"></script>
+</body>
+</html>

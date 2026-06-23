@@ -16,6 +16,10 @@ export default function NewsForm() {
     date: new Date().toISOString().split('T')[0],
     content: '',
     imageId: null,
+    coverTitle: '',
+    coverSub: '',
+    coverVariant: '',
+    cardBg: '',
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -37,6 +41,10 @@ export default function NewsForm() {
         date: item.date.split('T')[0],
         content: item.content,
         imageId: item.imageId,
+        coverTitle: item.coverTitle || '',
+        coverSub: item.coverSub || '',
+        coverVariant: item.coverVariant || '',
+        cardBg: item.cardBg || '',
       });
       setImagePreview(item.image?.url || null);
     } catch (err) {
@@ -132,6 +140,51 @@ export default function NewsForm() {
             value={formData.content}
             onChange={(val) => setFormData(prev => ({ ...prev, content: val }))}
             minHeight={250}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Заголовок карточки (для главной)</label>
+          <input
+            type="text"
+            value={formData.coverTitle || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, coverTitle: e.target.value }))}
+            className={styles.input}
+            placeholder="Заголовок на главной странице"
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Подзаголовок карточки</label>
+          <input
+            type="text"
+            value={formData.coverSub || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, coverSub: e.target.value }))}
+            className={styles.input}
+            placeholder="Подзаголовок на карточке"
+          />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Вариант карточки</label>
+          <select
+            value={formData.coverVariant || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, coverVariant: e.target.value }))}
+            className={styles.select}
+          >
+            <option value="">Обычный</option>
+            <option value="discount">Скидка</option>
+          </select>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>CSS-градиент фона (опционально)</label>
+          <input
+            type="text"
+            value={formData.cardBg || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, cardBg: e.target.value }))}
+            className={styles.input}
+            placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
           />
         </div>
 

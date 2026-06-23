@@ -20,6 +20,14 @@ const DIFFICULTY_OPTIONS = [
   { value: 'hard', label: 'Сложный' },
 ];
 
+const AGE_RESTRICTION_OPTIONS = [
+  { value: '', label: 'Без ограничений' },
+  { value: '0+', label: '0+' },
+  { value: '8+', label: '8+' },
+  { value: '12+', label: '12+' },
+  { value: '18+', label: '18+' },
+];
+
 export default function QuestForm({ initialData, onSubmit, onCancel, isSubmitting }: QuestFormProps) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [formData, setFormData] = useState<CreateQuestData>({
@@ -38,6 +46,9 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     safety: initialData?.safety || '',
     extraServices: initialData?.extraServices || '',
     extraPlayerPrice: initialData?.extraPlayerPrice || 0,
+    hasActors: initialData?.hasActors || false,
+    ageRestriction: initialData?.ageRestriction || '',
+    subtitle: initialData?.subtitle || '',
     galleryPhotoIds: initialData?.galleryPhotos?.map(p => p.imageId) || [],
   });
 
@@ -194,6 +205,41 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="subtitle">Подзаголовок</label>
+          <input
+            id="subtitle"
+            type="text"
+            value={formData.subtitle || ''}
+            onChange={(e) => handleChange('subtitle', e.target.value)}
+            placeholder="Краткий подзаголовок квеста"
+          />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="ageRestriction">Возрастное ограничение</label>
+          <select
+            id="ageRestriction"
+            value={formData.ageRestriction || ''}
+            onChange={(e) => handleChange('ageRestriction', e.target.value)}
+          >
+            {AGE_RESTRICTION_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.field}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={formData.hasActors || false}
+              onChange={(e) => handleChange('hasActors', e.target.checked)}
+            />
+            С актёрами
+          </label>
         </div>
 
         <div className={styles.field}>

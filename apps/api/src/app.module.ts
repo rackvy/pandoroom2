@@ -12,6 +12,12 @@ import { PublicModule } from './public/public.module';
 import { MediaModule } from './media/media.module';
 import { QuestScheduleModule } from './quest-schedule/quest-schedule.module';
 import { ClientsModule } from './clients/clients.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { VRScheduleModule } from './vr-schedule/vr-schedule.module';
+import { GoogleCalendarModule } from './google-calendar/google-calendar.module';
+import { PaymentsModule } from './payments/payments.module';
+import { ReportsModule } from './reports/reports.module';
+import { IikoModule } from './iiko/iiko.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -31,6 +37,12 @@ import { RolesGuard } from './common/guards/roles.guard';
     MediaModule,
     QuestScheduleModule,
     ClientsModule,
+    NotificationsModule,
+    VRScheduleModule,
+    GoogleCalendarModule,
+    PaymentsModule,
+    ReportsModule,
+    IikoModule,
   ],
   providers: [
     {

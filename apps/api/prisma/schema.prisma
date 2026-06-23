@@ -76,6 +76,11 @@ enum ServeMode {
   after
 }
 
+enum VRBookingType {
+  full_hall
+  open_slot
+}
+
 // ==================== MODELS ====================
 
 model Branch {
@@ -112,6 +117,7 @@ model Branch {
   tableReservations TableReservation[]
   questReservations QuestReservation[]
   employees         BranchEmployee[]
+  vrHalls           VRHall[]
 }
 
 model Media {
@@ -135,6 +141,7 @@ model Media {
   cakeImages        Cake[]
   showProgramImages ShowProgram[]
   decorationImages  Decoration[]
+  vrGameImages      VRGame[] @relation("VRGamePreview")
 }
 
 model Quest {
@@ -143,6 +150,9 @@ model Quest {
   name              String
   genre             String
   difficulty        Difficulty
+  hasActors         Boolean   @default(false)
+  ageRestriction    String?
+  subtitle          String?
   address           String
   minPlayers        Int
   maxPlayers        Int
@@ -220,15 +230,19 @@ model QuestScheduleSpecialPrice {
 }
 
 model News {
-  id        String   @id @default(uuid())
-  title     String
-  date      DateTime @db.Date
-  imageId   String?
-  content   String   @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  title        String
+  date         DateTime @db.Date
+  imageId      String?
+  content      String   @db.Text
+  coverTitle   String?
+  coverSub     String?
+  coverVariant String?
+  cardBg       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  image     Media?   @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  image        Media?   @relation(fields: [imageId], references: [id], onDelete: SetNull)
 }
 
 model AboutFact {
@@ -387,6 +401,9 @@ model Client {
   email             String?
   birthday          DateTime? @db.Date
   notes             String?   @db.Text
+  telegramChatId    String?
+  maxChatId         String?
+  preferredChannel  String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -416,6 +433,13 @@ model Booking {
   managerId            String?
   depositRub           Int           @default(0)
   paymentMethod        PaymentMethod?
+  paymentStatus        String?
+  paymentId            String?
+  paymentUrl           String?
+  paidAt               DateTime?
+  googleEventId        String?
+  iikoOrderId          String?
+  iikoOrderStatus      String?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
@@ -431,6 +455,8 @@ model Booking {
   foodItems            BookingFoodItem[]
   tableReservations    TableReservation[]
   questReservations    QuestReservation[]
+  notifications        NotificationLog[]
+  vrReservations       VRReservation[]
 
   @@index([eventDate])
   @@index([branchId])
@@ -515,16 +541,17 @@ model BookingDecorationItem {
 }
 
 model BookingFoodItem {
-  id        String     @id @default(uuid())
-  bookingId String
-  title     String
-  qty       Int        @default(1)
-  serveAt   DateTime?  @db.Time
-  serveMode ServeMode?
-  priceRub  Int        @default(0)
-  comment   String?    @db.Text
+  id         String     @id @default(uuid())
+  bookingId  String
+  title      String
+  qty        Int        @default(1)
+  serveAt    DateTime?  @db.Time
+  serveMode  ServeMode?
+  department String?
+  priceRub   Int        @default(0)
+  comment    String?    @db.Text
 
-  booking   Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking    Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([bookingId])
 }
@@ -622,4 +649,98 @@ model QuestReservation {
   @@index([questId, eventDate])
   @@index([bookingId])
   @@index([clientId])
+}
+
+// ==================== NOTIFICATIONS ====================
+
+model NotificationLog {
+  id        String   @id @default(uuid())
+  bookingId String
+  channel   String
+  template  String
+  recipient String
+  status    String   @default("pending")
+  errorText String?  @db.Text
+  createdAt DateTime @default(now())
+
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([createdAt])
+}
+
+// ==================== VR ====================
+
+model VRHall {
+  id           String   @id @default(uuid())
+  branchId     String
+  name         String
+  maxCapacity  Int      @default(20)
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  branch       Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  reservations VRReservation[]
+
+  @@index([branchId])
+}
+
+model VRReservation {
+  id           String          @id @default(uuid())
+  hallId       String
+  bookingId    String?
+  date         DateTime        @db.Date
+  startTime    DateTime        @db.Time
+  endTime      DateTime        @db.Time
+  type         VRBookingType
+  title        String?
+  description  String?         @db.Text
+  gameId       String?
+  clientName   String?
+  clientPhone  String?
+  guestsCount  Int             @default(0)
+  maxGuests    Int?
+  status       ReservationStatus @default(draft)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  hall         VRHall          @relation(fields: [hallId], references: [id], onDelete: Cascade)
+  booking      Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  game         VRGame?         @relation(fields: [gameId], references: [id], onDelete: SetNull)
+
+  @@index([hallId, date])
+  @@index([bookingId])
+}
+
+model VRGame {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?  @db.Text
+  genre           String?
+  minPlayers      Int      @default(1)
+  maxPlayers      Int      @default(20)
+  durationMinutes Int?
+  previewImageId  String?
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  previewImage    Media?   @relation("VRGamePreview", fields: [previewImageId], references: [id], onDelete: SetNull)
+  vrReservations  VRReservation[]
+}
+
+// ==================== IIKO ====================
+
+model IikoMenuItem {
+  id          String   @id @default(uuid())
+  iikoId      String   @unique
+  name        String
+  category    String
+  department  String?
+  price       Decimal  @db.Decimal(10, 2)
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
 }

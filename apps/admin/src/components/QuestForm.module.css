@@ -40,6 +40,24 @@
   border-color: #A0BF39;
 }
 
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1A1A18;
+  cursor: pointer;
+  padding-top: 24px;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #A0BF39;
+  cursor: pointer;
+}
+
 .field textarea {
   resize: vertical;
   min-height: 80px;

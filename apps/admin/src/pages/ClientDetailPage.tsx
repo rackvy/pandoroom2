@@ -16,6 +16,9 @@ export default function ClientDetailPage() {
     email: '',
     birthday: '',
     notes: '',
+    telegramChatId: '',
+    maxChatId: '',
+    preferredChannel: '',
   });
 
   useEffect(() => {
@@ -35,6 +38,9 @@ export default function ClientDetailPage() {
         email: data.email || '',
         birthday: data.birthday || '',
         notes: data.notes || '',
+        telegramChatId: data.telegramChatId || '',
+        maxChatId: data.maxChatId || '',
+        preferredChannel: data.preferredChannel || '',
       });
     } catch (error) {
       console.error('Failed to load client:', error);
@@ -146,6 +152,36 @@ export default function ClientDetailPage() {
                 rows={3}
               />
             </div>
+            <div className={styles.field}>
+              <label>Telegram Chat ID</label>
+              <input
+                type="text"
+                value={formData.telegramChatId}
+                onChange={(e) => setFormData({ ...formData, telegramChatId: e.target.value })}
+                placeholder="Например: 123456789"
+              />
+            </div>
+            <div className={styles.field}>
+              <label>MAX Chat ID</label>
+              <input
+                type="text"
+                value={formData.maxChatId}
+                onChange={(e) => setFormData({ ...formData, maxChatId: e.target.value })}
+                placeholder="Например: 123456789"
+              />
+            </div>
+            <div className={styles.field}>
+              <label>Предпочтительный канал</label>
+              <select
+                value={formData.preferredChannel}
+                onChange={(e) => setFormData({ ...formData, preferredChannel: e.target.value })}
+              >
+                <option value="">Не указан</option>
+                <option value="sms">SMS</option>
+                <option value="telegram">Telegram</option>
+                <option value="max">MAX</option>
+              </select>
+            </div>
           </div>
         ) : (
           <div className={styles.info}>
@@ -169,6 +205,28 @@ export default function ClientDetailPage() {
               <div className={styles.infoRow}>
                 <span className={styles.label}>Примечания:</span>
                 <span className={styles.value}>{client.notes}</span>
+              </div>
+            )}
+            {client.telegramChatId && (
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Telegram:</span>
+                <span className={styles.value}>{client.telegramChatId}</span>
+              </div>
+            )}
+            {client.maxChatId && (
+              <div className={styles.infoRow}>
+                <span className={styles.label}>MAX:</span>
+                <span className={styles.value}>{client.maxChatId}</span>
+              </div>
+            )}
+            {client.preferredChannel && (
+              <div className={styles.infoRow}>
+                <span className={styles.label}>Канал уведомлений:</span>
+                <span className={styles.value}>
+                  {client.preferredChannel === 'sms' ? 'SMS' :
+                   client.preferredChannel === 'telegram' ? 'Telegram' :
+                   client.preferredChannel === 'max' ? 'MAX' : client.preferredChannel}
+                </span>
               </div>
             )}
             <div className={styles.stats}>

@@ -3,7 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateNewsDto } from './dto/create-news.dto';
 import { CreatePageBlockDto } from './dto/create-page-block.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
-import { PageKey } from '@prisma/client';
+
+// Local type definition
+type PageKey = 'HOME' | 'PARTY_GUIDE' | 'PARTY_GUIDE_KIDS' | 'PARTY_GUIDE_6_10' | 'PARTY_GUIDE_10_15' | 'CAFE' | 'CAFE_KAFE' | 'CAFE_LOUNGE' | 'CAFE_KIDS';
 
 // Helper to convert BigInt to number for JSON serialization
 function convertMediaBigInt(media: any) {
@@ -24,7 +26,7 @@ export class ContentService {
       orderBy: { date: 'desc' },
       include: { image: true },
     });
-    return news.map(n => ({
+    return news.map((n: any) => ({
       ...n,
       image: convertMediaBigInt(n.image),
     }));

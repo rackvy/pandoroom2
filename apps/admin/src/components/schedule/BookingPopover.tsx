@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './ScheduleGrid.module.css';
 import type { TableReservation, QuestReservation } from '../../api/schedule';
+import { sendNotification } from '../../api/notifications';
+import { toast } from '../ui/Toast';
 
 interface BookingPopoverProps {
   reservation: TableReservation | QuestReservation;
@@ -12,6 +14,7 @@ interface BookingPopoverProps {
 
 export default function BookingPopover({ reservation, position, onClose, onEdit, onCancel }: BookingPopoverProps) {
   const popoverRef = useRef<HTMLDivElement>(null);
+  const [sendingSms, setSendingSms] = useState<string | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -31,6 +34,26 @@ export default function BookingPopover({ reservation, position, onClose, onEdit,
   };
 
   const shortBookingId = reservation.bookingId.slice(-6).toUpperCase();
+
+  const handleSendSms = async (templateKey: 'MISSED_CALL' | 'PREORDER_REMINDER') => {
+    setSendingSms(templateKey);
+    try {
+      const result = await sendNotification({
+        bookingId: reservation.bookingId,
+        templateKey,
+        channel: 'sms',
+      });
+      if (result.success) {
+        toast.success('СМС отправлено');
+      } else {
+        toast.error(result.error || 'Ошибка отправки СМС');
+      }
+    } catch {
+      toast.error('Ошибка отправки СМС');
+    } finally {
+      setSendingSms(null);
+    }
+  };
 
   return (
     <>
@@ -87,11 +110,19 @@ export default function BookingPopover({ reservation, position, onClose, onEdit,
             </button>
 
             <div className={styles.smsButtons}>
-              <button className={`${styles.popoverButton} ${styles.popoverButtonSecondary}`}>
-                SMS #1
+              <button
+                className={`${styles.popoverButton} ${styles.popoverButtonSecondary}`}
+                onClick={() => handleSendSms('MISSED_CALL')}
+                disabled={sendingSms !== null}
+              >
+                {sendingSms === 'MISSED_CALL' ? '...' : 'Не дозвонились'}
               </button>
-              <button className={`${styles.popoverButton} ${styles.popoverButtonSecondary}`}>
-                SMS #2
+              <button
+                className={`${styles.popoverButton} ${styles.popoverButtonSecondary}`}
+                onClick={() => handleSendSms('PREORDER_REMINDER')}
+                disabled={sendingSms !== null}
+              >
+                {sendingSms === 'PREORDER_REMINDER' ? '...' : 'Напоминание'}
               </button>
             </div>
 

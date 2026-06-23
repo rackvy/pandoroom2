@@ -11,13 +11,19 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { EmployeeRole } from '@prisma/client';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
+
+// Local enum definition
+const EmployeeRole = {
+  ADMIN: 'ADMIN',
+  CONTENT: 'CONTENT',
+  MANAGER: 'MANAGER',
+} as const;
 
 @Controller('api/admin/clients')
 @UseGuards(JwtAuthGuard, RolesGuard)

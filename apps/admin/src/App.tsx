@@ -7,6 +7,7 @@ import RegistryPage from './pages/RegistryPage'
 import BookingEditPage from './pages/BookingEditPage'
 import TablesSchedulePage from './pages/schedule/TablesSchedulePage'
 import QuestsSchedulePage from './pages/schedule/QuestsSchedulePage'
+import VRSchedulePage from './pages/schedule/VRSchedulePage'
 import ContentLayout from './pages/content/ContentLayout'
 import QuestsListPage from './pages/content/QuestsListPage'
 import QuestCreatePage from './pages/content/QuestCreatePage'
@@ -27,11 +28,16 @@ import ShowProgramsListPage from './pages/content/ShowProgramsListPage'
 import ShowProgramForm from './pages/content/ShowProgramForm'
 import DecorationsListPage from './pages/content/DecorationsListPage'
 import DecorationForm from './pages/content/DecorationForm'
+import IikoMenuPage from './pages/reference/IikoMenuPage'
+import VRGamesListPage from './pages/content/VRGamesListPage'
+import VRGameForm from './pages/content/VRGameForm'
 import ReferenceLayout from './pages/reference/ReferenceLayout'
 import EmployeesPage from './pages/EmployeesPage'
 import SettingsPage from './pages/SettingsPage'
 import ClientsPage from './pages/ClientsPage'
 import ClientDetailPage from './pages/ClientDetailPage'
+import ClientCreatePage from './pages/ClientCreatePage'
+import ReportsPage from './pages/ReportsPage'
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth()
@@ -59,6 +65,7 @@ function AppRoutes() {
         <Route path="registry/:id" element={<BookingEditPage />} />
         <Route path="table-grid" element={<TablesSchedulePage />} />
         <Route path="quest-grid" element={<QuestsSchedulePage />} />
+        <Route path="vr-grid" element={<VRSchedulePage />} />
         <Route path="content" element={<ContentLayout />}>
           <Route index element={<QuestsListPage />} />
           <Route path="quests" element={<QuestsListPage />} />
@@ -74,8 +81,12 @@ function AppRoutes() {
           <Route path="review-sources" element={<ReviewSourcesPage />} />
           <Route path="about" element={<AboutFactsListPage />} />
           <Route path="pages" element={<PageBlocksEditor />} />
+          <Route path="vr-games" element={<VRGamesListPage />} />
+          <Route path="vr-games/new" element={<VRGameForm />} />
+          <Route path="vr-games/:id/edit" element={<VRGameForm />} />
         </Route>
         <Route path="clients" element={<ClientsPage />} />
+        <Route path="clients/new" element={<ClientCreatePage />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="reference" element={<ReferenceLayout />}>
           <Route index element={<Navigate to="/reference/suppliers" replace />} />
@@ -91,8 +102,10 @@ function AppRoutes() {
           <Route path="decorations" element={<DecorationsListPage />} />
           <Route path="decorations/new" element={<DecorationForm />} />
           <Route path="decorations/:id/edit" element={<DecorationForm />} />
+          <Route path="iiko-menu" element={<IikoMenuPage />} />
         </Route>
         <Route path="employees" element={<EmployeesPage />} />
+        <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>

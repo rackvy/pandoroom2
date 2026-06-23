@@ -1,105 +1,367 @@
-.questsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
-  padding: 3rem;
-  background: #f8f9fa;
-  min-height: 400px;
+/* ==================== CATALOG PAGE STYLES ==================== */
+/* Ported from apps/html/styles/main.css — catalog, filter, qcard sections */
+
+/* Section wrapper */
+.sectionCatalog {
+  padding-top: 32px;
+  padding-bottom: 0;
 }
 
-.questCard {
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.questCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.imageWrapper {
-  position: relative;
-  width: 100%;
-  height: 200px;
-  background: #e9ecef;
-}
-
-.image {
-  object-fit: cover;
-}
-
-.placeholder {
-  width: 100%;
-  height: 100%;
+/* Breadcrumb */
+.breadcrumb {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #1A1A18 0%, #2a2a25 100%);
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
-.placeholder span {
-  font-size: 4rem;
+.breadcrumbLink {
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast);
 }
 
-.content {
-  padding: 1.5rem;
+.breadcrumbLink:hover {
+  color: var(--color-text);
 }
 
-.content h3 {
-  margin: 0 0 0.75rem 0;
-  color: #1A1A18;
-  font-size: 1.25rem;
+.breadcrumbSep {
+  opacity: 0.5;
 }
 
-.description {
-  color: #666;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin-bottom: 1rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.breadcrumbCurrent {
+  color: var(--color-text);
 }
 
-.meta {
+/* Catalog title */
+.catalogTitle {
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 32px 0;
+}
+
+/* ---- Filters ---- */
+.catalogFilters {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.filtersRow {
+  display: flex;
   flex-wrap: wrap;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  gap: 10px;
 }
 
-.meta span {
-  font-size: 0.85rem;
-  color: #555;
-  background: #f0f0f0;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
+.filtersRowParams {
+  gap: 24px;
 }
 
-.branch {
-  font-size: 0.85rem;
-  color: #A0BF39;
+.filtersGenres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Filter chip (difficulty) */
+.filterChip {
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.filterChip:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--color-text);
+}
+
+.filterChipActive {
+  background-color: var(--color-cta-green);
+  color: #000;
+  border-color: var(--color-cta-green);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Genre chip */
+.genreChip {
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-primary);
+  font-size: 13px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.genreChip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-text);
+}
+
+.genreChipActive {
+  background-color: var(--color-cta-green);
+  color: #000;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Filter toggle (actors checkbox) */
+.filterToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.filterToggleInput {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-cta-green);
+}
+
+.filterToggleLabel {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+/* Filter param (dot selectors) */
+.filterParam {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterParamLabel {
+  font-family: var(--font-primary);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.filterParamDots {
+  display: flex;
+  gap: 4px;
+}
+
+.filterDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.15);
+  font-style: normal;
+}
+
+.filterDotOn {
+  background-color: var(--color-cta-green);
+}
+
+/* ---- Date Picker ---- */
+.datePicker {
+  margin-bottom: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.datePicker::-webkit-scrollbar {
+  display: none;
+}
+
+.datePickerTrack {
+  display: flex;
+  gap: 6px;
+}
+
+.datePickerDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  padding: 12px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.datePickerDay:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.datePickerDayActive {
+  background-color: var(--color-cta-green);
+  border-color: var(--color-cta-green);
+}
+
+.datePickerDayActive .datePickerNum,
+.datePickerDayActive .datePickerWeekday {
+  color: #000;
+}
+
+.datePickerNum {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.datePickerWeekday {
+  font-family: var(--font-primary);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+}
+
+/* ==================== QUEST GRID ==================== */
+
+.sectionQuestGrid {
+  padding-top: 32px;
+  padding-bottom: 60px;
+}
+
+.questGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .questGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1100px) {
+  .questGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Quest Card */
+.qcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background-color: #161616;
+  transition:
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.qcard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.qcardPoster {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background-image: var(--poster);
+  background-size: cover;
+  background-position: center;
+}
+
+.qcardBody {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.qcardTitle {
+  font-family: var(--font-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  line-height: 1.25;
   margin: 0;
 }
 
-.emptyState {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 4rem 2rem;
-  color: #666;
+.qcardSub {
+  font-weight: var(--font-weight-regular);
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
-.emptyState p:first-child {
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
-  color: #1A1A18;
+.qcardMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.emptySubtext {
-  font-size: 0.9rem;
-  color: #888;
+.qcardDifficulty {
+  display: flex;
+  gap: 3px;
+}
+
+.qcardDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-cta-green);
+  font-style: normal;
+}
+
+.qcardDotOff {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.qcardInfo {
+  font-family: var(--font-primary);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.qcardSlots {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.qcardSlot {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-cta-green);
+}
+
+.qcardSlot sub {
+  font-size: 10px;
+  vertical-align: super;
+  margin-left: 1px;
+}
+
+.qcardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }

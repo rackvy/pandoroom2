@@ -1,0 +1,357 @@
+/* VR Schedule Page Layout */
+.page {
+  padding: 1.5rem;
+  height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #1A1A18;
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  flex: 1;
+}
+
+.datePicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dateButton {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.dateButton:hover {
+  background: #f3f4f6;
+}
+
+.dateButton.active {
+  background: #A0BF39;
+  color: white;
+  border-color: #A0BF39;
+}
+
+.dateInput {
+  padding: 0.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.branchSelect {
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.addButton {
+  padding: 0.5rem 1rem;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.addButton:hover {
+  background: #8fa832;
+}
+
+/* Grid Container */
+.gridContainer {
+  flex: 1;
+  overflow: auto;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Schedule Table */
+.scheduleTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.scheduleTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #f9fafb;
+}
+
+.scheduleTable th {
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.scheduleTable th:first-child {
+  text-align: left;
+  min-width: 70px;
+  position: sticky;
+  left: 0;
+  background: #f9fafb;
+  z-index: 11;
+}
+
+.scheduleTable td {
+  padding: 0;
+  border: 1px solid #f3f4f6;
+  height: 40px;
+  vertical-align: top;
+  position: relative;
+}
+
+.scheduleTable td:first-child {
+  padding: 0.25rem 0.5rem;
+  text-align: center;
+  font-weight: 500;
+  color: #6b7280;
+  font-size: 0.8rem;
+  background: #fafafa;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  border-right: 2px solid #e5e7eb;
+}
+
+/* Time column half-hour indicator */
+.timeSlotHalf {
+  color: #9ca3af;
+  font-size: 0.7rem;
+}
+
+/* Empty Cell */
+.emptyCell {
+  cursor: pointer;
+  transition: background 0.15s;
+  height: 100%;
+  min-height: 40px;
+}
+
+.emptyCell:hover {
+  background: rgba(160, 191, 57, 0.1);
+}
+
+/* Reservation Block */
+.reservationBlock {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-height: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+
+.reservationBlock:hover {
+  opacity: 0.85;
+}
+
+.fullHall {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-left: 3px solid #1d4ed8;
+}
+
+.openSlot {
+  background: #dcfce7;
+  color: #15803d;
+  border-left: 3px solid #15803d;
+}
+
+.canceled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-left: 3px solid #9ca3af;
+  text-decoration: line-through;
+}
+
+.reservationTitle {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reservationTime {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+/* Popover */
+.popoverOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+.popover {
+  position: fixed;
+  z-index: 101;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  min-width: 280px;
+  max-width: 360px;
+}
+
+.popoverTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1A1A18;
+  margin: 0 0 12px 0;
+}
+
+.popoverRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.popoverLabel {
+  color: #6b7280;
+}
+
+.popoverValue {
+  font-weight: 500;
+  color: #1A1A18;
+}
+
+.popoverActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.popoverBtn {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.cancelBtn:hover {
+  background: #fde68a;
+}
+
+.deleteBtn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.deleteBtn:hover {
+  background: #fecaca;
+}
+
+/* Status badges */
+.statusBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.statusConfirmed {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.statusCanceled {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.statusDraft {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.statusDone {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* Loading / Empty */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+  gap: 0.5rem;
+}
+
+.emptyState p:first-child {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #374151;
+}

@@ -1,0 +1,212 @@
+/* ==================== CSS-ПЕРЕМЕННЫЕ ==================== */
+
+:root {
+  --color-bg: #0a0a0a;
+  --color-bg-card: #141414;
+  --color-bg-alt: #1a1a1a;
+  --color-primary: #b5e61d;
+  --color-secondary: #d946ef;
+  --color-accent: #b5e61d;
+  --color-text: #ffffff;
+  --color-text-muted: #9ca3af;
+  --color-border: #2a2a2a;
+  --color-bg-deep: #0a0a0a;
+  --color-bg-overlay: rgba(0, 0, 0, 0.55);
+  --color-card-overlay: rgba(20, 20, 20, 0.85);
+  --color-stroke-green: #b5e61d;
+  --color-stroke-pink: #d946ef;
+  --color-tag-bg: rgba(0, 0, 0, 0.65);
+  --color-cta-pink: #d946ef;
+  --color-cta-green: #b5e61d;
+
+  --font-heading: 'Actay Wide', 'Actay', sans-serif;
+  --font-primary: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-md: 18px;
+  --font-size-lg: 24px;
+  --font-size-xl: 32px;
+  --font-size-2xl: 48px;
+  --font-size-3xl: 64px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+  --space-5xl: 128px;
+
+  --container-max: 1516px;
+  --container-padding: 24px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.15);
+
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 400ms ease;
+}
+
+/* ==================== FONTS ==================== */
+
+@font-face {
+  font-family: 'Actay Wide';
+  src: url('/fonts/ActayWide-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Actay';
+  src: url('/fonts/Actay-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Actay';
+  src: url('/fonts/Actay-RegularItalic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ==================== ГЛОБАЛЬНЫЕ СТИЛИ ==================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-primary);
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-normal);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+img,
+picture,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ==================== УТИЛИТЫ ==================== */
+
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==================== ЭФФЕКТ ЗАГОЛОВКОВ ==================== */
+
+.title-effect {
+  font-family: var(--font-heading);
+  color: #ffffff;
+  text-shadow:
+    -1px -1px 0 var(--color-stroke-green),
+    -2px -2px 0 var(--color-stroke-green),
+    1px 1px 0 var(--color-stroke-pink),
+    2px 2px 0 var(--color-stroke-pink);
+  letter-spacing: 0.5px;
+}
+
+.title-effect--lg {
+  text-shadow:
+    -1px -1px 0 var(--color-stroke-green),
+    -2px -2px 0 var(--color-stroke-green),
+    -3px -3px 0 var(--color-stroke-green),
+    -4px -4px 0 var(--color-stroke-green),
+    1px 1px 0 var(--color-stroke-pink),
+    2px 2px 0 var(--color-stroke-pink),
+    3px 3px 0 var(--color-stroke-pink),
+    4px 4px 0 var(--color-stroke-pink);
+}
+
+/* Фоновый виньет */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(1200px 600px at 50% -200px, rgba(217, 70, 239, 0.06), transparent 60%),
+    radial-gradient(900px 500px at 80% 30%, rgba(181, 230, 29, 0.04), transparent 60%);
+}

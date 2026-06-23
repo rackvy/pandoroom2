@@ -6,6 +6,10 @@ import QuestSelector from '../components/booking/QuestSelector';
 import api from '../lib/axios';
 import { toast } from '../components/ui/Toast';
 import { confirm } from '../components/ui/ConfirmDialog';
+import { sendNotification } from '../api/notifications';
+import { createPaymentLink, getPaymentStatus } from '../api/payments';
+import { syncBookingToCalendar } from '../api/googleCalendar';
+import { createIikoOrder, getIikoOrderStatus } from '../api/iiko';
 import styles from './BookingEditPage.module.css';
 
 interface Cake {
@@ -32,6 +36,7 @@ interface FoodItem {
   quantity: number;
   servingTime: string | null;
   comment: string | null;
+  department: string | null;
 }
 
 interface ExtraSlot {
@@ -76,15 +81,28 @@ export default function BookingEditPage() {
 
   // Get selected branch with zone flags
   const selectedBranch = branches.find(b => b.id === booking?.branch?.id);
+  const branchHasCafe = !!(selectedBranch?.hasCafe || selectedBranch?.hasLounge || selectedBranch?.hasKids);
+  const branchHasVR = !!selectedBranch?.hasVR;
+  const branchHasQuests = !!selectedBranch?.hasQuests;
 
   // Show/hide selectors state
   const [showTableSelector, setShowTableSelector] = useState(false);
   const [showQuestSelector, setShowQuestSelector] = useState(false);
+  const [notificationChannel, setNotificationChannel] = useState<'sms' | 'telegram' | 'max'>('sms');
+  const [sendingNotification, setSendingNotification] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [syncingCalendar, setSyncingCalendar] = useState(false);
+  const [iikoLoading, setIikoLoading] = useState(false);
+  const [iikoOrderId, setIikoOrderId] = useState<string | null>(null);
+  const [iikoStatus, setIikoStatus] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
     loadBranches();
     loadManagers();
+    loadPaymentStatus();
   }, [id]);
 
   const loadData = async () => {
@@ -111,6 +129,8 @@ export default function BookingEditPage() {
       setDecorations(data.decorationItems || []);
       setFoodItems(data.foodItems || []);
       setExtraSlots(data.extraSlots || []);
+      setIikoOrderId(data.iikoOrderId || null);
+      setIikoStatus(data.iikoOrderStatus || null);
     } catch (error) {
       console.error('Failed to load booking:', error);
     } finally {
@@ -133,6 +153,48 @@ export default function BookingEditPage() {
       setManagers(response.data);
     } catch (error) {
       console.error('Failed to load managers:', error);
+    }
+  };
+
+  const loadPaymentStatus = async () => {
+    if (!id) return;
+    try {
+      const data = await getPaymentStatus(id);
+      setPaymentStatus(data.paymentStatus);
+      setPaymentUrl(data.paymentUrl);
+    } catch (error) {
+      // Payment status may not exist yet, silently ignore
+    }
+  };
+
+  const handleCreatePaymentLink = async () => {
+    if (!id || !booking) return;
+    const amount = booking.depositRub || Number(formData.depositRub) || 0;
+    if (amount <= 0) {
+      toast.error('Укажите сумму депозита');
+      return;
+    }
+    setPaymentLoading(true);
+    try {
+      const result = await createPaymentLink(id, amount);
+      if (result.error) {
+        toast.error(`Ошибка: ${result.error}`);
+      } else if (result.paymentUrl) {
+        setPaymentUrl(result.paymentUrl);
+        setPaymentStatus('pending');
+        toast.success('Ссылка на оплату сформирована');
+      }
+    } catch (error) {
+      toast.error('Ошибка формирования ссылки');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleCopyPaymentUrl = () => {
+    if (paymentUrl) {
+      navigator.clipboard.writeText(paymentUrl);
+      toast.success('Ссылка скопирована');
     }
   };
 
@@ -225,15 +287,24 @@ export default function BookingEditPage() {
   const handleAddFood = async () => {
     const menuItemId = prompt('ID блюда:');
     if (!menuItemId || !id) return;
+    const department = prompt('Цех (bar / pizza / hot_kitchen / cold_kitchen):') || null;
     try {
       await api.post(`/api/admin/bookings/${id}/food`, {
         menuItemId,
         quantity: 1,
+        department,
       });
       loadData();
     } catch (error) {
       alert('Ошибка добавления блюда');
     }
+  };
+
+  const departmentLabels: Record<string, string> = {
+    bar: 'Бар',
+    pizza: 'Пицца',
+    hot_kitchen: 'Горячий цех',
+    cold_kitchen: 'Холодный цех',
   };
 
   const handleRemoveFood = async (itemId: string) => {
@@ -289,6 +360,83 @@ export default function BookingEditPage() {
     }
   };
 
+  const handleSendNotification = async (templateKey: 'MISSED_CALL' | 'PREORDER_REMINDER') => {
+    if (!id) return;
+    setSendingNotification(true);
+    try {
+      const result = await sendNotification({
+        bookingId: id,
+        templateKey,
+        channel: notificationChannel,
+      });
+      if (result.success) {
+        toast.success('Уведомление отправлено');
+      } else {
+        toast.error(result.error || 'Ошибка отправки уведомления');
+      }
+    } catch (error) {
+      toast.error('Ошибка отправки уведомления');
+    } finally {
+      setSendingNotification(false);
+    }
+  };
+
+  const handleSyncCalendar = async () => {
+    if (!id) return;
+    setSyncingCalendar(true);
+    try {
+      const result = await syncBookingToCalendar(id);
+      toast.success('Синхронизация с Google Calendar выполнена');
+      // Update booking state with new googleEventId
+      setBooking(prev => prev ? { ...prev, googleEventId: result.googleEventId } : prev);
+    } catch (error) {
+      toast.error('Ошибка синхронизации с Google Calendar');
+    } finally {
+      setSyncingCalendar(false);
+    }
+  };
+
+  const handleRefreshIiko = async () => {
+    if (!iikoOrderId) {
+      toast.error('Заказ iiko не создан');
+      return;
+    }
+    setIikoLoading(true);
+    try {
+      const result = await getIikoOrderStatus(iikoOrderId);
+      setIikoStatus(result.status);
+      toast.success(`Статус iiko: ${result.status}`);
+    } catch (error) {
+      toast.error('Ошибка получения статуса iiko');
+    } finally {
+      setIikoLoading(false);
+    }
+  };
+
+  const handleCreateIikoOrder = async () => {
+    if (!id) return;
+    const items = foodItems.map((f) => ({
+      name: f.menuItemName,
+      qty: f.quantity,
+      price: 0,
+    }));
+    if (items.length === 0) {
+      toast.error('Добавьте блюда в заказ перед созданием чека iiko');
+      return;
+    }
+    setIikoLoading(true);
+    try {
+      const result = await createIikoOrder(id, items);
+      setIikoOrderId(result.iikoOrderId);
+      setIikoStatus(result.status);
+      toast.success(`Чек iiko создан: ${result.iikoOrderId}`);
+    } catch (error) {
+      toast.error('Ошибка создания чека iiko');
+    } finally {
+      setIikoLoading(false);
+    }
+  };
+
   const handleDeleteBooking = async () => {
     const confirmed = await confirm({
       title: 'Удаление бронирования',
@@ -323,14 +471,26 @@ export default function BookingEditPage() {
           <div className={styles.iikoField}>
             <label>Номер чека в iiko</label>
             <div className={styles.iikoInput}>
-              <input 
-                type="text" 
-                value={booking.id.slice(0, 8)} 
-                readOnly 
+              <input
+                type="text"
+                value={iikoOrderId || '—'}
+                readOnly
                 className={styles.shortInput}
               />
-              <button className={styles.refreshBtn}>↻</button>
+              <button
+                className={styles.refreshBtn}
+                onClick={handleRefreshIiko}
+                disabled={iikoLoading}
+                title="Обновить статус из iiko"
+              >
+                {iikoLoading ? '...' : '↻'}
+              </button>
             </div>
+            {iikoStatus && (
+              <span className={styles.syncBadge}>
+                Статус: {iikoStatus}
+              </span>
+            )}
           </div>
         </div>
         <div className={styles.headerRight}>
@@ -345,6 +505,24 @@ export default function BookingEditPage() {
           </div>
         </div>
       </div>
+
+      {/* Branch info with feature badges */}
+      {booking.branch && (
+        <div className={styles.branchInfo}>
+          <span className={styles.branchLabel}>Филиал:</span>
+          <span className={styles.branchName}>{booking.branch.name}</span>
+          <span className={styles.branchBadges}>
+            <span className={styles.branchBadgeLabel}>Тип филиала:</span>
+            {selectedBranch?.hasCafe && <span className={styles.badge}>Кафе</span>}
+            {selectedBranch?.hasLounge && <span className={styles.badge}>Лаунж</span>}
+            {selectedBranch?.hasKids && <span className={styles.badge}>Детская</span>}
+            {selectedBranch?.hasQuests && <span className={styles.badge}>Квесты</span>}
+            {selectedBranch?.hasVR && <span className={styles.badge}>VR</span>}
+            {selectedBranch?.hasLava && <span className={styles.badge}>Лава</span>}
+            {selectedBranch?.hasLaserTag && <span className={styles.badge}>Лазертаг</span>}
+          </span>
+        </div>
+      )}
 
       <div className={styles.content}>
         {/* Left Column - Event Info */}
@@ -478,17 +656,46 @@ export default function BookingEditPage() {
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
                 <label>Депозит</label>
-                <input 
+                <input
                   type="number"
                   value={formData.depositRub}
                   onChange={(e) => setFormData({...formData, depositRub: e.target.value})}
                 />
               </div>
-              <div className={styles.paymentType}>
-                <button className={styles.paymentBtn}>Наличные</button>
-                <button className={styles.paymentBtnActive}>Безнал</button>
+              <div className={styles.formGroup}>
+                <label>Статус оплаты</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {paymentStatus === 'paid' && <span style={{ color: '#16a34a', fontWeight: 600 }}>Оплачено</span>}
+                  {paymentStatus === 'pending' && <span style={{ color: '#d97706', fontWeight: 600 }}>Ожидает оплаты</span>}
+                  {paymentStatus === 'failed' && <span style={{ color: '#dc2626', fontWeight: 600 }}>Ошибка</span>}
+                  {paymentStatus === 'refunded' && <span style={{ color: '#6b7280', fontWeight: 600 }}>Возврат</span>}
+                  {!paymentStatus && <span style={{ color: '#9ca3af' }}>—</span>}
+                </div>
               </div>
             </div>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+              <button
+                className={styles.paymentBtn}
+                onClick={handleCreatePaymentLink}
+                disabled={paymentLoading}
+              >
+                {paymentLoading ? 'Формирование...' : 'Сформировать ссылку на оплату'}
+              </button>
+              {paymentUrl && (
+                <button
+                  className={styles.paymentBtn}
+                  onClick={handleCopyPaymentUrl}
+                  title={paymentUrl}
+                >
+                  Скопировать ссылку
+                </button>
+              )}
+            </div>
+            {paymentUrl && (
+              <div style={{ marginTop: '8px', fontSize: '12px', color: '#6b7280', wordBreak: 'break-all' }}>
+                {paymentUrl}
+              </div>
+            )}
           </section>
 
           {/* Manager Section */}
@@ -523,7 +730,7 @@ export default function BookingEditPage() {
             <h3>2. Дополнения</h3>
             
             {/* Quests - only show if branch has quests */}
-            {(!selectedBranch || selectedBranch.hasQuests) && (
+            {(!selectedBranch || branchHasQuests) && (
               <div className={styles.subSection}>
                 <h4>2.1 Квест</h4>
                 {booking.questReservations.map((res) => (
@@ -537,7 +744,7 @@ export default function BookingEditPage() {
                     </div>
                   </div>
                 ))}
-                
+
                 {/* Quest Selector */}
                 {showQuestSelector && booking?.branch?.id && (
                   <div className={styles.selectorContainer}>
@@ -550,7 +757,7 @@ export default function BookingEditPage() {
                         setShowQuestSelector(false);
                       }}
                     />
-                    <button 
+                    <button
                       className={styles.cancelButton}
                       onClick={() => setShowQuestSelector(false)}
                     >
@@ -558,9 +765,9 @@ export default function BookingEditPage() {
                     </button>
                   </div>
                 )}
-                
+
                 {!showQuestSelector && (
-                  <button 
+                  <button
                     className={styles.addButton}
                     onClick={() => setShowQuestSelector(true)}
                   >
@@ -570,9 +777,20 @@ export default function BookingEditPage() {
               </div>
             )}
 
-            {/* Cakes */}
-            <div className={styles.subSection}>
-              <h4>2.2 Торт и украшения торта</h4>
+            {/* VR - only show if branch has VR */}
+            {branchHasVR && (
+              <div className={styles.subSection}>
+                <h4>2.2 VR бронирования</h4>
+                <div className={styles.vrPlaceholder}>
+                  VR бронирования — управление через VR сетку
+                </div>
+              </div>
+            )}
+
+            {/* Cakes - only for cafe branches */}
+            {(!selectedBranch || branchHasCafe) && (
+              <div className={styles.subSection}>
+                <h4>{branchHasVR ? '2.3' : '2.2'} Торт и украшения торта</h4>
               {cakes.map((cake) => (
                 <div key={cake.id} className={styles.addonRow}>
                   <div className={styles.tag}>{cake.cakeName} {cake.weightKg} кг</div>
@@ -598,11 +816,12 @@ export default function BookingEditPage() {
                   + добавить украшение торта
                 </button>
               </div>
-            </div>
+              </div>
+            )}
 
             {/* Extra Entertainment */}
             <div className={styles.subSection}>
-              <h4>2.3 Дополнительные развлечения</h4>
+              <h4>2.4 Дополнительные развлечения</h4>
               {extraSlots.map((slot) => (
                 <div key={slot.id} className={styles.addonRow}>
                   <div className={styles.tag}>
@@ -627,35 +846,40 @@ export default function BookingEditPage() {
               </button>
             </div>
 
-            {/* Decorations */}
-            <div className={styles.subSection}>
-              <h4>2.4 Украшение зала</h4>
-              {decorations.map((item) => (
-                <div key={item.id} className={styles.addonRow}>
-                  <div className={styles.tag}>{item.decorationName}</div>
-                  <div className={styles.quantity}>{item.quantity} шт</div>
-                  <div className={styles.rowActions}>
-                    <button className={styles.editBtn}>Изменить</button>
-                    <button 
-                      className={styles.deleteBtn}
-                      onClick={() => handleRemoveDecoration(item.id)}
-                    >
-                      🗑
-                    </button>
+            {/* Decorations - only for cafe branches */}
+            {(!selectedBranch || branchHasCafe) && (
+              <div className={styles.subSection}>
+                <h4>2.5 Украшение зала</h4>
+                {decorations.map((item) => (
+                  <div key={item.id} className={styles.addonRow}>
+                    <div className={styles.tag}>{item.decorationName}</div>
+                    <div className={styles.quantity}>{item.quantity} шт</div>
+                    <div className={styles.rowActions}>
+                      <button className={styles.editBtn}>Изменить</button>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => handleRemoveDecoration(item.id)}
+                      >
+                        🗑
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-              <button className={styles.addButton} onClick={handleAddDecoration}>
-                + добавить украшение зала
-              </button>
-            </div>
+                ))}
+                <button className={styles.addButton} onClick={handleAddDecoration}>
+                  + добавить украшение зала
+                </button>
+              </div>
+            )}
 
             {/* Food */}
             <div className={styles.subSection}>
-              <h4>2.5 Кухня / бар (состав чека из iiko)</h4>
+              <h4>2.6 Кухня / бар (состав чека из iiko)</h4>
               {foodItems.map((item) => (
                 <div key={item.id} className={styles.foodRow}>
                   <div className={styles.foodName}>{item.menuItemName}</div>
+                  <div className={styles.foodDept}>
+                    {item.department ? (departmentLabels[item.department] || item.department) : '—'}
+                  </div>
                   <div className={styles.foodQty}>{item.quantity} шт</div>
                   <div className={styles.foodTime}>{item.servingTime?.slice(0, 5) || '—'}</div>
                   <div className={styles.rowActions}>
@@ -687,12 +911,56 @@ export default function BookingEditPage() {
           >
             {saving ? 'Сохранение...' : 'Сохранить изменения'}
           </button>
-          <button className={styles.smsBtn}>СМС: "Не смогли дозвониться"</button>
-          <button className={styles.smsBtn}>СМС: "Напоминание о предзаказе"</button>
+          <select
+            className={styles.smsBtn}
+            value={notificationChannel}
+            onChange={(e) => setNotificationChannel(e.target.value as 'sms' | 'telegram' | 'max')}
+          >
+            <option value="sms">SMS</option>
+            <option value="telegram">Telegram</option>
+            <option value="max">MAX</option>
+          </select>
+          <button
+            className={styles.smsBtn}
+            onClick={() => handleSendNotification('MISSED_CALL')}
+            disabled={sendingNotification}
+          >
+            {sendingNotification ? 'Отправка...' : '"Не смогли дозвониться"'}
+          </button>
+          <button
+            className={styles.smsBtn}
+            onClick={() => handleSendNotification('PREORDER_REMINDER')}
+            disabled={sendingNotification}
+          >
+            {sendingNotification ? 'Отправка...' : '"Напоминание о предзаказе"'}
+          </button>
+          <button
+            className={styles.smsBtn}
+            onClick={handleSyncCalendar}
+            disabled={syncingCalendar}
+          >
+            {syncingCalendar ? 'Синхронизация...' : 'Google Calendar'}
+          </button>
+          {booking.googleEventId && (
+            <span className={styles.syncBadge}>Событие синхронизировано</span>
+          )}
         </div>
         <div className={styles.footerRight}>
-          <button className={styles.refreshBtn}>обновить из iiko ↻</button>
-          <button 
+          <button
+            className={styles.smsBtn}
+            onClick={handleCreateIikoOrder}
+            disabled={iikoLoading}
+          >
+            {iikoLoading ? 'Создание...' : 'Создать чек в iiko'}
+          </button>
+          <button
+            className={styles.refreshBtn}
+            onClick={handleRefreshIiko}
+            disabled={iikoLoading || !iikoOrderId}
+          >
+            {iikoLoading ? 'Загрузка...' : 'обновить из iiko ↻'}
+          </button>
+          <button
             className={styles.deleteBookingBtn}
             onClick={handleDeleteBooking}
           >

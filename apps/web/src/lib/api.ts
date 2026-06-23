@@ -1,4 +1,4 @@
-export const BASE_API_URL = 'http://localhost:3001/api/public'
+export const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/public'
 
 export async function fetchApi(endpoint: string) {
   const res = await fetch(`${BASE_API_URL}${endpoint}`, {
@@ -16,68 +16,48 @@ export async function fetchApi(endpoint: string) {
 export interface Quest {
   id: string
   name: string
-  description: string
-  shortDescription: string
-  duration: number
+  subtitle?: string | null
+  genre: string
+  difficulty: 'easy' | 'medium' | 'hard'
+  hasActors: boolean
+  ageRestriction?: string | null
+  durationMinutes: number
   minPlayers: number
   maxPlayers: number
-  minAge: number
-  difficulty: 'EASY' | 'MEDIUM' | 'HARD'
-  isActive: boolean
-  branchId: string
-  previewImage?: {
-    id: string
-    url: string
-    alt?: string
-  }
-  branch?: {
-    id: string
-    name: string
-    city: string
-  }
+  address: string
+  previewImage?: { id: string; url: string } | null
+  backgroundImage?: { id: string; url: string } | null
 }
 
-export interface News {
+export interface NewsItem {
   id: string
   title: string
+  date: string
   content: string
-  excerpt?: string
-  isPublished: boolean
-  publishedAt?: string
-  createdAt: string
-  coverImage?: {
-    id: string
-    url: string
-    alt?: string
-  }
+  coverTitle?: string | null
+  coverSub?: string | null
+  coverVariant?: string | null
+  cardBg?: string | null
+  image?: { id: string; url: string } | null
 }
 
-export interface Review {
+export interface ReviewItem {
   id: string
-  authorName: string
-  content: string
+  name: string
   rating: number
-  isPublished: boolean
+  text: string
   createdAt: string
-  source?: {
-    id: string
-    name: string
-    icon?: string
-  }
+  source?: { id: string; name: string; icon?: { id: string; url: string } | null } | null
 }
 
 export interface PageBlock {
   id: string
   pageKey: string
   blockKey: string
-  title?: string
-  content?: string
+  title?: string | null
+  text?: string | null
+  linkUrl?: string | null
+  image?: { id: string; url: string } | null
+  extraJson?: any
   sortOrder: number
-  isActive: boolean
-  media?: Array<{
-    id: string
-    url: string
-    alt?: string
-    sortOrder: number
-  }>
 }

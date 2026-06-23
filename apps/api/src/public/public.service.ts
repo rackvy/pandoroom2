@@ -21,8 +21,18 @@ export class PublicService {
     return branch;
   }
 
-  async findAllQuests() {
+  async findAllQuests(filters?: { hasActors?: string; ageRestriction?: string }) {
+    const where: any = {};
+    if (filters?.hasActors === 'true') {
+      where.hasActors = true;
+    } else if (filters?.hasActors === 'false') {
+      where.hasActors = false;
+    }
+    if (filters?.ageRestriction) {
+      where.ageRestriction = filters.ageRestriction;
+    }
     return this.prisma.quest.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: {
         branch: true,
@@ -84,5 +94,22 @@ export class PublicService {
       orderBy: { sortOrder: 'asc' },
       include: { icon: true },
     });
+  }
+
+  async getVRGames() {
+    return this.prisma.vRGame.findMany({
+      where: { isActive: true },
+      include: { previewImage: true },
+      orderBy: { sortOrder: 'asc' },
+    });
+  }
+
+  async getVRGame(id: string) {
+    const game = await this.prisma.vRGame.findUnique({
+      where: { id },
+      include: { previewImage: true },
+    });
+    if (!game) throw new NotFoundException('VR Game not found');
+    return game;
   }
 }
