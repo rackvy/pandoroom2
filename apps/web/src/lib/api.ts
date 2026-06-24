@@ -29,6 +29,22 @@ export interface Quest {
   backgroundImage?: { id: string; url: string } | null
 }
 
+export interface QuestGalleryPhoto {
+  id: string
+  sortOrder: number
+  image: { id: string; url: string }
+}
+
+export interface QuestDetail extends Quest {
+  description: string
+  rules: string
+  safety: string
+  extraServices: string
+  extraPlayerPrice: number
+  galleryPhotos: QuestGalleryPhoto[]
+  branch: { id: string; name: string; address?: string | null }
+}
+
 export interface NewsItem {
   id: string
   title: string
@@ -59,5 +75,25 @@ export interface PageBlock {
   linkUrl?: string | null
   image?: { id: string; url: string } | null
   extraJson?: any
+  sortOrder: number
+}
+
+export interface Branch {
+  id: string
+  name: string
+  address: string
+  phone?: string | null
+  email?: string | null
+  whatsapp?: string | null
+  telegram?: string | null
+  workingHours?: string | null
+  geoLat?: number | null
+  geoLng?: number | null
+}
+
+export interface AboutFact {
+  id: string
+  icon?: string | null
+  text: string
   sortOrder: number
 }

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import styles from './guide.module.css'
+import { fetchApi, type Quest, type NewsItem, type ReviewItem, type PageBlock } from '@/lib/api'
 
 export const metadata = {
   title: 'Праздник гид — Площадки для праздников во Владивостоке | PANDOROOM',
@@ -7,9 +8,43 @@ export const metadata = {
     'Площадки для праздников и самый большой квеструм во Владивостоке. Праздник «под ключ» — игровая, кафе, шоу-программа, квесты, торт и пиньята.',
 }
 
-/* ==================== MOCK DATA ==================== */
+/* ==================== API FETCHERS ==================== */
 
-const holidayCards = [
+async function getQuests(): Promise<Quest[]> {
+  try {
+    return await fetchApi('/quests')
+  } catch {
+    return []
+  }
+}
+
+async function getNews(): Promise<NewsItem[]> {
+  try {
+    return await fetchApi('/news')
+  } catch {
+    return []
+  }
+}
+
+async function getReviews(): Promise<ReviewItem[]> {
+  try {
+    return await fetchApi('/reviews')
+  } catch {
+    return []
+  }
+}
+
+async function getGuideBlocks(): Promise<PageBlock[]> {
+  try {
+    return await fetchApi('/content?pageKey=PARTY_GUIDE')
+  } catch {
+    return []
+  }
+}
+
+/* ==================== FALLBACK DATA ==================== */
+
+const fallbackHolidayCards = [
   { kicker: 'праздники', title: 'для малышей', poster: '/images/main/6.png' },
   { kicker: 'праздники для детей', title: '6 — 10 лет', poster: '/images/main/5.png' },
   { kicker: 'праздники для детей', title: '10 — 15 лет', poster: '/images/main/4.png' },
@@ -19,7 +54,7 @@ const holidayCards = [
 ]
 
 const services = [
-  { name: 'Lounge', iconPath: 'M11.052 18.9911L9.01367 17.5493C9.03853 17.4996 12.3943 12.7767 17.5895 6.7115C23.1078 0.273432 33.5479 0 33.9954 0H44.336V2.48574H34.0202C33.9456 2.48574 24.2761 2.73431 19.4786 8.32723C14.358 14.293 11.0768 18.9413 11.052 18.9911Z' },
+  { name: 'Lounge' },
   { name: 'Игровая' },
   { name: 'Кафе' },
   { name: 'Шоу-программа' },
@@ -28,7 +63,77 @@ const services = [
   { name: 'Пиньята' },
 ]
 
+/* ==================== MAPPING HELPERS ==================== */
+
+function difficultyToLevel(d: string): number {
+  return d === 'easy' ? 1 : d === 'medium' ? 3 : 5
+}
+
+function formatDuration(mins: number): string {
+  return `${mins} минут`
+}
+
+function formatPlayers(min: number, max: number): string {
+  return `${min}-${max} игроков`
+}
+
+function getTagVariant(genre: string): 'horror' | 'detective' | 'kids' | undefined {
+  if (genre === 'хоррор') return 'horror'
+  if (genre === 'детектив') return 'detective'
+  if (genre === 'детский') return 'kids'
+  return undefined
+}
+
 interface QuestCard {
+  id: string
+  title: string
+  subtitle?: string
+  tag: string
+  tagVariant?: 'horror' | 'detective' | 'kids'
+  difficulty: number
+  duration: string
+  players: string
+  age: string
+  poster: string
+}
+
+function mapQuest(q: Quest): QuestCard {
+  return {
+    id: q.id,
+    title: q.name,
+    subtitle: q.subtitle || undefined,
+    tag: q.genre,
+    tagVariant: getTagVariant(q.genre),
+    difficulty: difficultyToLevel(q.difficulty),
+    duration: formatDuration(q.durationMinutes),
+    players: formatPlayers(q.minPlayers, q.maxPlayers),
+    age: q.ageRestriction || '12+',
+    poster: q.previewImage?.url || '',
+  }
+}
+
+interface MappedNews {
+  id: string
+  cardBg: string
+  coverTitle: string
+  coverSub?: string
+  coverVariant?: string
+  date: string
+  title: string
+  text: string
+}
+
+interface MappedReview {
+  id: string
+  name: string
+  date: string
+  text: string
+  source: string
+}
+
+/* ==================== FALLBACK QUESTS ==================== */
+
+interface FallbackQuest {
   title: string
   sub?: string
   tag: string
@@ -40,7 +145,7 @@ interface QuestCard {
   age: string
 }
 
-const questsWithActors: QuestCard[] = [
+const fallbackQuestsWithActors: FallbackQuest[] = [
   { title: 'Гарри Поттер', sub: 'и Философский камень', tag: 'приключение', poster: '/images/main/hp.jpg', difficulty: 4, duration: '60 минут', players: '2-6 игроков', age: '12+' },
   { title: 'Чумной доктор', tag: 'мистический', poster: '/images/quests/plague-doctor.jpg', difficulty: 3, duration: '60 минут', players: '2-6 игроков', age: '12+' },
   { title: 'Сокровища пиратов', tag: 'приключение', poster: '/images/quests/pirates.jpg', difficulty: 2, duration: '60 минут', players: '2-6 игроков', age: '12+' },
@@ -48,7 +153,7 @@ const questsWithActors: QuestCard[] = [
   { title: 'Код Да Винчи', tag: 'приключение', poster: '/images/quests/da-vinci.jpg', difficulty: 3, duration: '60 минут', players: '2-6 игроков', age: '12+' },
 ]
 
-const questsWithoutActors: QuestCard[] = [
+const fallbackQuestsWithoutActors: FallbackQuest[] = [
   { title: 'Инквизиция', tag: 'мистический', poster: '/images/quests/inquisition.jpg', difficulty: 4, duration: '60 минут', players: '2-6 игроков', age: '14+' },
   { title: 'Silent Hill', tag: 'хоррор', tagVariant: 'horror', poster: '/images/quests/silent-hill.jpg', difficulty: 5, duration: '80 минут', players: '2-6 игроков', age: '16+' },
   { title: 'Секретный эксперимент', tag: 'детектив', tagVariant: 'detective', poster: '/images/quests/secret-experiment.jpg', difficulty: 4, duration: '70 минут', players: '2-6 игроков', age: '12+' },
@@ -56,23 +161,13 @@ const questsWithoutActors: QuestCard[] = [
   { title: 'Охотники', tag: 'хоррор', tagVariant: 'horror', poster: '/images/quests/hunters.jpg', difficulty: 4, duration: '60 минут', players: '2-6 игроков', age: '14+' },
 ]
 
-const kidsQuests: QuestCard[] = [
+const fallbackKidsQuests: FallbackQuest[] = [
   { title: 'Лазертаг', tag: 'детский', tagVariant: 'kids', poster: '/images/quests/lasertag.jpg', difficulty: 2, duration: '60 минут', players: '4-8 игроков', age: '7+' },
   { title: 'Ограбление века', tag: 'детский', tagVariant: 'kids', poster: '/images/quests/heist.jpg', difficulty: 3, duration: '60 минут', players: '2-6 игроков', age: '10+' },
   { title: 'Вий', tag: 'детский', tagVariant: 'kids', poster: '/images/quests/viy.jpg', difficulty: 3, duration: '60 минут', players: '2-6 игроков', age: '10+' },
 ]
 
-interface NewsCard {
-  coverTitle: string
-  coverSub?: string
-  coverVariant?: 'mummy' | 'discount' | 'may'
-  cardBg: string
-  date: string
-  title: string
-  text: string
-}
-
-const newsCards: NewsCard[] = [
+const fallbackNews: Array<{ cardBg: string; coverTitle: string; coverSub?: string; coverVariant?: string; date: string; title: string; text: string }> = [
   {
     coverTitle: 'ДЕНЬ РОЖДЕНИЯ\nВ КВЕСТЕ',
     cardBg: 'linear-gradient(180deg, #1a2010 0%, #07080a 100%)',
@@ -109,14 +204,7 @@ const newsCards: NewsCard[] = [
   },
 ]
 
-interface Review {
-  name: string
-  date: string
-  text: string
-  source: string
-}
-
-const reviews: Review[] = [
+const fallbackReviews: Array<{ name: string; date: string; text: string; source: string }> = [
   { name: 'Кристина', date: '12 августа 2024', text: 'Вот уже много лет отмечаем у нас праздники здесь. Это невероятно крутое место для детей и для взрослых. Сама атмосфера просто волшебная.', source: 'VL.RU' },
   { name: 'Пелагея Ганчикова', date: '6 августа 2024', text: 'Были в Джинсе на Свердлова с детьми, всё было организовано отлично. Иваня. Дочка с 5 лет, остались очень довольны, ушли с подарками — благодарим за заботу!', source: '2GIS' },
   { name: 'Роксолана Скрипка', date: '1 августа 2024', text: 'Отличное место для празднования с друзьями, семьей или со своей второй половиной. Также отличная кухня и разнообразный бар :) Иван — официант, всё на высоте!', source: '2GIS' },
@@ -138,7 +226,7 @@ function DifficultyDots({ level }: { level: number }) {
   )
 }
 
-function QuestCardItem({ quest }: { quest: QuestCard }) {
+function QuestCardItem({ quest }: { quest: QuestCard | FallbackQuest }) {
   const tagClass =
     quest.tagVariant === 'horror'
       ? `${styles.questCardTag} ${styles.questCardTagHorror}`
@@ -161,7 +249,12 @@ function QuestCardItem({ quest }: { quest: QuestCard }) {
       <div className={styles.questCardBody}>
         <h3 className={styles.questCardTitle}>
           {quest.title}
-          {quest.sub && <span className={styles.questCardSub}>{quest.sub}</span>}
+          {'subtitle' in quest && quest.subtitle
+            ? <span className={styles.questCardSub}>{quest.subtitle}</span>
+            : 'sub' in quest && quest.sub
+              ? <span className={styles.questCardSub}>{quest.sub}</span>
+              : null
+          }
         </h3>
         <div className={styles.questCardMeta}>
           <DifficultyDots level={quest.difficulty} />
@@ -175,7 +268,7 @@ function QuestCardItem({ quest }: { quest: QuestCard }) {
   )
 }
 
-function QuestsSlider({ title, quests }: { title: string; quests: QuestCard[] }) {
+function QuestsSlider({ title, quests }: { title: string; quests: (QuestCard | FallbackQuest)[] }) {
   return (
     <section className={styles.sectionQuests}>
       <div className="container">
@@ -187,7 +280,7 @@ function QuestsSlider({ title, quests }: { title: string; quests: QuestCard[] })
         </button>
         <div className={styles.questsSliderTrack}>
           {quests.map((quest, idx) => (
-            <QuestCardItem key={idx} quest={quest} />
+            <QuestCardItem key={'id' in quest ? quest.id : idx} quest={quest} />
           ))}
         </div>
         <button className={`${styles.sliderArrow} ${styles.sliderArrowNext}`} aria-label="Вперед">
@@ -200,7 +293,68 @@ function QuestsSlider({ title, quests }: { title: string; quests: QuestCard[] })
 
 /* ==================== PAGE ==================== */
 
-export default function GuidePage() {
+export default async function GuidePage() {
+  const [allQuests, newsData, reviewsData, guideBlocks] = await Promise.all([
+    getQuests(),
+    getNews(),
+    getReviews(),
+    getGuideBlocks(),
+  ])
+
+  /* --- quests --- */
+  const apiQuestsWithActors = allQuests
+    .filter(q => q.hasActors && q.ageRestriction !== '0+')
+    .map(mapQuest)
+
+  const apiQuestsWithoutActors = allQuests
+    .filter(q => !q.hasActors && q.ageRestriction !== '0+')
+    .map(mapQuest)
+
+  const apiKidsQuests = allQuests
+    .filter(q => q.ageRestriction === '0+')
+    .map(mapQuest)
+
+  const questsWithActors: (QuestCard | FallbackQuest)[] = apiQuestsWithActors.length > 0 ? apiQuestsWithActors : fallbackQuestsWithActors
+  const questsWithoutActors: (QuestCard | FallbackQuest)[] = apiQuestsWithoutActors.length > 0 ? apiQuestsWithoutActors : fallbackQuestsWithoutActors
+  const kidsQuests: (QuestCard | FallbackQuest)[] = apiKidsQuests.length > 0 ? apiKidsQuests : fallbackKidsQuests
+
+  /* --- holiday cards --- */
+  const holidayCardsData = (() => {
+    try {
+      const parsed = JSON.parse(
+        guideBlocks.find(b => b.blockKey === 'holiday_cards')?.extraJson || '[]'
+      ) as Array<{ kicker: string; title: string; poster: string }>
+      return parsed.length > 0 ? parsed : fallbackHolidayCards
+    } catch {
+      return fallbackHolidayCards
+    }
+  })()
+
+  /* --- news --- */
+  const newsItems: MappedNews[] = newsData.length > 0
+    ? newsData.map(n => ({
+        id: n.id,
+        cardBg: n.cardBg || 'linear-gradient(180deg, #1a2010 0%, #07080a 100%)',
+        coverTitle: n.coverTitle || n.title,
+        coverSub: n.coverSub || undefined,
+        coverVariant: n.coverVariant || undefined,
+        date: new Date(n.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+        title: n.title,
+        text: n.content.substring(0, 100) + '...',
+      }))
+    : fallbackNews.map((n, idx) => ({ id: `fallback-${idx}`, ...n }))
+
+  /* --- reviews --- */
+  const reviewItems: MappedReview[] = reviewsData.length > 0
+    ? reviewsData.map(r => ({
+        id: r.id,
+        name: r.name,
+        date: new Date(r.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+        text: r.text,
+        source: r.source?.name || '',
+      }))
+    : fallbackReviews.map((r, idx) => ({ id: `fallback-${idx}`, ...r }))
+
   return (
     <main>
       {/* ===== HERO (holidays variant) ===== */}
@@ -276,7 +430,7 @@ export default function GuidePage() {
           </div>
 
           <div className={styles.holidaysGrid}>
-            {holidayCards.map((card, idx) => (
+            {holidayCardsData.map((card, idx) => (
               <article
                 key={idx}
                 className={styles.holidayCard}
@@ -338,9 +492,9 @@ export default function GuidePage() {
           <div className="container">
             <h2 className={`${styles.sectionTitle} ${styles.titleEffect}`}>Новости и акции</h2>
             <div className={styles.newsGrid}>
-              {newsCards.map((item, idx) => (
+              {newsItems.map((item) => (
                 <article
-                  key={idx}
+                  key={item.id}
                   className={styles.newsCard}
                   style={{ '--card-bg': item.cardBg } as React.CSSProperties}
                 >
@@ -363,7 +517,7 @@ export default function GuidePage() {
                     <span className={styles.newsCardDate}>{item.date}</span>
                     <h3 className={styles.newsCardTitle}>{item.title}</h3>
                     <p className={styles.newsCardText}>{item.text}</p>
-                    <Link href="/news" className={styles.newsCardLink}>
+                    <Link href={`/news/${item.id}`} className={styles.newsCardLink}>
                       подробнее
                     </Link>
                   </div>
@@ -382,8 +536,8 @@ export default function GuidePage() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
               </button>
               <div className={styles.reviewsSliderTrack}>
-                {reviews.map((review, idx) => (
-                  <article key={idx} className={styles.reviewCard}>
+                {reviewItems.map((review) => (
+                  <article key={review.id} className={styles.reviewCard}>
                     <div className={styles.reviewCardHeader}>
                       <span className={styles.reviewCardName}>{review.name}</span>
                       <span className={styles.reviewCardDate}>{review.date}</span>

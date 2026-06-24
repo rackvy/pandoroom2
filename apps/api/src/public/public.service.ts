@@ -49,6 +49,10 @@ export class PublicService {
         branch: true,
         previewImage: true,
         backgroundImage: true,
+        galleryPhotos: {
+          include: { image: true },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
     });
     if (!quest) throw new NotFoundException('Квест не найден');

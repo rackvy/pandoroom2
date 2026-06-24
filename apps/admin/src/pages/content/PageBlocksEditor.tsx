@@ -4,20 +4,54 @@ import { getPageBlocks, updatePageBlock, createPageBlock, deletePageBlock, type 
 import { uploadMedia } from '../../api/media';
 import { toast } from '../../components/ui/Toast';
 import { confirm } from '../../components/ui/ConfirmDialog';
-import styles from './QuestsListPage.module.css';
+import styles from './Form.module.css';
+import hintStyles from './PageBlocksEditor.module.css';
 import RichTextEditor from '../../components/ui/RichTextEditor';
 
-const PAGE_OPTIONS: { key: PageKey; label: string }[] = [
-  { key: 'HOME', label: 'Главная страница' },
-  { key: 'PARTY_GUIDE', label: 'Гид по праздникам' },
-  { key: 'PARTY_GUIDE_KIDS', label: 'Гид - Детский праздник' },
-  { key: 'PARTY_GUIDE_6_10', label: 'Гид - 6-10 лет' },
-  { key: 'PARTY_GUIDE_10_15', label: 'Гид - 10-15 лет' },
-  { key: 'CAFE', label: 'Кафе' },
-  { key: 'CAFE_KAFE', label: 'Кафе - Кафе' },
-  { key: 'CAFE_LOUNGE', label: 'Кафе - Лаунж' },
-  { key: 'CAFE_KIDS', label: 'Кафе - Детская' },
+// ─── Page options with descriptions ─────────────────────────────────────────
+
+interface ExpectedBlock {
+  key: string;
+  description: string;
+  extraJsonHint?: string;
+}
+
+interface PageOption {
+  key: PageKey;
+  label: string;
+  description: string;
+  expectedBlocks: ExpectedBlock[] | null; // null = free-form
+  freeFormMessage?: string;
+}
+
+const PAGE_OPTIONS: PageOption[] = [
+  {
+    key: 'HOME',
+    label: 'Главная страница',
+    description: 'Блоки для главной страницы: hero-секция, праздничные карточки, сервисы',
+    expectedBlocks: [
+      { key: 'hero_title', description: 'Заголовок hero-секции' },
+      { key: 'hero_features', description: 'Список преимуществ (JSON-массив строк)', extraJsonHint: '["Преимущество 1", "Преимущество 2", ...]' },
+      { key: 'hero_cta_text', description: 'Текст CTA-кнопки' },
+      { key: 'holiday_cards', description: 'Карточки праздников (JSON-массив объектов)', extraJsonHint: '[{"title": "...", "description": "...", "imageId": "..."}, ...]' },
+      { key: 'services', description: 'Иконки сервисов (JSON-массив объектов)', extraJsonHint: '[{"title": "...", "iconId": "..."}, ...]' },
+    ],
+  },
+  {
+    key: 'CAFE',
+    label: 'Кафе',
+    description: 'Блоки для страницы кафе',
+    expectedBlocks: null,
+    freeFormMessage: 'Создавайте блоки с произвольными ключами',
+  },
 ];
+
+// Helper to find current page option
+function getPageOption(pageKey: PageKey): PageOption | undefined {
+  return PAGE_OPTIONS.find(p => p.key === pageKey);
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function PageBlocksEditor() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,6 +72,8 @@ export default function PageBlocksEditor() {
     linkUrl: '',
     sortOrder: 0,
   });
+
+  const currentOption = getPageOption(selectedPage);
 
   const loadBlocks = useCallback(async () => {
     try {
@@ -158,14 +194,12 @@ export default function PageBlocksEditor() {
 
     const newBlocks = [...blocks];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    
-    // Swap
+
     [newBlocks[index], newBlocks[targetIndex]] = [newBlocks[targetIndex], newBlocks[index]];
-    
-    // Update sort orders
+
     try {
       await Promise.all(
-        newBlocks.map((block, i) => 
+        newBlocks.map((block, i) =>
           updatePageBlock(block.id, { sortOrder: i })
         )
       );
@@ -175,6 +209,11 @@ export default function PageBlocksEditor() {
       toast.error('Ошибка обновления порядка');
     }
   };
+
+  // Resolve extraJson hint for a given blockKey on the current page
+  function getExtraJsonHintForKey(blockKey: string): string | undefined {
+    return currentOption?.expectedBlocks?.find(b => b.key === blockKey)?.extraJsonHint;
+  }
 
   if (loading) {
     return <div className={styles.loading}>Загрузка...</div>;
@@ -186,21 +225,59 @@ export default function PageBlocksEditor() {
         <h1 className={styles.title}>Редактор страниц</h1>
       </div>
 
-      <div className={styles.formGroup} style={{ marginBottom: '20px' }}>
+      {/* Page selector */}
+      <div className={styles.formGroup} style={{ marginBottom: '8px' }}>
         <label className={styles.label}>Выберите страницу</label>
-        <select value={selectedPage} onChange={handlePageChange} className={styles.input}>
+        <select value={selectedPage} onChange={handlePageChange} className={styles.input} style={{ maxWidth: '400px' }}>
           {PAGE_OPTIONS.map(page => (
             <option key={page.key} value={page.key}>{page.label}</option>
           ))}
         </select>
       </div>
 
+      {/* Page description + expected blocks */}
+      {currentOption && (
+        <div style={{ marginBottom: '20px' }}>
+          <div className={hintStyles.pageHint}>
+            {currentOption.description}
+          </div>
+
+          {currentOption.expectedBlocks && currentOption.expectedBlocks.length > 0 && (
+            <div className={hintStyles.expectedBlocks}>
+              <div className={hintStyles.expectedBlocksTitle}>Ожидаемые ключи блоков:</div>
+              {currentOption.expectedBlocks.map(b => (
+                <div key={b.key} className={hintStyles.expectedBlockItem}>
+                  <code className={hintStyles.expectedBlockKey}>{b.key}</code>
+                  <span className={hintStyles.expectedBlockDesc}>— {b.description}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {currentOption.freeFormMessage && (
+            <div className={hintStyles.expectedBlocks}>
+              <span style={{ color: '#6b7280', fontStyle: 'italic' }}>{currentOption.freeFormMessage}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {error && <div className={styles.error}>{error}</div>}
 
       {editingBlock ? (
         <form onSubmit={handleSaveBlock} className={styles.form}>
           <h3>Редактирование блока: {editingBlock.blockKey}</h3>
-          
+
+          {/* ExtraJson hint for known blockKey */}
+          {getExtraJsonHintForKey(editingBlock.blockKey) && (
+            <div className={hintStyles.hintText} style={{ marginBottom: '1rem' }}>
+              Поле <code>extraJson</code> ожидается в формате:{' '}
+              <div className={hintStyles.extraJsonHint}>
+                {getExtraJsonHintForKey(editingBlock.blockKey)}
+              </div>
+            </div>
+          )}
+
           <div className={styles.formGroup}>
             <label className={styles.label}>Заголовок</label>
             <input
@@ -242,7 +319,7 @@ export default function PageBlocksEditor() {
       ) : isCreating ? (
         <form onSubmit={handleCreateBlock} className={styles.form}>
           <h3>Создание нового блока</h3>
-          
+
           <div className={styles.formGroup}>
             <label className={styles.label}>Ключ блока *</label>
             <input
@@ -250,9 +327,29 @@ export default function PageBlocksEditor() {
               value={newBlock.blockKey || ''}
               onChange={(e) => setNewBlock({ ...newBlock, blockKey: e.target.value })}
               className={styles.input}
-              placeholder="hero, about, features, cta..."
+              placeholder={
+                currentOption?.expectedBlocks
+                  ? currentOption.expectedBlocks.map(b => b.key).join(', ')
+                  : 'hero, about, features, cta...'
+              }
               required
             />
+            {/* Dynamic hint based on what the user types */}
+            {newBlock.blockKey && getExtraJsonHintForKey(newBlock.blockKey) && (
+              <div style={{ marginTop: '0.375rem' }}>
+                <span className={hintStyles.hintText}>
+                  Этот блок использует <code>extraJson</code>. Ожидаемый формат:
+                </span>
+                <div className={hintStyles.extraJsonHint}>
+                  {getExtraJsonHintForKey(newBlock.blockKey)}
+                </div>
+              </div>
+            )}
+            {newBlock.blockKey && currentOption?.expectedBlocks?.find(b => b.key === newBlock.blockKey) && (
+              <div className={hintStyles.hintText}>
+                {currentOption.expectedBlocks.find(b => b.key === newBlock.blockKey)!.description}
+              </div>
+            )}
           </div>
 
           <div className={styles.formGroup}>
@@ -296,86 +393,99 @@ export default function PageBlocksEditor() {
       ) : (
         <>
           <div style={{ marginBottom: '16px' }}>
-            <button className={styles.addButton} onClick={() => setIsCreating(true)}>
+            <button className={hintStyles.addButton} onClick={() => setIsCreating(true)}>
               + Добавить блок
             </button>
           </div>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Порядок</th>
-                <th>Ключ блока</th>
-                <th>Заголовок</th>
-                <th>Текст</th>
-                <th>Изображение</th>
-                <th>Действия</th>
-              </tr>
-            </thead>
-            <tbody>
-              {blocks.map((block, index) => (
-                <tr key={block.id}>
-                  <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <button 
-                        onClick={() => handleMoveBlock(index, 'up')}
-                        disabled={index === 0}
-                        style={{ padding: '2px 6px', fontSize: '12px' }}
-                      >
-                        ↑
-                      </button>
-                      <span>{block.sortOrder}</span>
-                      <button 
-                        onClick={() => handleMoveBlock(index, 'down')}
-                        disabled={index === blocks.length - 1}
-                        style={{ padding: '2px 6px', fontSize: '12px' }}
-                      >
-                        ↓
-                      </button>
-                    </div>
-                  </td>
-                  <td>{block.blockKey}</td>
-                  <td>{block.title || '-'}</td>
-                  <td>
-                    <div style={{ maxWidth: '200px', maxHeight: '60px', overflow: 'hidden' }}>
-                      {block.text ? block.text.substring(0, 50) + (block.text.length > 50 ? '...' : '') : '-'}
-                    </div>
-                  </td>
-                  <td>
-                    {block.image?.url ? (
-                      <img src={block.image.url} alt="" className={styles.questImage} style={{ width: '60px', height: '40px' }} />
-                    ) : (
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, block.id)}
-                        className={styles.fileInput}
-                        style={{ width: '100px' }}
-                      />
-                    )}
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        className={styles.actionButton}
-                        onClick={() => setEditingBlock(block)}
-                        title="Редактировать"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className={styles.actionButton}
-                        onClick={() => handleDeleteBlock(block)}
-                        title="Удалить"
-                        style={{ color: '#f44336' }}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </td>
+          {blocks.length === 0 ? (
+            <div className={styles.empty}>
+              Блоки отсутствуют. Нажмите «+ Добавить блок», чтобы создать первый.
+            </div>
+          ) : (
+            <table className={hintStyles.table}>
+              <thead>
+                <tr>
+                  <th>Порядок</th>
+                  <th>Ключ блока</th>
+                  <th>Заголовок</th>
+                  <th>Текст</th>
+                  <th>Изображение</th>
+                  <th>Действия</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {blocks.map((block, index) => (
+                  <tr key={block.id}>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <button
+                          onClick={() => handleMoveBlock(index, 'up')}
+                          disabled={index === 0}
+                          style={{ padding: '2px 6px', fontSize: '12px' }}
+                        >
+                          ↑
+                        </button>
+                        <span>{block.sortOrder}</span>
+                        <button
+                          onClick={() => handleMoveBlock(index, 'down')}
+                          disabled={index === blocks.length - 1}
+                          style={{ padding: '2px 6px', fontSize: '12px' }}
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      <code>{block.blockKey}</code>
+                      {block.extraJson && (
+                        <div className={hintStyles.hintText} title={JSON.stringify(block.extraJson, null, 2)}>
+                          extraJson ✓
+                        </div>
+                      )}
+                    </td>
+                    <td>{block.title || '-'}</td>
+                    <td>
+                      <div style={{ maxWidth: '200px', maxHeight: '60px', overflow: 'hidden' }}>
+                        {block.text ? block.text.substring(0, 50) + (block.text.length > 50 ? '...' : '') : '-'}
+                      </div>
+                    </td>
+                    <td>
+                      {block.image?.url ? (
+                        <img src={block.image.url} alt="" className={hintStyles.questImage} style={{ width: '60px', height: '40px' }} />
+                      ) : (
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleImageUpload(e, block.id)}
+                          className={styles.fileInput}
+                          style={{ width: '100px' }}
+                        />
+                      )}
+                    </td>
+                    <td>
+                      <div className={styles.actions}>
+                        <button
+                          className={hintStyles.actionButton}
+                          onClick={() => setEditingBlock(block)}
+                          title="Редактировать"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          className={hintStyles.actionButton}
+                          onClick={() => handleDeleteBlock(block)}
+                          title="Удалить"
+                          style={{ color: '#f44336' }}
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </>
       )}
     </div>
