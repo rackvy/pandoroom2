@@ -2,6 +2,8 @@ import Image from 'next/image'
 import { fetchApi, type PageBlock } from '@/lib/api'
 import contentStyles from './cafe.module.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Кафе - Pandoroom',
   description: 'Уютное кафе с авторской кухней',

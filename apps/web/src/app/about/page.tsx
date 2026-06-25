@@ -1,5 +1,7 @@
 import { fetchApi, type AboutFact } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'О компании - Pandoroom',
   description: 'Узнайте больше о Pandoroom — самом большом квеструме во Владивостоке',

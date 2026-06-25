@@ -2,6 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { fetchApi, type NewsItem } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Новость - Pandoroom',
   description: 'Подробности новости',

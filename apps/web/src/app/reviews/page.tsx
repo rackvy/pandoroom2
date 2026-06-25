@@ -1,5 +1,7 @@
 import reviewsStyles from './reviews.module.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Отзывы - Pandoroom',
   description: 'Отзывы наших гостей',

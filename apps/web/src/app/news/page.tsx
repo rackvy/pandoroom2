@@ -2,6 +2,8 @@ import Image from 'next/image'
 import { fetchApi, type NewsItem } from '@/lib/api'
 import newsStyles from './news.module.css'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Новости - Pandoroom',
   description: 'Последние новости и события',

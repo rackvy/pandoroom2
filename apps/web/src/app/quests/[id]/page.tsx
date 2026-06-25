@@ -2,6 +2,8 @@ import { fetchApi } from '@/lib/api'
 import type { QuestDetail } from '@/lib/api'
 import QuestDetailClient from './QuestDetailClient'
 
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata({ params }: { params: { id: string } }) {
   try {
     const quest: QuestDetail = await fetchApi(`/quests/${params.id}`)

@@ -2,6 +2,9 @@ import Link from 'next/link'
 import styles from './page.module.css'
 import { fetchApi, type Quest, type NewsItem, type ReviewItem, type PageBlock } from '@/lib/api'
 
+// Force dynamic rendering — fetch data at request time, not build time
+export const dynamic = 'force-dynamic'
+
 /* ==================== API FETCHERS ==================== */
 
 async function getQuests() {

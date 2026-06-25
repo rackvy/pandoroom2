@@ -2,6 +2,8 @@ import Link from 'next/link'
 import styles from './guide.module.css'
 import { fetchApi, type Quest, type NewsItem, type ReviewItem, type PageBlock } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Праздник гид — Площадки для праздников во Владивостоке | PANDOROOM',
   description:

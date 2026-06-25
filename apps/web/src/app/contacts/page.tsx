@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { fetchApi, type Branch } from '@/lib/api'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Контакты - Pandoroom',
   description: 'Как нас найти — адреса, телефоны и часы работы Pandoroom во Владивостоке',

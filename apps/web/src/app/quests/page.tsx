@@ -2,6 +2,8 @@ import { fetchApi } from '@/lib/api'
 import type { Quest } from '@/lib/api'
 import QuestsClient from './QuestsClient'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'PANDOROOM — Все квесты во Владивостоке',
   description:
