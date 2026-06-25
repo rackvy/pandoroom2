@@ -303,29 +303,48 @@ export default async function Home() {
     .filter(q => q.ageRestriction === '0+')
     .map(mapQuest)
 
-  const newsItems = newsData.map(n => ({
-    id: n.id,
-    cardBg: n.cardBg || 'linear-gradient(180deg, #1a2010 0%, #07080a 100%)',
-    coverTitle: n.coverTitle || n.title,
-    coverSub: n.coverSub || undefined,
-    coverVariant: n.coverVariant || undefined,
-    date: new Date(n.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
-    title: n.title,
-    text: n.content.substring(0, 100) + '...',
-  }))
+  const newsItems = newsData
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 4)
+    .map(n => ({
+      id: n.id,
+      cardBg: n.cardBg || 'linear-gradient(180deg, #1a2010 0%, #07080a 100%)',
+      coverTitle: n.coverTitle || n.title,
+      coverSub: n.coverSub || undefined,
+      coverVariant: n.coverVariant || undefined,
+      date: new Date(n.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+      title: n.title,
+      text: n.content.substring(0, 100) + '...',
+    }))
 
-  const reviewItems = reviewsData.map(r => ({
-    id: r.id,
-    name: r.name,
-    date: new Date(r.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
-    text: r.text,
-    source: r.source?.name || '',
-  }))
+  const reviewItems = reviewsData
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 4)
+    .map(r => ({
+      id: r.id,
+      name: r.name,
+      date: new Date(r.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+      text: r.text,
+      source: r.source?.name || '',
+    }))
 
   const heroTitle = homeBlocks.find(b => b.blockKey === 'hero_title')?.title || 'Самый большой квеструм и площадки для праздников во Владивостоке'
   const heroFeatures = (() => { try { return JSON.parse(homeBlocks.find(b => b.blockKey === 'hero_features')?.extraJson || '[]') as string[] } catch { return [] } })()
   const heroCtaText = homeBlocks.find(b => b.blockKey === 'hero_cta_text')?.title || 'Забронируйте праздник прямо сейчас'
-  const holidayCardsData = (() => { try { return JSON.parse(homeBlocks.find(b => b.blockKey === 'holiday_cards')?.extraJson || '[]') as Array<{ kicker: string; title: string; poster: string }> } catch { return [] } })()
+  const holidayCardsFallback = [
+    { kicker: 'праздники', title: 'для малышей', poster: '/images/main/6.png' },
+    { kicker: 'праздники для детей', title: '6 — 10 лет', poster: '/images/main/5.png' },
+    { kicker: 'праздники для детей', title: '10 — 15 лет', poster: '/images/main/4.png' },
+    { kicker: 'организовываем', title: 'Выпускные\nиз детсада', poster: '/images/main/3.png' },
+    { kicker: 'отпразднуем', title: 'Поступление\nв школу', poster: '/images/main/2.png' },
+    { kicker: 'устроим праздник', title: 'По любому\nповоду! :)', poster: '/images/main/1.png' },
+  ]
+  const holidayCardsData = (() => {
+    try {
+      const data = JSON.parse(homeBlocks.find(b => b.blockKey === 'holiday_cards')?.extraJson || '[]') as Array<{ kicker: string; title: string; poster: string }>
+      return data.length > 0 ? data : holidayCardsFallback
+    } catch { return holidayCardsFallback }
+  })()
 
   return (
     <main>
