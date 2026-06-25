@@ -1,3 +1,8 @@
+// Fix: Prisma BigInt serialization
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
