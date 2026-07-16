@@ -14,15 +14,34 @@ function convertBigIntToNumber(obj: any): any {
   return obj;
 }
 
+// Helper to convert Prisma Decimal fields to plain numbers
+function convertDecimalToNumber(val: any): number | null {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'number') return val;
+  if (typeof val === 'string') return parseFloat(val);
+  if (typeof val === 'object' && typeof val.toNumber === 'function') return val.toNumber();
+  return Number(val);
+}
+
+function convertBranchDecimals(branch: any): any {
+  if (!branch) return branch;
+  return {
+    ...branch,
+    geoLat: convertDecimalToNumber(branch.geoLat),
+    geoLng: convertDecimalToNumber(branch.geoLng),
+  };
+}
+
 @Injectable()
 export class CatalogService {
   constructor(private prisma: PrismaService) {}
 
   // ==================== BRANCHES ====================
   async findAllBranches() {
-    return this.prisma.branch.findMany({
+    const branches = await this.prisma.branch.findMany({
       orderBy: { createdAt: 'desc' },
     });
+    return branches.map(convertBranchDecimals);
   }
 
   async findOneBranch(id: string) {
@@ -31,16 +50,18 @@ export class CatalogService {
       include: { quests: true },
     });
     if (!branch) throw new NotFoundException('Филиал не найден');
-    return branch;
+    return convertBranchDecimals(branch);
   }
 
   async createBranch(data: any) {
-    return this.prisma.branch.create({ data });
+    const branch = await this.prisma.branch.create({ data });
+    return convertBranchDecimals(branch);
   }
 
   async updateBranch(id: string, data: any) {
     await this.findOneBranch(id);
-    return this.prisma.branch.update({ where: { id }, data });
+    const branch = await this.prisma.branch.update({ where: { id }, data });
+    return convertBranchDecimals(branch);
   }
 
   async removeBranch(id: string) {

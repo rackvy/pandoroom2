@@ -2,14 +2,50 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
+// Convert Prisma Decimal (or string) to plain number for JSON serialization
+function convertDecimalToNumber(val: any): number | null {
+  if (val === null || val === undefined) return null;
+  if (typeof val === 'number') return val;
+  if (typeof val === 'string') return parseFloat(val);
+  if (typeof val === 'object' && typeof val.toNumber === 'function') return val.toNumber();
+  return Number(val);
+}
+
+function convertBranchDecimals(branch: any): any {
+  if (!branch) return branch;
+  return { ...branch, geoLat: convertDecimalToNumber(branch.geoLat), geoLng: convertDecimalToNumber(branch.geoLng) };
+}
+
+function convertResultDecimals(result: any): any {
+  if (!result) return result;
+  if (Array.isArray(result)) return result.map(convertBranchDecimals);
+  return convertBranchDecimals(result);
+}
+
+// Deep-convert branch inside nested quest objects
+function convertQuestBranch(quest: any): any {
+  if (!quest) return quest;
+  if (quest.branch) {
+    return { ...quest, branch: convertBranchDecimals(quest.branch) };
+  }
+  return quest;
+}
+
+function convertQuestsResult(result: any): any {
+  if (!result) return result;
+  if (Array.isArray(result)) return result.map(convertQuestBranch);
+  return convertQuestBranch(result);
+}
+
 @Injectable()
 export class PublicService {
   constructor(private prisma: PrismaService) {}
 
   async findAllBranches() {
-    return this.prisma.branch.findMany({
+    const branches = await this.prisma.branch.findMany({
       orderBy: { createdAt: 'desc' },
     });
+    return convertResultDecimals(branches);
   }
 
   async findOneBranch(id: string) {
@@ -18,7 +54,7 @@ export class PublicService {
       include: { quests: { include: { previewImage: true } } },
     });
     if (!branch) throw new NotFoundException('Филиал не найден');
-    return branch;
+    return convertBranchDecimals(branch);
   }
 
   async findAllQuests(filters?: { hasActors?: string; ageRestriction?: string }) {
@@ -31,7 +67,7 @@ export class PublicService {
     if (filters?.ageRestriction) {
       where.ageRestriction = filters.ageRestriction;
     }
-    return this.prisma.quest.findMany({
+    const quests = await this.prisma.quest.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -40,6 +76,7 @@ export class PublicService {
         backgroundImage: true,
       },
     });
+    return convertQuestsResult(quests);
   }
 
   async findOneQuest(id: string) {
@@ -56,7 +93,7 @@ export class PublicService {
       },
     });
     if (!quest) throw new NotFoundException('Квест не найден');
-    return quest;
+    return convertQuestBranch(quest);
   }
 
   async findAllNews() {
