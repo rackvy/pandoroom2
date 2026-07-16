@@ -391,10 +391,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                 <div className={styles.specs}>
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>Сложность</span>
-                    <span className={styles.specValue}>
-                      <DifficultyDots level={diff} />
-                      <span className={styles.specValueText}>{difficultyLabels[quest.difficulty] || quest.difficulty}</span>
-                    </span>
+                    <span className={styles.specValue}>{difficultyLabels[quest.difficulty] || quest.difficulty}</span>
                   </div>
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>С актёрами</span>
