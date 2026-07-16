@@ -35,12 +35,53 @@
 }
 
 /* Catalog title */
+.catalogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
 .catalogTitle {
   font-family: var(--font-heading);
   font-size: clamp(28px, 4vw, 42px);
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
-  margin: 0 0 32px 0;
+  margin: 0;
+}
+
+.scheduleBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 28px;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  background: var(--color-cta-green, #b5e61d);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.scheduleBtn:hover {
+  background: #c8f034;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 767px) {
+  .catalogHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .scheduleBtn {
+    padding: 10px 22px;
+    font-size: 14px;
+  }
 }
 
 /* ---- Filters ---- */

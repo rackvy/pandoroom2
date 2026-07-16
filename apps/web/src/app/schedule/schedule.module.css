@@ -1,0 +1,396 @@
+/* ==================== SCHEDULE PAGE ==================== */
+
+/* ---- Header ---- */
+.sectionHeader {
+  padding-top: 140px;
+  padding-bottom: 0;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.breadcrumbLink {
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast);
+}
+
+.breadcrumbLink:hover {
+  color: var(--color-text);
+}
+
+.breadcrumbSep {
+  opacity: 0.5;
+}
+
+.breadcrumbCurrent {
+  color: var(--color-text);
+}
+
+.pageTitle {
+  font-family: var(--font-heading);
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 12px 0;
+}
+
+.pageSubtitle {
+  font-size: 16px;
+  color: var(--color-text-muted);
+  margin: 0 0 32px 0;
+}
+
+/* ---- Date Picker ---- */
+.sectionDates {
+  padding-bottom: 0;
+}
+
+.datePicker {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 0 16px;
+}
+
+.datePicker::-webkit-scrollbar {
+  display: none;
+}
+
+.datePickerTrack {
+  display: flex;
+  gap: 10px;
+}
+
+.datePickerDay {
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--color-text);
+}
+
+.datePickerDay:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.datePickerDayActive {
+  background: var(--color-cta-green, #b5e61d);
+  border-color: var(--color-cta-green, #b5e61d);
+  color: #111;
+}
+
+.datePickerDayActive:hover {
+  background: var(--color-cta-green, #b5e61d);
+}
+
+.datePickerDayActive .datePickerMonth,
+.datePickerDayActive .datePickerWeekday {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.datePickerNum {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.datePickerMonth {
+  font-family: var(--font-primary);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.datePickerWeekday {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: lowercase;
+}
+
+.datePickerWeekend .datePickerNum {
+  color: #EAB9B9;
+}
+
+.datePickerDayActive.datePickerWeekend .datePickerNum {
+  color: #111;
+}
+
+/* ---- Schedule Table ---- */
+.sectionSchedule {
+  padding-top: 24px;
+  padding-bottom: 60px;
+}
+
+.scheduleTable {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Table header row with time labels */
+.scheduleHeader {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 8px;
+}
+
+.questCol {
+  min-width: 320px;
+  flex-shrink: 0;
+}
+
+.slotsCol {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  align-items: center;
+}
+
+.timeHeader {
+  min-width: 90px;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  padding: 4px 0;
+}
+
+/* Quest row */
+.scheduleRow {
+  display: flex;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  align-items: center;
+}
+
+.scheduleRow:last-child {
+  border-bottom: none;
+}
+
+/* Quest link/info */
+.questLink {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: opacity 0.15s ease;
+}
+
+.questLink:hover {
+  opacity: 0.85;
+}
+
+.questPoster {
+  width: 60px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.questPosterImg {
+  object-fit: cover;
+}
+
+.questInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.questName {
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.questMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.questTag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-muted);
+}
+
+/* Genre tag colors */
+.tagHorror { background: rgba(139, 0, 0, 0.5); color: #f4a0a0; }
+.tagDetective { background: rgba(30, 60, 120, 0.5); color: #a0c0f4; }
+.tagKids { background: rgba(180, 140, 0, 0.4); color: #f4e0a0; }
+.tagAction { background: rgba(180, 80, 0, 0.5); color: #f4c0a0; }
+.tagAdventure { background: rgba(0, 120, 60, 0.4); color: #a0f4c0; }
+.tagMystic { background: rgba(100, 30, 140, 0.4); color: #d0a0f4; }
+.tagVR { background: rgba(0, 140, 160, 0.4); color: #a0e8f4; }
+
+.questMetaText {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ---- Time Slots ---- */
+.slotFree {
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.slotFree:hover {
+  background: rgba(181, 230, 29, 0.1);
+  border-color: var(--color-cta-green, #b5e61d);
+  transform: translateY(-1px);
+}
+
+.slotTime {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-cta-green, #b5e61d);
+}
+
+.slotPrice {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.slotBooked {
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.slotBooked .slotTime {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.slotStatus {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.slotPassed {
+  min-width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  opacity: 0.25;
+}
+
+.slotPassed .slotTime {
+  color: rgba(255, 255, 255, 0.3);
+  text-decoration: line-through;
+}
+
+.slotEmpty {
+  min-width: 90px;
+  height: 50px;
+  visibility: hidden;
+}
+
+/* ---- Empty state ---- */
+.emptyMsg {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 15px;
+  padding: 48px 0;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 1023px) {
+  .questCol {
+    min-width: 240px;
+  }
+}
+
+@media (max-width: 767px) {
+  .sectionHeader {
+    padding-top: 120px;
+  }
+
+  .scheduleHeader {
+    display: none;
+  }
+
+  .scheduleRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .questCol {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .slotsCol {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+  }
+
+  .slotsCol::-webkit-scrollbar {
+    display: none;
+  }
+
+  .slotFree,
+  .slotBooked,
+  .slotPassed,
+  .slotEmpty {
+    min-width: 80px;
+  }
+}

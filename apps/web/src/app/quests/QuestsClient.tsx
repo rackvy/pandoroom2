@@ -221,7 +221,10 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
             <span className={styles.breadcrumbSep}>/</span>
             <span className={styles.breadcrumbCurrent}>Квесты</span>
           </nav>
-          <h1 className={styles.catalogTitle}>Выберите квест во Владивостоке</h1>
+          <div className={styles.catalogHeader}>
+            <h1 className={styles.catalogTitle}>Выберите квест во Владивостоке</h1>
+            <Link href="/schedule" className={styles.scheduleBtn}>Расписание</Link>
+          </div>
 
           {/* Filters */}
           <div className={styles.catalogFilters}>
