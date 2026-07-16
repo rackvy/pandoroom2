@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, useRef } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import styles from './quests.module.css'
 import type { Quest } from '@/lib/api'
@@ -32,16 +33,17 @@ function DifficultyDots({ level }: { level: number }) {
   )
 }
 
-/* Gradient placeholders per quest (deterministic from index) */
-const gradients = [
-  'linear-gradient(135deg, #1a1028 0%, #0a0a0a 100%)',
-  'linear-gradient(135deg, #1a2010 0%, #07080a 100%)',
-  'linear-gradient(135deg, #20180a 0%, #08070a 100%)',
-  'linear-gradient(135deg, #15101f 0%, #050514 100%)',
-  'linear-gradient(135deg, #20102a 0%, #070514 100%)',
-  'linear-gradient(135deg, #0f1a20 0%, #060a0a 100%)',
-  'linear-gradient(135deg, #201a10 0%, #0a0806 100%)',
-]
+function genreVariant(genre: string): string {
+  const g = genre.toLowerCase()
+  if (g.includes('хоррор') || g.includes('horror')) return styles.qcardGenreHorror
+  if (g.includes('детектив') || g.includes('detective')) return styles.qcardGenreDetective
+  if (g.includes('детск') || g.includes('kids') || g.includes('для детей')) return styles.qcardGenreKids
+  if (g.includes('экш') || g.includes('action')) return styles.qcardGenreAction
+  if (g.includes('приключ') || g.includes('adventure')) return styles.qcardGenreAdventure
+  if (g.includes('мист') || g.includes('mystic')) return styles.qcardGenreMystic
+  if (g === 'vr') return styles.qcardGenreVR
+  return ''
+}
 
 const WEEKDAY_SHORT = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
 
@@ -94,6 +96,7 @@ const genres = [
   'Мистический',
   'Хоррор',
   'Детектив',
+  'VR',
   'Для детей',
 ]
 
@@ -248,13 +251,15 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                 {dates.map((d) => {
                   const isSelected = formatDateKey(d) === formatDateKey(selectedDate)
                   const dayIdx = getWeekdayIdx(d)
+                  const dayNum = String(d.getDate()).padStart(2, '0')
+                  const monthNum = String(d.getMonth() + 1).padStart(2, '0')
                   return (
                     <button
                       key={formatDateKey(d)}
                       className={`${styles.datePickerDay}${isSelected ? ` ${styles.datePickerDayActive}` : ''}`}
                       onClick={() => setSelectedDate(d)}
                     >
-                      <span className={styles.datePickerNum}>{d.getDate()}</span>
+                      <span className={styles.datePickerDate}>{dayNum} / {monthNum}</span>
                       <span className={styles.datePickerWeekday}>{WEEKDAY_SHORT[dayIdx]}</span>
                     </button>
                   )
@@ -274,34 +279,37 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
             </p>
           ) : (
             <div className={styles.questGrid}>
-              {filteredQuests.map((q, idx) => {
+              {filteredQuests.map((q) => {
                 const diff = difficultyNumber(q.difficulty)
                 const posterUrl = q.previewImage?.url || ''
                 const slots = scheduleMap[q.id] || []
+                const gVariant = genreVariant(q.genre)
 
                 return (
-                  <article
-                    key={q.id}
-                    className={styles.qcard}
-                    style={
-                      {
-                        '--poster': posterUrl
-                          ? `url('${posterUrl}') center/cover no-repeat`
-                          : gradients[idx % gradients.length],
-                      } as React.CSSProperties
-                    }
-                  >
-                    <div className={styles.qcardPoster} />
+                  <article key={q.id} className={styles.qcard}>
+                    {/* Poster */}
+                    <div className={styles.qcardPoster}>
+                      {posterUrl ? (
+                        <Image
+                          src={posterUrl}
+                          alt={q.name}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 33vw"
+                          className={styles.qcardPosterImg}
+                        />
+                      ) : (
+                        <div className={styles.qcardPosterImg} />
+                      )}
+                    </div>
+                    {/* Body */}
                     <div className={styles.qcardBody}>
-                      <h3 className={styles.qcardTitle}>
-                        {q.name}
-                        {q.subtitle && (
-                          <>
-                            <br />
-                            <span className={styles.qcardSub}>{q.subtitle}</span>
-                          </>
-                        )}
-                      </h3>
+                      {/* Genre tag */}
+                      {q.genre && (
+                        <span className={`${styles.qcardGenre}${gVariant ? ` ${gVariant}` : ''}`}>
+                          {q.genre}
+                        </span>
+                      )}
+                      <h3 className={styles.qcardTitle}>{q.name}</h3>
                       <div className={styles.qcardMeta}>
                         <DifficultyDots level={diff} />
                         <span className={styles.qcardInfo}>{q.durationMinutes} мин</span>
@@ -323,6 +331,7 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                         </div>
                       )}
                     </div>
+                    {/* Full-card overlay link (below slot z-index) */}
                     <Link
                       href={`/quests/${q.id}`}
                       className={styles.qcardLink}

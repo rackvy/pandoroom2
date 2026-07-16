@@ -1,5 +1,4 @@
 /* ==================== CATALOG PAGE STYLES ==================== */
-/* Ported from apps/html/styles/main.css — catalog, filter, qcard sections */
 
 /* Section wrapper */
 .sectionCatalog {
@@ -56,10 +55,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-}
-
-.filtersRowParams {
-  gap: 24px;
 }
 
 .filtersGenres {
@@ -145,37 +140,7 @@
   color: var(--color-text-muted);
 }
 
-/* Filter param (dot selectors) */
-.filterParam {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.filterParamLabel {
-  font-family: var(--font-primary);
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
-.filterParamDots {
-  display: flex;
-  gap: 4px;
-}
-
-.filterDot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.15);
-  font-style: normal;
-}
-
-.filterDotOn {
-  background-color: var(--color-cta-green);
-}
-
-/* ---- Date Picker ---- */
+/* ==================== DATE PICKER ==================== */
 .datePicker {
   margin-bottom: 8px;
   overflow-x: auto;
@@ -188,7 +153,6 @@
 
 .datePickerTrack {
   display: flex;
-  gap: 6px;
 }
 
 .datePickerDay {
@@ -196,45 +160,52 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 60px;
-  padding: 12px 10px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 4px;
+  min-width: 80px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
   cursor: pointer;
-  transition:
-    background-color var(--transition-fast),
-    border-color var(--transition-fast);
+  transition: background-color var(--transition-fast);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.datePickerDay:last-child {
+  border-right: none;
 }
 
 .datePickerDay:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .datePickerDayActive {
   background-color: var(--color-cta-green);
-  border-color: var(--color-cta-green);
+  border-radius: 8px;
 }
 
-.datePickerDayActive .datePickerNum,
-.datePickerDayActive .datePickerWeekday {
-  color: #000;
+.datePickerDayActive:hover {
+  background-color: var(--color-cta-green);
 }
 
-.datePickerNum {
-  font-family: var(--font-heading);
-  font-size: 20px;
-  font-weight: var(--font-weight-bold);
+.datePickerDate {
+  font-family: var(--font-primary);
+  font-size: 15px;
+  font-weight: var(--font-weight-regular);
   color: var(--color-text);
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .datePickerWeekday {
   font-family: var(--font-primary);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--color-text-muted);
   text-transform: lowercase;
+}
+
+.datePickerDayActive .datePickerDate,
+.datePickerDayActive .datePickerWeekday {
+  color: #000;
 }
 
 /* ==================== QUEST GRID ==================== */
@@ -274,14 +245,23 @@
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
+/* Poster image */
 .qcardPoster {
+  position: relative;
   width: 100%;
   aspect-ratio: 3 / 4;
-  background-image: var(--poster);
-  background-size: cover;
-  background-position: center;
+  overflow: hidden;
+  background-color: #111;
 }
 
+.qcardPosterImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Card body */
 .qcardBody {
   padding: 14px 16px 16px;
   display: flex;
@@ -289,6 +269,55 @@
   gap: 8px;
 }
 
+/* Genre tag pill */
+.qcardGenre {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-primary);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium, 500);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-muted);
+}
+
+.qcardGenreHorror {
+  background: rgba(180, 40, 40, 0.25);
+  color: #e57373;
+}
+
+.qcardGenreDetective {
+  background: rgba(60, 120, 200, 0.2);
+  color: #64b5f6;
+}
+
+.qcardGenreKids {
+  background: rgba(255, 200, 60, 0.2);
+  color: #ffd54f;
+}
+
+.qcardGenreAction {
+  background: rgba(255, 140, 40, 0.2);
+  color: #ffb74d;
+}
+
+.qcardGenreAdventure {
+  background: rgba(80, 180, 80, 0.2);
+  color: #81c784;
+}
+
+.qcardGenreMystic {
+  background: rgba(140, 80, 200, 0.2);
+  color: #b39ddb;
+}
+
+.qcardGenreVR {
+  background: rgba(0, 180, 220, 0.2);
+  color: #4dd0e1;
+}
+
+/* Title */
 .qcardTitle {
   font-family: var(--font-primary);
   font-size: 15px;
@@ -298,12 +327,7 @@
   margin: 0;
 }
 
-.qcardSub {
-  font-weight: var(--font-weight-regular);
-  font-size: 13px;
-  color: var(--color-text-muted);
-}
-
+/* Meta row */
 .qcardMeta {
   display: flex;
   align-items: center;
@@ -334,39 +358,42 @@
   color: var(--color-text-muted);
 }
 
+/* Time slots as buttons */
 .qcardSlots {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
   margin-top: 4px;
 }
 
 .qcardSlot {
+  padding: 4px 10px;
+  border-radius: 8px;
   font-family: var(--font-heading);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: var(--font-weight-bold);
   color: var(--color-cta-green);
+  background: rgba(var(--color-cta-green-rgb, 0, 255, 100), 0.08);
+  border: 1px solid rgba(var(--color-cta-green-rgb, 0, 255, 100), 0.2);
   cursor: pointer;
-  transition: opacity var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .qcardSlot:hover {
-  opacity: 0.7;
+  background: rgba(var(--color-cta-green-rgb, 0, 255, 100), 0.15);
+  border-color: rgba(var(--color-cta-green-rgb, 0, 255, 100), 0.4);
 }
 
 .qcardSlotBooked {
   color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
   text-decoration: line-through;
   cursor: default;
   pointer-events: none;
 }
 
-.qcardSlot sub {
-  font-size: 10px;
-  vertical-align: super;
-  margin-left: 1px;
-}
-
+/* Full-card overlay link — sits below slot buttons */
 .qcardLink {
   position: absolute;
   inset: 0;
