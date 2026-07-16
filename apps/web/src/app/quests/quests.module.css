@@ -188,29 +188,37 @@
   background-color: var(--color-cta-green);
 }
 
-.datePickerDate {
-  font-family: var(--font-primary);
-  font-size: 22px;
-  font-weight: var(--font-weight-regular);
+.datePickerDay {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
   color: var(--color-text);
-  line-height: 1.2;
-  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.datePickerMonth {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+  margin-left: 2px;
 }
 
 .datePickerWeekday {
   font-family: var(--font-primary);
-  font-size: 14px;
+  font-size: 13px;
   color: var(--color-text-muted);
   text-transform: lowercase;
 }
 
-/* Weekend = red */
-.datePickerWeekend .datePickerWeekday {
-  color: #ef4444;
+/* Weekend = day number in #EAB9B9 */
+.datePickerWeekend .datePickerDay {
+  color: #EAB9B9;
 }
 
 /* Active overrides */
-.datePickerDayActive .datePickerDate,
+.datePickerDayActive .datePickerDay,
+.datePickerDayActive .datePickerMonth,
 .datePickerDayActive .datePickerWeekday {
   color: #000;
 }

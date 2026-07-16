@@ -281,7 +281,9 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                       }
                       onClick={() => setSelectedDate(d)}
                     >
-                      <span className={styles.datePickerDate}>{dayNum} / {monthNum}</span>
+                      <span className={styles.datePickerDay}>
+                        {dayNum} <span className={styles.datePickerMonth}>/ {monthNum}</span>
+                      </span>
                       <span className={styles.datePickerWeekday}>{WEEKDAY_FULL[dayIdx]}</span>
                     </button>
                   )
