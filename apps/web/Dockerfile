@@ -49,6 +49,11 @@ COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./.next/static
 COPY --from=builder /app/apps/web/public ./public
 
+# Fix dangling pnpm symlinks in standalone output:
+# /app/node_modules/next -> ../../../node_modules/.pnpm/... resolves to /node_modules/.pnpm/...
+# Copy the real .pnpm store to where the symlinks point
+COPY --from=deps /app/apps/web/node_modules/.pnpm /node_modules/.pnpm
+
 EXPOSE 3000
 
 CMD ["node", "server.js"]
