@@ -7,19 +7,12 @@ export const metadata = {
   description: 'Отзывы наших гостей',
 }
 
-const mockReviews = [
-  { id: '1', authorName: 'Анна М.', rating: 5, content: 'Потрясающий квест! Актёры играли просто великолепно, мы полностью погрузились в атмосферу.', createdAt: '2024-03-15', source: { name: 'Яндекс Карты' } },
-  { id: '2', authorName: 'Павел Г.', rating: 5, content: 'Организация на высшем уровне. Дети в восторге от праздника, всё продумано до мелочей.', createdAt: '2024-03-12', source: { name: 'Яндекс Карты' } },
-  { id: '3', authorName: 'Светлана К.', rating: 5, content: 'Отличное место для детского праздника. Чисто, уютно, персонал очень внимательный.', createdAt: '2024-03-10', source: { name: 'Google' } },
-  { id: '4', authorName: 'Кирилл В.', rating: 5, content: 'Были на квесте — это нечто! Декорации, загадки, актёры — всё на 5 баллов.', createdAt: '2024-03-08', source: { name: 'Яндекс Карты' } },
-]
-
 async function getReviews() {
   try {
     const { fetchApi } = await import('@/lib/api')
     return await fetchApi('/reviews')
   } catch {
-    return mockReviews
+    return []
   }
 }
 

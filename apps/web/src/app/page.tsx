@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import styles from './page.module.css'
 import { fetchApi, type Quest, type NewsItem, type ReviewItem, type PageBlock } from '@/lib/api'
+import ReviewsSlider from '@/components/ReviewsSlider'
+import QuestSliderClient from '@/components/QuestSliderClient'
 
 // Force dynamic rendering — fetch data at request time, not build time
 export const dynamic = 'force-dynamic'
@@ -88,32 +90,6 @@ function mapQuest(q: Quest): QuestCard {
   }
 }
 
-/* ==================== HELPERS ==================== */
-
-function tagClass(variant?: string): string {
-  if (variant === 'horror') return `${styles.questCardTag} ${styles.questCardTagHorror}`
-  if (variant === 'detective') return `${styles.questCardTag} ${styles.questCardTagDetective}`
-  if (variant === 'kids') return `${styles.questCardTag} ${styles.questCardTagKids}`
-  return styles.questCardTag
-}
-
-function DifficultyDots({ level }: { level: number }) {
-  return (
-    <span className={styles.questCardDifficulty} aria-label={`Сложность ${level} из 5`}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <i
-          key={i}
-          className={
-            i <= level
-              ? styles.questCardDot
-              : `${styles.questCardDot} ${styles.questCardDotOff}`
-          }
-        />
-      ))}
-    </span>
-  )
-}
-
 /* ==================== SVG ICONS (services) ==================== */
 
 const CheckSvg = (
@@ -122,30 +98,11 @@ const CheckSvg = (
   </svg>
 )
 
-const ArrowPrevSvg = (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-)
-
-const ArrowNextSvg = (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-)
 
 const ArrowRightSvg = (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="5" y1="12" x2="19" y2="12" />
     <polyline points="12 5 19 12 12 19" />
-  </svg>
-)
-
-const HoverIconSvg = (
-  <svg width="63" height="61" viewBox="0 0 63 61" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M4.05371 47.5676C21.6663 62.0721 39.2789 62.0721 56.8915 47.5676" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M52.2297 50.6757L46.0135 24.2568L49.1216 18.0405L55.3378 21.1486L60 16.4865L52.2297 2.5C36.5276 3.17757 33.6122 12.2377 30.473 21.1486H11.8243C9.35136 21.1486 6.97968 22.131 5.23103 23.8797C3.48238 25.6283 2.5 28 2.5 30.473M8.71622 50.6757L14.9324 21.1486" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M18.041 55.3379L24.2572 39.7974H36.6897L42.9059 55.3379" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 )
 
@@ -219,69 +176,7 @@ const serviceNames = ['Lounge', 'Игровая', 'Кафе', 'Шоу-прогр
 /* ==================== QUEST SLIDER COMPONENT ==================== */
 
 function QuestSlider({ title, quests }: { title: string; quests: QuestCard[] }) {
-  return (
-    <section className={styles.section}>
-      <div className="container">
-        <h2 className={`${styles.sectionTitle} title-effect`}>{title}</h2>
-      </div>
-      <div className={styles.questsSlider}>
-        <button className={`${styles.sliderArrow} ${styles.sliderArrowPrev}`} aria-label="Назад">
-          {ArrowPrevSvg}
-        </button>
-        <div className={styles.questsSliderTrack}>
-          {quests.map((quest) => (
-            <article
-              key={quest.id}
-              className={styles.questCard}
-              style={{ '--poster': `url('${quest.poster}')` } as React.CSSProperties}
-            >
-              <div
-                className={styles.questCardPoster}
-                style={{ backgroundImage: `url('${quest.poster}')` }}
-              />
-              <span className={tagClass(quest.tagVariant)}>{quest.tag}</span>
-              <div className={styles.questCardBody}>
-                <h3 className={styles.questCardTitle}>
-                  {quest.title}
-                  {quest.subtitle && (
-                    <span className={styles.questCardSub}>{quest.subtitle}</span>
-                  )}
-                </h3>
-                <div className={styles.questCardMeta}>
-                  <DifficultyDots level={quest.difficulty} />
-                  <span className={styles.questCardInfo}>{quest.duration}</span>
-                  <span className={styles.questCardInfo}>{quest.players}</span>
-                  <span className={styles.questCardInfo}>{quest.age}</span>
-                </div>
-              </div>
-              {/* Hover overlay */}
-              <div className={styles.questCardHover}>
-                <span className={styles.questCardHoverIcon}>{HoverIconSvg}</span>
-                <h3 className={styles.questCardHoverTitle}>
-                  Игровая и кафе<br />для вашего ребенка
-                </h3>
-                <p className={styles.questCardHoverText}>
-                  Проведите этот день максимально весело. Отдохните после квеста в наших кафе и игровой
-                </p>
-                <div className={styles.questCardHoverActions}>
-                  <Link href="/quests" className={`${styles.btn} ${styles.btnPink} ${styles.btnFull}`}>
-                    Перейти в квест
-                  </Link>
-                  <Link href="/holidays" className={`${styles.btn} ${styles.btnGreen} ${styles.btnFull}`}>
-                    Забронировать столик
-                  </Link>
-                </div>
-              </div>
-              <Link href={`/quests/${quest.id}`} className={styles.questCardLink} aria-label="Подробнее" />
-            </article>
-          ))}
-        </div>
-        <button className={`${styles.sliderArrow} ${styles.sliderArrowNext}`} aria-label="Вперед">
-          {ArrowNextSvg}
-        </button>
-      </div>
-    </section>
-  )
+  return <QuestSliderClient title={title} quests={quests} />
 }
 
 /* ==================== PAGE ==================== */
@@ -425,9 +320,11 @@ export default async function Home() {
           <div className={styles.holidaysIntro}>
             <h2 className={styles.holidaysIntroTitle}>
               <span className={styles.holidaysIntroLine}>Устройте незабываемый</span>
+              {' '}
               <span className={`${styles.holidaysIntroLine} title-effect`}>
                 праздник для вашего ребенка
               </span>
+              {' '}
               <span className={styles.holidaysIntroLine}>в семейном центре «Пандорум»</span>
             </h2>
           </div>
@@ -509,7 +406,7 @@ export default async function Home() {
                     <span className={styles.newsCardDate}>{item.date}</span>
                     <h3 className={styles.newsCardTitle}>{item.title}</h3>
                     <p className={styles.newsCardText}>{item.text}</p>
-                    <Link href="#" className={styles.newsCardLink}>
+                    <Link href={`/news/${item.id}`} className={styles.newsCardLink}>
                       подробнее
                     </Link>
                   </div>
@@ -523,55 +420,7 @@ export default async function Home() {
         <section className={styles.section}>
           <div className="container">
             <h2 className={`${styles.sectionTitle} title-effect`}>Отзывы гостей</h2>
-            <div className={styles.reviewsSlider}>
-              <button
-                className={`${styles.sliderArrow} ${styles.sliderArrowPrev}`}
-                aria-label="Назад"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="15 18 9 12 15 6" />
-                </svg>
-              </button>
-              <div className={styles.reviewsSliderTrack}>
-                {reviewItems.map((review) => (
-                  <article key={review.id} className={styles.reviewCard}>
-                    <div className={styles.reviewCardHeader}>
-                      <span className={styles.reviewCardName}>{review.name}</span>
-                      <span className={styles.reviewCardDate}>{review.date}</span>
-                    </div>
-                    <div className={styles.reviewCardStars}>★★★★★</div>
-                    <p className={styles.reviewCardText}>{review.text}</p>
-                    <span className={styles.reviewCardSource}>{review.source}</span>
-                  </article>
-                ))}
-              </div>
-              <button
-                className={`${styles.sliderArrow} ${styles.sliderArrowNext}`}
-                aria-label="Вперед"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            </div>
+            <ReviewsSlider reviews={reviewItems} />
           </div>
         </section>
       </div>
