@@ -352,6 +352,19 @@
   font-size: 14px;
   font-weight: var(--font-weight-bold);
   color: var(--color-cta-green);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.qcardSlot:hover {
+  opacity: 0.7;
+}
+
+.qcardSlotBooked {
+  color: rgba(255, 255, 255, 0.2);
+  text-decoration: line-through;
+  cursor: default;
+  pointer-events: none;
 }
 
 .qcardSlot sub {

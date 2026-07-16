@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import styles from './quests.module.css'
 import type { Quest } from '@/lib/api'
@@ -17,14 +17,6 @@ const difficultyMap: Record<string, number> = {
 
 function difficultyNumber(d: string): number {
   return difficultyMap[d] ?? 3
-}
-
-function genreToTagVariant(genre: string): string {
-  const g = genre.toLowerCase()
-  if (g.includes('хоррор') || g.includes('horror')) return 'horror'
-  if (g.includes('детектив') || g.includes('detective')) return 'detective'
-  if (g.includes('детский') || g.includes('kids') || g.includes('для детей')) return 'kids'
-  return genre
 }
 
 function DifficultyDots({ level }: { level: number }) {
@@ -51,16 +43,48 @@ const gradients = [
   'linear-gradient(135deg, #201a10 0%, #0a0806 100%)',
 ]
 
+const WEEKDAY_SHORT = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'вс']
+
+function formatDateKey(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function getWeekdayIdx(d: Date): number {
+  // 0=Mon ... 6=Sun
+  return d.getDay() === 0 ? 6 : d.getDay() - 1
+}
+
+/* ------------------------------------------------------------------ */
+/*  Types                                                             */
+/* ------------------------------------------------------------------ */
+
+interface ScheduleSlot {
+  slotId: string
+  startTime: string
+  finalPrice: number
+  isBooked: boolean
+}
+
+interface QuestSchedule {
+  questId: string
+  questName: string
+  durationMinutes: number
+  slots: ScheduleSlot[]
+}
+
 /* ------------------------------------------------------------------ */
 /*  Filter definitions                                                */
 /* ------------------------------------------------------------------ */
 
-const difficultyFilters = ['Все квесты', 'Начинающие', 'Азартные', 'Ходилки']
+const difficultyFilters = ['Все квесты', 'Легкий', 'Средний', 'Сложный']
 const difficultyFilterMap: Record<string, string | null> = {
   'Все квесты': null,
-  'Начинающие': 'easy',
-  'Азартные': 'medium',
-  'Ходилки': 'hard',
+  'Легкий': 'easy',
+  'Средний': 'medium',
+  'Сложный': 'hard',
 }
 
 const genres = [
@@ -86,20 +110,79 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
   const [activeGenre, setActiveGenre] = useState('все жанры')
   const [actorsOnly, setActorsOnly] = useState(false)
 
+  // Date picker
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    return d
+  })
+
+  // Schedule data keyed by questId
+  const [scheduleMap, setScheduleMap] = useState<Record<string, ScheduleSlot[]>>({})
+  const [scheduleLoading, setScheduleLoading] = useState(false)
+  const datePickerRef = useRef<HTMLDivElement>(null)
+
+  // Generate 14 days starting from today
+  const dates = useMemo(() => {
+    const result: Date[] = []
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(today)
+      d.setDate(today.getDate() + i)
+      result.push(d)
+    }
+    return result
+  }, [])
+
+  // Fetch schedule when date changes
+  useEffect(() => {
+    let cancelled = false
+    const dateKey = formatDateKey(selectedDate)
+
+    setScheduleLoading(true)
+
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api/public'}/schedule/grid?date=${dateKey}`)
+      .then(res => res.ok ? res.json() : [])
+      .then((data: QuestSchedule[]) => {
+        if (cancelled) return
+        const map: Record<string, ScheduleSlot[]> = {}
+        for (const qs of data) {
+          map[qs.questId] = qs.slots
+        }
+        setScheduleMap(map)
+      })
+      .catch(() => {
+        if (!cancelled) setScheduleMap({})
+      })
+      .finally(() => {
+        if (!cancelled) setScheduleLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [selectedDate])
+
+  // Auto-scroll date picker to selected date on mount
+  useEffect(() => {
+    if (datePickerRef.current) {
+      const activeEl = datePickerRef.current.querySelector(`.${styles.datePickerDayActive}`)
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+      }
+    }
+  }, [])
+
   const filteredQuests = useMemo(() => {
     return quests.filter((q) => {
-      // Difficulty filter
       const diffKey = difficultyFilterMap[activeDifficulty]
       if (diffKey && q.difficulty !== diffKey) return false
 
-      // Genre filter
       if (activeGenre !== 'все жанры') {
         const genreLower = q.genre.toLowerCase()
         const filterLower = activeGenre.toLowerCase()
         if (!genreLower.includes(filterLower)) return false
       }
 
-      // Actors filter
       if (actorsOnly && !q.hasActors) return false
 
       return true
@@ -159,40 +242,23 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
               </label>
             </div>
 
-            {/* Dot-based param selectors */}
-            <div className={`${styles.filtersRow} ${styles.filtersRowParams}`}>
-              <div className={styles.filterParam}>
-                <span className={styles.filterParamLabel}>Игроков:</span>
-                <span className={styles.filterParamDots}>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <i
-                      key={i}
-                      className={`${styles.filterDot}${i <= 2 ? ` ${styles.filterDotOn}` : ''}`}
-                    />
-                  ))}
-                </span>
-              </div>
-              <div className={styles.filterParam}>
-                <span className={styles.filterParamLabel}>Сложность</span>
-                <span className={styles.filterParamDots}>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <i
-                      key={i}
-                      className={`${styles.filterDot}${i <= 3 ? ` ${styles.filterDotOn}` : ''}`}
-                    />
-                  ))}
-                </span>
-              </div>
-              <div className={styles.filterParam}>
-                <span className={styles.filterParamLabel}>Сортировка</span>
-                <span className={styles.filterParamDots}>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <i
-                      key={i}
-                      className={`${styles.filterDot}${i <= 4 ? ` ${styles.filterDotOn}` : ''}`}
-                    />
-                  ))}
-                </span>
+            {/* Date Picker */}
+            <div ref={datePickerRef} className={styles.datePicker}>
+              <div className={styles.datePickerTrack}>
+                {dates.map((d) => {
+                  const isSelected = formatDateKey(d) === formatDateKey(selectedDate)
+                  const dayIdx = getWeekdayIdx(d)
+                  return (
+                    <button
+                      key={formatDateKey(d)}
+                      className={`${styles.datePickerDay}${isSelected ? ` ${styles.datePickerDayActive}` : ''}`}
+                      onClick={() => setSelectedDate(d)}
+                    >
+                      <span className={styles.datePickerNum}>{d.getDate()}</span>
+                      <span className={styles.datePickerWeekday}>{WEEKDAY_SHORT[dayIdx]}</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           </div>
@@ -211,6 +277,8 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
               {filteredQuests.map((q, idx) => {
                 const diff = difficultyNumber(q.difficulty)
                 const posterUrl = q.previewImage?.url || ''
+                const slots = scheduleMap[q.id] || []
+
                 return (
                   <article
                     key={q.id}
@@ -240,6 +308,20 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                         <span className={styles.qcardInfo}>{q.minPlayers}-{q.maxPlayers} игроков</span>
                         <span className={styles.qcardInfo}>{q.ageRestriction || '12+'}</span>
                       </div>
+                      {/* Time Slots */}
+                      {slots.length > 0 && (
+                        <div className={styles.qcardSlots}>
+                          {slots.map((slot) => (
+                            <span
+                              key={slot.slotId}
+                              className={`${styles.qcardSlot}${slot.isBooked ? ` ${styles.qcardSlotBooked}` : ''}`}
+                              title={slot.isBooked ? 'Забронировано' : `Свободно — ${slot.finalPrice} ₽`}
+                            >
+                              {slot.startTime}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <Link
                       href={`/quests/${q.id}`}
