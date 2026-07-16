@@ -47,12 +47,12 @@ async function getGuideBlocks(): Promise<PageBlock[]> {
 /* ==================== FALLBACK DATA ==================== */
 
 const fallbackHolidayCards = [
-  { kicker: 'праздники', title: 'для малышей', poster: '/images/main/6.png' },
-  { kicker: 'праздники для детей', title: '6 — 10 лет', poster: '/images/main/5.png' },
-  { kicker: 'праздники для детей', title: '10 — 15 лет', poster: '/images/main/4.png' },
-  { kicker: 'организовываем', title: 'Выпускные\nиз детсада', poster: '/images/main/3.png' },
-  { kicker: 'отпразднуем', title: 'Поступление\nв школу', poster: '/images/main/2.png' },
-  { kicker: 'устроим праздник', title: 'По любому\nповоду! :)', poster: '/images/main/1.png' },
+  { kicker: 'праздники', title: 'для малышей', poster: '/images/main/6.png', href: '/holidays/toddlers' },
+  { kicker: 'праздники для детей', title: '6 — 10 лет', poster: '/images/main/5.png', href: '/holidays/kids' },
+  { kicker: 'праздники для детей', title: '10 — 15 лет', poster: '/images/main/4.png', href: '/holidays/teens' },
+  { kicker: 'организовываем', title: 'Выпускные\nиз детсада', poster: '/images/main/3.png', href: '/holidays' },
+  { kicker: 'отпразднуем', title: 'Поступление\nв школу', poster: '/images/main/2.png', href: '/holidays' },
+  { kicker: 'устроим праздник', title: 'По любому\nповоду! :)', poster: '/images/main/1.png', href: '/holidays' },
 ]
 
 const services = [
@@ -325,7 +325,7 @@ export default async function GuidePage() {
     try {
       const parsed = JSON.parse(
         guideBlocks.find(b => b.blockKey === 'holiday_cards')?.extraJson || '[]'
-      ) as Array<{ kicker: string; title: string; poster: string }>
+      ) as Array<{ kicker: string; title: string; poster: string; href?: string }>
       return parsed.length > 0 ? parsed : fallbackHolidayCards
     } catch {
       return fallbackHolidayCards
@@ -447,7 +447,7 @@ export default async function GuidePage() {
                     </span>
                   ))}
                 </h3>
-                <Link href="/guide" className={styles.holidayCardBtn}>
+                <Link href={card.href || '/guide'} className={styles.holidayCardBtn}>
                   подробнее
                 </Link>
               </article>

@@ -32,9 +32,9 @@ export default function Footer() {
           <div className={styles.group}>
             <h4 className={styles.groupTitle}>Праздники во Владивостоке</h4>
             <ul className={styles.list}>
-              <li><Link href="/holidays">Праздник для малышей</Link></li>
-              <li><Link href="/holidays">Праздник для детей 6-10 лет</Link></li>
-              <li><Link href="/holidays">Праздник для детей 10-15 лет</Link></li>
+              <li><Link href="/holidays/toddlers">Праздник для малышей</Link></li>
+              <li><Link href="/holidays/kids">Праздник для детей 6-10 лет</Link></li>
+              <li><Link href="/holidays/teens">Праздник для детей 10-15 лет</Link></li>
             </ul>
             <ul className={`${styles.list} ${styles.listSpaced}`}>
               <li><Link href="/holidays">Индивидуальный расчет праздника</Link></li>

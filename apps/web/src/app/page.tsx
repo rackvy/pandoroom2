@@ -230,16 +230,16 @@ export default async function Home() {
   const heroFeatures = (() => { try { return JSON.parse(homeBlocks.find(b => b.blockKey === 'hero_features')?.extraJson || '[]') as string[] } catch { return [] } })()
   const heroCtaText = homeBlocks.find(b => b.blockKey === 'hero_cta_text')?.title || 'Забронируйте праздник прямо сейчас'
   const holidayCardsFallback = [
-    { kicker: 'праздники', title: 'для малышей', poster: '/images/main/6.png' },
-    { kicker: 'праздники для детей', title: '6 — 10 лет', poster: '/images/main/5.png' },
-    { kicker: 'праздники для детей', title: '10 — 15 лет', poster: '/images/main/4.png' },
-    { kicker: 'организовываем', title: 'Выпускные\nиз детсада', poster: '/images/main/3.png' },
-    { kicker: 'отпразднуем', title: 'Поступление\nв школу', poster: '/images/main/2.png' },
-    { kicker: 'устроим праздник', title: 'По любому\nповоду! :)', poster: '/images/main/1.png' },
+    { kicker: 'праздники', title: 'для малышей', poster: '/images/main/6.png', href: '/holidays/toddlers' },
+    { kicker: 'праздники для детей', title: '6 — 10 лет', poster: '/images/main/5.png', href: '/holidays/kids' },
+    { kicker: 'праздники для детей', title: '10 — 15 лет', poster: '/images/main/4.png', href: '/holidays/teens' },
+    { kicker: 'организовываем', title: 'Выпускные\nиз детсада', poster: '/images/main/3.png', href: '/holidays' },
+    { kicker: 'отпразднуем', title: 'Поступление\nв школу', poster: '/images/main/2.png', href: '/holidays' },
+    { kicker: 'устроим праздник', title: 'По любому\nповоду! :)', poster: '/images/main/1.png', href: '/holidays' },
   ]
   const holidayCardsData = (() => {
     try {
-      const data = JSON.parse(homeBlocks.find(b => b.blockKey === 'holiday_cards')?.extraJson || '[]') as Array<{ kicker: string; title: string; poster: string }>
+      const data = JSON.parse(homeBlocks.find(b => b.blockKey === 'holiday_cards')?.extraJson || '[]') as Array<{ kicker: string; title: string; poster: string; href?: string }>
       return data.length > 0 ? data : holidayCardsFallback
     } catch { return holidayCardsFallback }
   })()
@@ -345,7 +345,7 @@ export default async function Home() {
                     </span>
                   ))}
                 </h3>
-                <Link href="/holidays" className={styles.holidayCardBtn}>
+                <Link href={holiday.href || '/holidays'} className={styles.holidayCardBtn}>
                   подробнее
                 </Link>
               </article>
