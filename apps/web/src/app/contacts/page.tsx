@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import { fetchApi, type Branch } from '@/lib/api'
+import styles from './contacts.module.css'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Контакты - Pandoroom',
-  description: 'Как нас найти — адреса, телефоны и часы работы Pandoroom во Владивостоке',
+  title: 'Контакты — Pandoroom',
+  description: 'Адреса, телефоны и карта филиалов Pandoroom во Владивостоке',
 }
 
 async function getBranches(): Promise<Branch[]> {
@@ -19,152 +20,149 @@ async function getBranches(): Promise<Branch[]> {
 const fallbackBranches: Branch[] = [
   {
     id: 'fallback-1',
-    name: 'Pandoroom на Пушкинской',
-    address: 'Владивосток, ул. Пушкинская, 14',
-    phone: '8 (423) 202-26-96',
-    workingHours: 'Ежедневно 10:00 — 22:00',
+    name: 'Развлекательный центр Pandoroom',
+    address: 'г. Владивосток, ул. Нижнепортовая, 1\n(«Морской вокзал», -1 этаж, вход со стороны моря)',
+    phone: '+7 (423) 202-26-96',
   },
   {
     id: 'fallback-2',
-    name: 'Pandoroom на Свердлова',
-    address: 'Владивосток, ул. Свердлова, 13',
-    phone: '8 (423) 205-44-68',
-    workingHours: 'Ежедневно 10:00 — 22:00',
+    name: 'Pandoroom на Посьетской',
+    address: 'г. Владивосток, ул. Посьетская, 27 стр. 2\n(район «Центр»)',
+    phone: '+7 (423) 202-26-96',
+  },
+  {
+    id: 'fallback-3',
+    name: 'Филиал хоррор квестов Pandoroom',
+    address: 'г. Владивосток, ул. Алеутская 17а\n(район «Серая лошадь»)',
+    phone: '+7 (423) 205-44-58',
   },
 ]
+
+/* ── Phone icon SVG ── */
+function PhoneIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  )
+}
+
+/* ── Pin icon SVG ── */
+function PinIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+      <circle cx="12" cy="10" r="3" />
+    </svg>
+  )
+}
+
+/* ── Single branch card ── */
+function BranchCard({ branch }: { branch: Branch }) {
+  const hasCoords = branch.geoLat != null && branch.geoLng != null
+  const phoneClean = branch.phone?.replace(/[\s()-]/g, '') ?? ''
+
+  return (
+    <div className={styles.card}>
+      {/* Map section */}
+      {hasCoords && (
+        <div className={styles.mapWrap}>
+          <iframe
+            src={`https://yandex.ru/map-widget/v1/?ll=${branch.geoLng}%2C${branch.geoLat}&z=16&l=map&pt=${branch.geoLng}%2C${branch.geoLat}%2Cpm2rdm`}
+            className={styles.mapFrame}
+            allowFullScreen
+            loading="lazy"
+            title={`Карта: ${branch.address}`}
+          />
+          <Link
+            href={`https://yandex.ru/maps/?ll=${branch.geoLng}%2C${branch.geoLat}&z=16`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.mapLink}
+          >
+            <PinIcon />
+            Открыть на карте
+          </Link>
+        </div>
+      )}
+
+      {/* Info section */}
+      <div className={styles.cardBody}>
+        <h2 className={styles.cardName}>{branch.name}</h2>
+
+        {branch.address && (
+          <p className={styles.cardAddress}>
+            {branch.address.split('\n').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 && <br />}
+              </span>
+            ))}
+          </p>
+        )}
+
+        {branch.phone && (
+          <a href={`tel:${phoneClean}`} className={styles.cardPhone}>
+            <span className={styles.phoneIcon}>
+              <PhoneIcon />
+            </span>
+            {branch.phone}
+          </a>
+        )}
+
+        <div className={styles.cardExtras}>
+          {branch.email && (
+            <a href={`mailto:${branch.email}`} className={styles.extraLink}>
+              {branch.email}
+            </a>
+          )}
+          {branch.whatsapp && (
+            <a
+              href={`https://wa.me/${branch.whatsapp.replace(/[\s()-]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.extraLink}
+            >
+              WhatsApp
+            </a>
+          )}
+          {branch.telegram && (
+            <a
+              href={`https://t.me/${branch.telegram.replace('@', '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.extraLink}
+            >
+              Telegram
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default async function ContactsPage() {
   const apiBranches = await getBranches()
   const branches = apiBranches.length > 0 ? apiBranches : fallbackBranches
+  const isSingle = branches.length === 1
 
   return (
-    <main style={{
-      maxWidth: '800px',
-      margin: '0 auto',
-      padding: '80px 24px',
-      minHeight: '60vh',
-      color: '#fff',
-    }}>
-      <h1 style={{
-        fontSize: '32px',
-        fontWeight: 700,
-        marginBottom: '32px',
-      }}>
-        Контакты
-      </h1>
+    <main style={{ minHeight: '60vh' }}>
+      <div style={{ maxWidth: 'var(--container-max-width, 1280px)', margin: '0 auto', padding: '0 var(--container-padding, 16px)' }}>
+        {/* Breadcrumb */}
+        <nav className={styles.breadcrumb}>
+          <Link href="/">Главная страница</Link>
+        </nav>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        {branches.map((branch) => (
-          <div
-            key={branch.id}
-            style={{
-              padding: '24px',
-              borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <h2 style={{
-              fontSize: '20px',
-              fontWeight: 600,
-              marginBottom: '16px',
-            }}>
-              {branch.name}
-            </h2>
+        <h1 className={styles.pageTitle}>Контактная информация</h1>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div>
-                <span style={{ color: '#888', fontSize: '14px' }}>Адрес</span>
-                <p style={{ color: '#ccc', margin: '4px 0 0' }}>{branch.address}</p>
-              </div>
-
-              {branch.phone && (
-                <div>
-                  <span style={{ color: '#888', fontSize: '14px' }}>Телефон</span>
-                  <p style={{ margin: '4px 0 0' }}>
-                    <a href={`tel:${branch.phone.replace(/[\s()-]/g, '')}`} style={{ color: '#A0BF39', textDecoration: 'none' }}>
-                      {branch.phone}
-                    </a>
-                  </p>
-                </div>
-              )}
-
-              {branch.email && (
-                <div>
-                  <span style={{ color: '#888', fontSize: '14px' }}>Email</span>
-                  <p style={{ margin: '4px 0 0' }}>
-                    <a href={`mailto:${branch.email}`} style={{ color: '#A0BF39', textDecoration: 'none' }}>
-                      {branch.email}
-                    </a>
-                  </p>
-                </div>
-              )}
-
-              {branch.whatsapp && (
-                <div>
-                  <span style={{ color: '#888', fontSize: '14px' }}>WhatsApp</span>
-                  <p style={{ margin: '4px 0 0' }}>
-                    <a
-                      href={`https://wa.me/${branch.whatsapp.replace(/[\s()-]/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: '#A0BF39', textDecoration: 'none' }}
-                    >
-                      {branch.whatsapp}
-                    </a>
-                  </p>
-                </div>
-              )}
-
-              {branch.telegram && (
-                <div>
-                  <span style={{ color: '#888', fontSize: '14px' }}>Telegram</span>
-                  <p style={{ margin: '4px 0 0' }}>
-                    <a
-                      href={`https://t.me/${branch.telegram.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: '#A0BF39', textDecoration: 'none' }}
-                    >
-                      {branch.telegram}
-                    </a>
-                  </p>
-                </div>
-              )}
-
-              {branch.workingHours && (
-                <div>
-                  <span style={{ color: '#888', fontSize: '14px' }}>Часы работы</span>
-                  <p style={{ color: '#ccc', margin: '4px 0 0' }}>{branch.workingHours}</p>
-                </div>
-              )}
-
-              {branch.geoLat != null && branch.geoLng != null && (
-                <div style={{ marginTop: '8px' }}>
-                  <Link
-                    href={`https://yandex.ru/maps/?ll=${branch.geoLng}%2C${branch.geoLat}&z=16`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      color: '#A0BF39',
-                      textDecoration: 'none',
-                      fontSize: '14px',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                      <circle cx="12" cy="10" r="3" />
-                    </svg>
-                    Показать на карте
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
+        {/* Branches */}
+        <div className={isSingle ? styles.gridSingle : styles.grid}>
+          {branches.map((branch) => (
+            <BranchCard key={branch.id} branch={branch} />
+          ))}
+        </div>
       </div>
     </main>
   )
