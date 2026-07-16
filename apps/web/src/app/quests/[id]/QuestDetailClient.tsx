@@ -397,12 +397,16 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                     </span>
                   </div>
                   <div className={styles.spec}>
-                    <span className={styles.specLabel}>Актёры</span>
-                    <span className={styles.specValue}>{quest.hasActors ? 'С актёрами' : 'Без актёров'}</span>
+                    <span className={styles.specLabel}>С актёрами</span>
+                    <span className={styles.specValue}>{quest.hasActors ? 'Да' : 'Нет'}</span>
                   </div>
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>Игроки</span>
-                    <span className={styles.specValue}>{quest.minPlayers}-{quest.maxPlayers} человек</span>
+                    <span className={styles.specValue}>{quest.minPlayers}-{quest.maxPlayers}</span>
+                  </div>
+                  <div className={styles.spec}>
+                    <span className={styles.specLabel}>Доп. игроки</span>
+                    <span className={styles.specValue}>до {quest.maxPlayers - quest.minPlayers}</span>
                   </div>
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>Возраст</span>
@@ -410,15 +414,19 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                   </div>
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>Время игры</span>
-                    <span className={styles.specValue}>{quest.durationMinutes} минут</span>
+                    <span className={styles.specValue}>{quest.durationMinutes} мин</span>
                   </div>
                   <div className={styles.spec}>
-                    <span className={styles.specLabel}>Доп. игрок</span>
-                    <span className={styles.specValue}>{quest.extraPlayerPrice} ₽</span>
+                    <span className={styles.specLabel}>Жанр</span>
+                    <span className={styles.specValue}>{quest.genre}</span>
                   </div>
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>Адрес</span>
                     <span className={styles.specValue}>{quest.address}</span>
+                  </div>
+                  <div className={styles.spec}>
+                    <span className={styles.specLabel}>Доп. игрок</span>
+                    <span className={styles.specValue}>{quest.extraPlayerPrice} ₽</span>
                   </div>
                 </div>
               </div>

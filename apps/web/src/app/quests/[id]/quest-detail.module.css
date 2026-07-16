@@ -371,7 +371,7 @@
 
 @media (min-width: 900px) {
   .content {
-    grid-template-columns: 1fr 300px;
+    grid-template-columns: 1fr 400px;
     gap: 48px;
   }
 }
@@ -477,9 +477,9 @@
 }
 
 .specs {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px 12px;
 }
 
 .spec {
