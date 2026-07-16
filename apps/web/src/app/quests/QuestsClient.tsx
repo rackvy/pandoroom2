@@ -311,7 +311,7 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                       {/* Time Slots */}
                       {slots.length > 0 && (
                         <div className={styles.qcardSlots}>
-                          {slots.map((slot) => (
+                          {[...slots].sort((a, b) => a.startTime.localeCompare(b.startTime)).map((slot) => (
                             <span
                               key={slot.slotId}
                               className={`${styles.qcardSlot}${slot.isBooked ? ` ${styles.qcardSlotBooked}` : ''}`}
