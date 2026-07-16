@@ -86,6 +86,7 @@ export interface Branch {
   email?: string | null
   whatsapp?: string | null
   telegram?: string | null
+  max?: string | null
   workingHours?: string | null
   geoLat?: number | null
   geoLng?: number | null

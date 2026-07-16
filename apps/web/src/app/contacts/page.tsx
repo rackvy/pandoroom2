@@ -118,7 +118,7 @@ function BranchCard({ branch }: { branch: Branch }) {
           )}
           {branch.whatsapp && (
             <a
-              href={`https://wa.me/${branch.whatsapp.replace(/[\s()-]/g, '')}`}
+              href={branch.whatsapp.startsWith('http') ? branch.whatsapp : `https://wa.me/${branch.whatsapp.replace(/[\s()-]/g, '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.extraLink}
@@ -128,12 +128,22 @@ function BranchCard({ branch }: { branch: Branch }) {
           )}
           {branch.telegram && (
             <a
-              href={`https://t.me/${branch.telegram.replace('@', '')}`}
+              href={branch.telegram.startsWith('http') ? branch.telegram : `https://t.me/${branch.telegram.replace('@', '')}`}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.extraLink}
             >
               Telegram
+            </a>
+          )}
+          {branch.max && (
+            <a
+              href={branch.max}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.extraLink}
+            >
+              MAX
             </a>
           )}
         </div>
