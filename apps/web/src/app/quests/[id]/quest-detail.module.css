@@ -508,138 +508,131 @@
   margin-left: 4px;
 }
 
-/* ---- Date Picker ---- */
-.datePicker {
-  overflow-x: auto;
-  scrollbar-width: none;
-  margin-bottom: 28px;
-}
-
-.datePicker::-webkit-scrollbar {
-  display: none;
-}
-
-.datePickerTrack {
-  display: flex;
-  gap: 8px;
-  padding: 4px 0;
-}
-
-.datePickerDay {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 18px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  min-width: 88px;
-}
-
-.datePickerDay:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.datePickerDayActive {
-  background: var(--color-cta-green, #b5e61d) !important;
-  border-color: var(--color-cta-green, #b5e61d) !important;
-}
-
-.datePickerDate {
-  font-family: var(--font-heading);
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text, #fff);
-  line-height: 1;
-}
-
-.datePickerMonth {
-  font-family: var(--font-primary);
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--color-text-muted, #888);
-}
-
-.datePickerWeekday {
-  font-size: 12px;
-  color: var(--color-text-muted, #888);
-  text-transform: lowercase;
-}
-
-.datePickerWeekend .datePickerDate {
-  color: #EAB9B9;
-}
-
-/* Active date overrides */
-.datePickerDayActive .datePickerDate,
-.datePickerDayActive .datePickerMonth,
-.datePickerDayActive .datePickerWeekday {
-  color: #000 !important;
-}
-
-/* ---- Schedule Slots ---- */
+/* ---- Schedule Grid ---- */
 .schedule {
   padding-top: 40px;
   padding-bottom: 48px;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.scheduleSlots {
+.scheduleGrid {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  gap: 4px;
 }
 
+.scheduleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.scheduleRowWeekend .scheduleDay {
+  color: #EAB9B9;
+}
+
+/* Date column */
+.scheduleDate {
+  min-width: 100px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scheduleDay {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text, #fff);
+  line-height: 1;
+}
+
+.scheduleMonth {
+  font-family: var(--font-primary);
+  font-size: 14px;
+  color: var(--color-text-muted, #888);
+}
+
+.scheduleWeekday {
+  font-size: 11px;
+  color: var(--color-text-muted, #888);
+  text-transform: lowercase;
+}
+
+/* Slots row */
+.scheduleSlots {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+/* Slot button */
 .slotBtn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 14px 22px;
-  border-radius: 12px;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
   transition: all 0.15s ease;
-  min-width: 100px;
+  min-width: 80px;
 }
 
 .slotBtn:hover:not(.slotBtnBooked) {
   background: rgba(181, 230, 29, 0.1);
   border-color: var(--color-cta-green, #b5e61d);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
 .slotTime {
   font-family: var(--font-heading);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-cta-green, #b5e61d);
 }
 
 .slotPrice {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--color-text-muted, #888);
 }
 
 .slotBooked {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.3);
 }
 
 .slotBtnBooked {
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: not-allowed;
   pointer-events: none;
+  min-width: 80px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
 .slotBtnBooked .slotTime {
   color: rgba(255, 255, 255, 0.3);
+}
+
+/* Empty placeholder for missing time slots */
+.slotEmpty {
+  min-width: 80px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  visibility: hidden;
 }
 
 .scheduleEmpty {
@@ -661,6 +654,32 @@
 
 .scheduleLink:hover {
   text-decoration: none;
+}
+
+/* Mobile: stack schedule vertically */
+@media (max-width: 767px) {
+  .scheduleRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .scheduleDate {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .scheduleSlots {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scheduleSlots::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ---- Back Link ---- */

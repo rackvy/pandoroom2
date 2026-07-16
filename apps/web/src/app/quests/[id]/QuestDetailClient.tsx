@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import styles from './quest-detail.module.css'
@@ -88,15 +88,9 @@ export default function QuestDetailClient({ quest }: QuestDetailClientProps) {
   const [bookingOpen, setBookingOpen] = useState(false)
   const [bookingSlotInfo, setBookingSlotInfo] = useState('')
 
-  // Date picker
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    return d
-  })
-  const [slots, setSlots] = useState<ScheduleSlot[]>([])
-  const [scheduleLoading, setScheduleLoading] = useState(false)
-  const datePickerRef = useRef<HTMLDivElement>(null)
+  // Schedule grid state — fetch all 14 days at once
+  const [allSlots, setAllSlots] = useState<Record<string, ScheduleSlot[]>>({})
+  const [scheduleLoading, setScheduleLoading] = useState(true)
 
   /* Build gallery images array */
   const galleryImages: string[] = quest.galleryPhotos.length > 0
@@ -118,56 +112,62 @@ export default function QuestDetailClient({ quest }: QuestDetailClientProps) {
     return result
   }, [])
 
-  /* Fetch schedule when date changes */
+  /* Fetch all 14 days of schedule in parallel */
   useEffect(() => {
     let cancelled = false
-    const dateKey = formatDateKey(selectedDate)
-
     setScheduleLoading(true)
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api/public'}/schedule/grid?date=${dateKey}`)
-      .then(res => res.ok ? res.json() : [])
-      .then((data: Array<{ questId: string; slots: ScheduleSlot[] }>) => {
-        if (cancelled) return
-        const questData = data.find(q => q.questId === quest.id)
-        setSlots(questData?.slots || [])
-      })
-      .catch(() => {
-        if (!cancelled) setSlots([])
-      })
-      .finally(() => {
-        if (!cancelled) setScheduleLoading(false)
-      })
-
-    return () => { cancelled = true }
-  }, [selectedDate, quest.id])
-
-  /* Auto-scroll date picker to selected date on mount */
-  useEffect(() => {
-    if (datePickerRef.current) {
-      const activeEl = datePickerRef.current.querySelector(`.${styles.datePickerDayActive}`)
-      if (activeEl) {
-        activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    const fetchAll = async () => {
+      const results: Record<string, ScheduleSlot[]> = {}
+      await Promise.all(
+        dates.map(async (d) => {
+          const dateKey = formatDateKey(d)
+          try {
+            const res = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL || '/api/public'}/schedule/grid?date=${dateKey}`
+            )
+            if (!res.ok) return
+            const data: Array<{ questId: string; slots: ScheduleSlot[] }> = await res.json()
+            const questData = data.find(q => q.questId === quest.id)
+            results[dateKey] = questData?.slots || []
+          } catch {
+            results[dateKey] = []
+          }
+        })
+      )
+      if (!cancelled) {
+        setAllSlots(results)
+        setScheduleLoading(false)
       }
     }
-  }, [])
 
-  /* Current time for filtering past slots */
+    fetchAll()
+    return () => { cancelled = true }
+  }, [dates, quest.id])
+
+  /* Collect all unique time slots across all days, sorted */
+  const allTimeSlots = useMemo(() => {
+    const timeSet = new Set<string>()
+    Object.values(allSlots).forEach((daySlots) => {
+      daySlots.forEach((s) => timeSet.add(s.startTime))
+    })
+    return Array.from(timeSet).sort()
+  }, [allSlots])
+
+  /* Current time for filtering past slots on today */
   const now = useMemo(() => new Date(), [])
-  const viewingToday = isSameDay(selectedDate, now)
 
-  const filteredSlots = useMemo(() => {
-    let result = [...slots].sort((a, b) => a.startTime.localeCompare(b.startTime))
-    if (viewingToday) {
-      const nowH = now.getHours()
-      const nowM = now.getMinutes()
-      result = result.filter((s) => {
-        const [h, m] = s.startTime.split(':').map(Number)
-        return h > nowH || (h === nowH && m > nowM)
-      })
-    }
-    return result
-  }, [slots, viewingToday, now])
+  /* Check if a slot is in the past (only for today's date) */
+  const isSlotPast = useCallback((dateKey: string, startTime: string) => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const dateObj = new Date(dateKey + 'T00:00:00')
+    if (!isSameDay(dateObj, today)) return false
+    const [h, m] = startTime.split(':').map(Number)
+    const nowH = now.getHours()
+    const nowM = now.getMinutes()
+    return h < nowH || (h === nowH && m <= nowM)
+  }, [now])
 
   /* Tabs definition */
   const tabs = [
@@ -213,9 +213,10 @@ export default function QuestDetailClient({ quest }: QuestDetailClientProps) {
   }, [galleryImages.length])
 
   /* Booking */
-  const openBooking = (slotTime?: string, price?: number) => {
-    if (slotTime) {
-      const dateStr = selectedDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+  const openBooking = (slotTime?: string, price?: number, dateKey?: string) => {
+    if (slotTime && dateKey) {
+      const dateObj = new Date(dateKey + 'T00:00:00')
+      const dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
       setBookingSlotInfo(`${quest.name} — ${dateStr}, ${slotTime} — ${price} ₽`)
     } else {
       setBookingSlotInfo('')
@@ -430,66 +431,69 @@ export default function QuestDetailClient({ quest }: QuestDetailClientProps) {
         <div className="container">
           <h2 className={styles.sectionTitle}>Выберите дату и время</h2>
 
-          {/* Date Picker */}
-          <div ref={datePickerRef} className={styles.datePicker}>
-            <div className={styles.datePickerTrack}>
+          {scheduleLoading ? (
+            <p className={styles.scheduleEmpty}>Загрузка расписания...</p>
+          ) : allTimeSlots.length > 0 ? (
+            <div className={styles.scheduleGrid}>
               {dates.map((d) => {
-                const isSelected = formatDateKey(d) === formatDateKey(selectedDate)
+                const dateKey = formatDateKey(d)
                 const dayIdx = getWeekdayIdx(d)
                 const dayNum = String(d.getDate()).padStart(2, '0')
                 const monthNum = String(d.getMonth() + 1).padStart(2, '0')
                 const weekend = isWeekend(d)
+                const daySlots = allSlots[dateKey] || []
+                const slotMap = new Map(daySlots.map(s => [s.startTime, s]))
+
                 return (
-                  <button
-                    key={formatDateKey(d)}
-                    className={
-                      styles.datePickerDay +
-                      (isSelected ? ` ${styles.datePickerDayActive}` : '') +
-                      (weekend ? ` ${styles.datePickerWeekend}` : '')
-                    }
-                    onClick={() => setSelectedDate(d)}
-                  >
-                    <span className={styles.datePickerDate}>
-                      {dayNum} <span className={styles.datePickerMonth}>/ {monthNum}</span>
-                    </span>
-                    <span className={styles.datePickerWeekday}>{WEEKDAY_FULL[dayIdx]}</span>
-                  </button>
+                  <div key={dateKey} className={`${styles.scheduleRow}${weekend ? ` ${styles.scheduleRowWeekend}` : ''}`}>
+                    <div className={styles.scheduleDate}>
+                      <span className={styles.scheduleDay}>{dayNum}</span>
+                      <span className={styles.scheduleMonth}>/ {monthNum}</span>
+                      <span className={styles.scheduleWeekday}>{WEEKDAY_FULL[dayIdx]}</span>
+                    </div>
+                    <div className={styles.scheduleSlots}>
+                      {allTimeSlots.map((time) => {
+                        const slot = slotMap.get(time)
+                        const past = isSlotPast(dateKey, time)
+
+                        if (!slot) {
+                          return <div key={time} className={styles.slotEmpty} />
+                        }
+
+                        if (past || slot.isBooked) {
+                          return (
+                            <div key={time} className={`${styles.slotBtn} ${styles.slotBtnBooked}`}>
+                              <span className={styles.slotTime}>{time}</span>
+                              <span className={styles.slotBooked}>{slot.isBooked ? 'Занято' : '—'}</span>
+                            </div>
+                          )
+                        }
+
+                        return (
+                          <button
+                            key={time}
+                            className={styles.slotBtn}
+                            onClick={() => openBooking(slot.startTime, slot.finalPrice, dateKey)}
+                            title={`Свободно — ${slot.finalPrice} ₽`}
+                          >
+                            <span className={styles.slotTime}>{slot.startTime}</span>
+                            <span className={styles.slotPrice}>{slot.finalPrice} ₽</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 )
               })}
             </div>
-          </div>
-
-          {/* Time Slots */}
-          <div className={styles.scheduleSlots}>
-            {scheduleLoading ? (
-              <p className={styles.scheduleEmpty}>Загрузка расписания...</p>
-            ) : filteredSlots.length > 0 ? (
-              filteredSlots.map((slot) => (
-                <button
-                  key={slot.slotId}
-                  className={`${styles.slotBtn}${slot.isBooked ? ` ${styles.slotBtnBooked}` : ''}`}
-                  disabled={slot.isBooked}
-                  onClick={() => openBooking(slot.startTime, slot.finalPrice)}
-                  title={slot.isBooked ? 'Забронировано' : `Свободно — ${slot.finalPrice} ₽`}
-                >
-                  <span className={styles.slotTime}>{slot.startTime}</span>
-                  {!slot.isBooked && (
-                    <span className={styles.slotPrice}>{slot.finalPrice} ₽</span>
-                  )}
-                  {slot.isBooked && (
-                    <span className={styles.slotBooked}>Занято</span>
-                  )}
-                </button>
-              ))
-            ) : (
-              <p className={styles.scheduleEmpty}>
-                Нет доступных слотов на выбранную дату. Попробуйте другой день или{' '}
-                <button className={styles.scheduleLink} onClick={() => openBooking()}>
-                  оставьте заявку
-                </button>
-              </p>
-            )}
-          </div>
+          ) : (
+            <p className={styles.scheduleEmpty}>
+              Нет доступных слотов на ближайшие 14 дней.{' '}
+              <button className={styles.scheduleLink} onClick={() => openBooking()}>
+                Оставьте заявку
+              </button>
+            </p>
+          )}
         </div>
       </section>
 
