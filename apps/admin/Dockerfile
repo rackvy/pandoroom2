@@ -12,6 +12,8 @@ COPY apps/admin/package.json apps/admin/
 RUN pnpm install --frozen-lockfile
 
 COPY apps/admin apps/admin
+ARG VITE_YANDEX_MAPS_API_KEY
+ENV VITE_YANDEX_MAPS_API_KEY=$VITE_YANDEX_MAPS_API_KEY
 RUN pnpm -C apps/admin build
 
 FROM nginx:alpine
