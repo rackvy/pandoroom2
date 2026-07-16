@@ -148,7 +148,7 @@ export default async function ContactsPage() {
   const isSingle = branches.length === 1
 
   return (
-    <main style={{ minHeight: '60vh' }}>
+    <main style={{ minHeight: '60vh', paddingTop: 140 }}>
       <div style={{ maxWidth: 'var(--container-max-width, 1280px)', margin: '0 auto', padding: '0 var(--container-padding, 16px)' }}>
         {/* Breadcrumb */}
         <nav className={styles.breadcrumb}>
