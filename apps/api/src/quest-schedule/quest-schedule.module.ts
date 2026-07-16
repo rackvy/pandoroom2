@@ -5,5 +5,6 @@ import { QuestScheduleService } from './quest-schedule.service';
 @Module({
   controllers: [QuestScheduleController],
   providers: [QuestScheduleService],
+  exports: [QuestScheduleService],
 })
 export class QuestScheduleModule {}

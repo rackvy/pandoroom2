@@ -2,11 +2,15 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
 import { PublicService } from './public.service';
 import { Public } from '../common/decorators/public.decorator';
+import { QuestScheduleService } from '../quest-schedule/quest-schedule.service';
 
 @Controller('api/public')
 @Public()
 export class PublicController {
-  constructor(private publicService: PublicService) {}
+  constructor(
+    private publicService: PublicService,
+    private questScheduleService: QuestScheduleService,
+  ) {}
 
   @Get('branches')
   findAllBranches() {
@@ -64,5 +68,28 @@ export class PublicController {
   @Get('vr-games/:id')
   getVRGame(@Param('id') id: string) {
     return this.publicService.getVRGame(id);
+  }
+
+  // ==================== PUBLIC SCHEDULE ====================
+
+  @Get('schedule/grid')
+  async getScheduleGrid(@Query('date') dateStr?: string) {
+    const date = dateStr ? new Date(dateStr) : new Date();
+    const grid = await this.questScheduleService.getQuestSlotsForDate(date);
+
+    // Strip sensitive booking info — only return slot availability
+    return grid.map(quest => ({
+      questId: quest.questId,
+      questName: quest.questName,
+      durationMinutes: quest.durationMinutes,
+      slots: quest.slots
+        .filter(s => s.isAvailable)
+        .map(s => ({
+          slotId: s.slotId,
+          startTime: s.startTime,
+          finalPrice: s.finalPrice,
+          isBooked: !!s.reservation,
+        })),
+    }));
   }
 }
