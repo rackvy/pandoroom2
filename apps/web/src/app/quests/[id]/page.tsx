@@ -1,5 +1,5 @@
 import { fetchApi } from '@/lib/api'
-import type { QuestDetail } from '@/lib/api'
+import type { QuestDetail, NewsItem } from '@/lib/api'
 import QuestDetailClient from './QuestDetailClient'
 
 export const dynamic = 'force-dynamic'
@@ -24,6 +24,15 @@ async function getQuest(id: string): Promise<QuestDetail | null> {
   }
 }
 
+async function getLatestNews(): Promise<NewsItem[]> {
+  try {
+    const all: NewsItem[] = await fetchApi('/news')
+    return all.slice(0, 4)
+  } catch {
+    return []
+  }
+}
+
 export default async function QuestDetailPage({ params }: { params: { id: string } }) {
   const quest = await getQuest(params.id)
 
@@ -40,5 +49,7 @@ export default async function QuestDetailPage({ params }: { params: { id: string
     )
   }
 
-  return <QuestDetailClient quest={quest} />
+  const news = await getLatestNews()
+
+  return <QuestDetailClient quest={quest} news={news} />
 }

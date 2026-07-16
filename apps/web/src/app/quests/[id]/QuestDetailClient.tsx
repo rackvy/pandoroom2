@@ -6,7 +6,7 @@ import Link from 'next/link'
 import styles from './quest-detail.module.css'
 import BookingModal from '@/components/BookingModal'
 import Lightbox from '@/components/Lightbox'
-import type { QuestDetail } from '@/lib/api'
+import type { QuestDetail, NewsItem } from '@/lib/api'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -79,9 +79,10 @@ interface ScheduleSlot {
 
 interface QuestDetailClientProps {
   quest: QuestDetail
+  news?: NewsItem[]
 }
 
-export default function QuestDetailClient({ quest }: QuestDetailClientProps) {
+export default function QuestDetailClient({ quest, news = [] }: QuestDetailClientProps) {
   const [activeTab, setActiveTab] = useState('description')
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
@@ -496,6 +497,56 @@ export default function QuestDetailClient({ quest }: QuestDetailClientProps) {
           )}
         </div>
       </section>
+
+      {/* ==================== NEWS ==================== */}
+      {news.length > 0 && (
+        <section className={styles.newsSection}>
+          <div className="container">
+            <h2 className={styles.sectionTitle}>Новости и акции</h2>
+            <div className={styles.newsGrid}>
+              {news.map((item) => {
+                const dateStr = new Date(item.date).toLocaleDateString('ru-RU', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })
+                const excerpt = item.content.replace(/<[^>]*>/g, '').slice(0, 120)
+                return (
+                  <Link key={item.id} href={`/news/${item.id}`} className={styles.newsCard}>
+                    {item.image?.url ? (
+                      <div className={styles.newsCardImage}>
+                        <Image
+                          src={item.image.url}
+                          alt={item.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 25vw"
+                          className={styles.newsCardImg}
+                        />
+                      </div>
+                    ) : (
+                      <div className={styles.newsCardPlaceholder}>
+                        <span>P</span>
+                      </div>
+                    )}
+                    <div className={styles.newsCardBody}>
+                      <span className={styles.newsCardDate}>{dateStr}</span>
+                      <h3 className={styles.newsCardTitle}>{item.title}</h3>
+                      {excerpt && (
+                        <p className={styles.newsCardExcerpt}>{excerpt}...</p>
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+            <div style={{ textAlign: 'center', paddingTop: 24 }}>
+              <Link href="/news" className={styles.backLink}>
+                Все новости &rarr;
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Back link */}
       <div className="container" style={{ paddingBottom: 48 }}>
