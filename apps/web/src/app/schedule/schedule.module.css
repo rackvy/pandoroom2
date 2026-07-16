@@ -138,6 +138,23 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scheduleTable::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scheduleTable::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scheduleTable::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
 }
 
 /* Table header row with time labels */
@@ -147,11 +164,19 @@
   padding: 12px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 8px;
+  min-width: max-content;
 }
 
 .questCol {
   min-width: 320px;
+  width: 320px;
   flex-shrink: 0;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--color-bg, #111);
+  padding-right: 16px;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.5);
 }
 
 .slotsCol {
@@ -178,6 +203,7 @@
   padding: 14px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   align-items: center;
+  min-width: max-content;
 }
 
 .scheduleRow:last-child {
@@ -360,6 +386,10 @@
     padding-top: 120px;
   }
 
+  .scheduleTable {
+    overflow-x: visible;
+  }
+
   .scheduleHeader {
     display: none;
   }
@@ -368,11 +398,15 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    min-width: unset;
   }
 
   .questCol {
+    position: static;
     min-width: unset;
     width: 100%;
+    box-shadow: none;
+    padding-right: 0;
   }
 
   .slotsCol {
