@@ -123,19 +123,50 @@
   color: #1A1A18;
 }
 
-.itemIikoId {
-  font-size: 0.75rem;
-  color: #9ca3af;
+.itemDesc {
+  font-size: 0.8rem;
+  color: #6b7280;
   margin-top: 2px;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.department {
+.categoryCount {
   display: inline-block;
-  padding: 0.25rem 0.5rem;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
   background: #f3f4f6;
-  border-radius: 4px;
+  color: #6b7280;
+  border-radius: 10px;
   font-size: 0.75rem;
-  color: #4b5563;
+  font-weight: 400;
+}
+
+.imgCell {
+  width: 52px;
+  padding: 0.5rem !important;
+}
+
+.thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  object-fit: cover;
+  display: block;
+}
+
+.thumbPlaceholder {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d1d5db;
+  font-size: 1.2rem;
 }
 
 .price {

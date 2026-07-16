@@ -99,28 +99,37 @@ export default function IikoMenuPage() {
       ) : (
         categoryNames.map((category) => (
           <div key={category} className={styles.categoryGroup}>
-            <h2 className={styles.categoryTitle}>{category}</h2>
+            <h2 className={styles.categoryTitle}>
+              {category}
+              <span className={styles.categoryCount}>{groupedItems[category].length}</span>
+            </h2>
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th></th>
                   <th>Название</th>
-                  <th>Департамент</th>
+                  <th>Вес/объём</th>
                   <th>Цена</th>
                 </tr>
               </thead>
               <tbody>
                 {groupedItems[category].map((item) => (
                   <tr key={item.id}>
-                    <td>
-                      <div className={styles.itemName}>{item.name}</div>
-                      <div className={styles.itemIikoId}>{item.iikoId}</div>
+                    <td className={styles.imgCell}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt={item.name} className={styles.thumb} />
+                      ) : (
+                        <div className={styles.thumbPlaceholder}>—</div>
+                      )}
                     </td>
                     <td>
-                      {item.department ? (
-                        <span className={styles.department}>{item.department}</span>
-                      ) : (
-                        '-'
+                      <div className={styles.itemName}>{item.name}</div>
+                      {item.description && (
+                        <div className={styles.itemDesc}>{item.description}</div>
                       )}
+                    </td>
+                    <td>
+                      {item.weight || '-'}
                     </td>
                     <td>
                       <span className={styles.price}>

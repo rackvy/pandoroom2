@@ -738,9 +738,12 @@ model IikoMenuItem {
   id          String   @id @default(uuid())
   iikoId      String   @unique
   name        String
+  description String?
   category    String
   department  String?
   price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String?
+  weight      String?
   isActive    Boolean  @default(true)
   updatedAt   DateTime @updatedAt
 }

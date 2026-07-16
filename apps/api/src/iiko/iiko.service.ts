@@ -41,18 +41,17 @@ export class IikoService {
   }
 
   async getMenu() {
-    // Try to get cached menu items from DB
-    const cachedItems = await this.prisma.iikoMenuItem.findMany({
+    const items = await this.prisma.iikoMenuItem.findMany({
       where: { isActive: true },
       orderBy: { category: 'asc' },
     });
-    if (cachedItems.length > 0) return cachedItems;
+    if (items.length > 0) return items;
 
     // If no cache, return stub data
     return [
-      { id: '1', iikoId: 'stub-1', name: 'Лимонад', category: 'Напитки', department: 'bar', price: 250, isActive: true, updatedAt: new Date() },
-      { id: '2', iikoId: 'stub-2', name: 'Пицца Маргарита', category: 'Пицца', department: 'pizza', price: 650, isActive: true, updatedAt: new Date() },
-      { id: '3', iikoId: 'stub-3', name: 'Стейк', category: 'Горячее', department: 'hot_kitchen', price: 1200, isActive: true, updatedAt: new Date() },
+      { id: '1', iikoId: 'stub-1', name: 'Лимонад', category: 'Напитки', department: 'bar', price: 250, isActive: true, description: null, imageUrl: null, weight: null, updatedAt: new Date() },
+      { id: '2', iikoId: 'stub-2', name: 'Пицца Маргарита', category: 'Пицца', department: 'pizza', price: 650, isActive: true, description: null, imageUrl: null, weight: null, updatedAt: new Date() },
+      { id: '3', iikoId: 'stub-3', name: 'Стейк', category: 'Горячее', department: 'hot_kitchen', price: 1200, isActive: true, description: null, imageUrl: null, weight: null, updatedAt: new Date() },
     ];
   }
 
@@ -60,12 +59,12 @@ export class IikoService {
     const token = await this.getAccessToken();
     if (!token) {
       this.logger.log('[STUB] Menu sync skipped — no token');
-      return { synced: 0, message: 'STUB: iiko API не настроен' };
+      return { synced: 0, deactivated: 0, message: 'STUB: iiko API не настроен' };
     }
 
     const apiUrl = this.configService.get<string>('IIKO_API_URL', 'https://api-ru.iiko.services');
     const orgId = this.configService.get<string>('IIKO_ORGANIZATION_ID');
-    if (!orgId) return { synced: 0, message: 'IIKO_ORGANIZATION_ID not configured' };
+    if (!orgId) return { synced: 0, deactivated: 0, message: 'IIKO_ORGANIZATION_ID not configured' };
 
     try {
       const response = await fetch(`${apiUrl}/api/1/nomenclature`, {
@@ -75,32 +74,89 @@ export class IikoService {
       });
       const data = await response.json();
 
-      // Process and save menu items
-      let synced = 0;
-      for (const group of (data.productCategories || [])) {
-        for (const product of (group.products || [])) {
-          await this.prisma.iikoMenuItem.upsert({
-            where: { iikoId: product.id },
-            create: {
-              iikoId: product.id,
-              name: product.name,
-              category: group.name,
-              price: product.price || 0,
-            },
-            update: {
-              name: product.name,
-              category: group.name,
-              price: product.price || 0,
-            },
-          });
-          synced++;
-        }
+      // Build category name lookup
+      const catMap: Record<string, string> = {};
+      for (const cat of (data.productCategories || [])) {
+        catMap[cat.id] = cat.name;
       }
 
-      return { synced, message: `Синхронизировано ${synced} позиций` };
+      // Products are in a flat array
+      const products: any[] = data.products || [];
+      const syncedIds = new Set<string>();
+      let synced = 0;
+
+      for (const product of products) {
+        // Skip deleted products
+        if (product.isDeleted) continue;
+
+        // Get price from sizePrices
+        let price = 0;
+        if (product.sizePrices && product.sizePrices.length > 0) {
+          const sp = product.sizePrices[0];
+          price = sp?.price?.currentPrice || 0;
+        }
+        // Skip zero-price items (internal/stock items)
+        if (price <= 0) continue;
+
+        // Get category name
+        const categoryName = catMap[product.productCategoryId] || 'Без категории';
+
+        // Get image URL
+        const imageUrl = (product.imageLinks && product.imageLinks.length > 0)
+          ? product.imageLinks[0]
+          : null;
+
+        // Format weight
+        let weight: string | null = null;
+        if (product.weight && product.measureUnit) {
+          weight = `${product.weight} ${product.measureUnit}`;
+        }
+
+        const iikoId = product.id;
+        syncedIds.add(iikoId);
+
+        await this.prisma.iikoMenuItem.upsert({
+          where: { iikoId },
+          create: {
+            iikoId,
+            name: product.name || 'Без названия',
+            description: product.description || null,
+            category: categoryName,
+            price: price,
+            imageUrl,
+            weight,
+            isActive: true,
+          },
+          update: {
+            name: product.name || 'Без названия',
+            description: product.description || null,
+            category: categoryName,
+            price: price,
+            imageUrl,
+            weight,
+            isActive: true,
+          },
+        });
+        synced++;
+      }
+
+      // Deactivate products no longer in iiko
+      const deactivated = await this.prisma.iikoMenuItem.updateMany({
+        where: {
+          iikoId: { notIn: Array.from(syncedIds) },
+          isActive: true,
+        },
+        data: { isActive: false },
+      });
+
+      return {
+        synced,
+        deactivated: deactivated.count,
+        message: `Синхронизировано ${synced} позиций, деактивировано ${deactivated.count}`,
+      };
     } catch (error: any) {
       this.logger.error(`Menu sync failed: ${error.message}`);
-      return { synced: 0, message: `Ошибка: ${error.message}` };
+      return { synced: 0, deactivated: 0, message: `Ошибка: ${error.message}` };
     }
   }
 

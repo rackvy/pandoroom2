@@ -4,9 +4,12 @@ export interface IikoMenuItem {
   id: string;
   iikoId: string;
   name: string;
+  description: string | null;
   category: string;
   department: string | null;
   price: number;
+  imageUrl: string | null;
+  weight: string | null;
   isActive: boolean;
 }
 
