@@ -357,9 +357,12 @@ export default function QuestDetailClient({ quest }: QuestDetailClientProps) {
                   className={`${styles.tabPanel}${activeTab === tab.key ? ` ${styles.tabPanelActive}` : ''}`}
                 >
                   {tabContent[tab.key]
-                    ? tabContent[tab.key].split('\n').filter(Boolean).map((p, i) => (
-                        <p key={i}>{p}</p>
-                      ))
+                    ? (
+                        <div
+                          className={styles.tabHtml}
+                          dangerouslySetInnerHTML={{ __html: tabContent[tab.key] }}
+                        />
+                      )
                     : <p className={styles.noContent}>Информация отсутствует</p>
                   }
                 </div>

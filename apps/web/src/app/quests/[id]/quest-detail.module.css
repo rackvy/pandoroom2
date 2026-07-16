@@ -361,6 +361,66 @@
   display: block;
 }
 
+/* HTML content from API */
+.tabHtml {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.tabHtml p {
+  margin: 0 0 16px;
+}
+
+.tabHtml p:last-child {
+  margin-bottom: 0;
+}
+
+.tabHtml strong,
+.tabHtml b {
+  color: #fff;
+  font-weight: 600;
+}
+
+.tabHtml em,
+.tabHtml i {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.tabHtml a {
+  color: var(--color-cta-green, #b5e61d);
+  text-decoration: none;
+}
+
+.tabHtml a:hover {
+  text-decoration: underline;
+}
+
+.tabHtml ul,
+.tabHtml ol {
+  padding-left: 20px;
+  margin: 0 0 16px;
+}
+
+.tabHtml li {
+  margin-bottom: 8px;
+}
+
+.tabHtml h1,
+.tabHtml h2,
+.tabHtml h3,
+.tabHtml h4 {
+  font-family: var(--font-heading);
+  color: #fff;
+  margin: 24px 0 12px;
+}
+
+.tabHtml h1:first-child,
+.tabHtml h2:first-child,
+.tabHtml h3:first-child {
+  margin-top: 0;
+}
+
 /* ---- Sidebar ---- */
 .sidebarCard {
   background: rgba(255, 255, 255, 0.04);
