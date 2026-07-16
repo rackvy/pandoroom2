@@ -271,45 +271,45 @@ export default function QuestDetailClient({ quest }: QuestDetailClientProps) {
               {quest.subtitle && (
                 <p className={styles.heroSubtitle}>{quest.subtitle}</p>
               )}
-            </div>
 
-            {/* Quick specs row */}
-            <div className={styles.heroSpecs}>
-              <div className={styles.heroSpec}>
-                <span className={styles.heroSpecLabel}>Жанр</span>
-                <span className={styles.heroSpecValue}>{quest.genre}</span>
+              {/* Quick specs row */}
+              <div className={styles.heroSpecs}>
+                <div className={styles.heroSpec}>
+                  <span className={styles.heroSpecLabel}>Жанр</span>
+                  <span className={styles.heroSpecValue}>{quest.genre}</span>
+                </div>
+                <div className={styles.heroSpecDivider} />
+                <div className={styles.heroSpec}>
+                  <span className={styles.heroSpecLabel}>Сложность</span>
+                  <span className={styles.heroSpecValue}>
+                    <DifficultyDots level={diff} />
+                  </span>
+                </div>
+                <div className={styles.heroSpecDivider} />
+                <div className={styles.heroSpec}>
+                  <span className={styles.heroSpecLabel}>Время</span>
+                  <span className={styles.heroSpecValue}>{quest.durationMinutes} мин</span>
+                </div>
+                <div className={styles.heroSpecDivider} />
+                <div className={styles.heroSpec}>
+                  <span className={styles.heroSpecLabel}>Игроки</span>
+                  <span className={styles.heroSpecValue}>{quest.minPlayers}-{quest.maxPlayers}</span>
+                </div>
+                <div className={styles.heroSpecDivider} />
+                <div className={styles.heroSpec}>
+                  <span className={styles.heroSpecLabel}>Возраст</span>
+                  <span className={styles.heroSpecValue}>{quest.ageRestriction || '12+'}</span>
+                </div>
+                {quest.hasActors && (
+                  <>
+                    <div className={styles.heroSpecDivider} />
+                    <div className={styles.heroSpec}>
+                      <span className={styles.heroSpecLabel}>Актёры</span>
+                      <span className={styles.heroSpecValue}>Есть</span>
+                    </div>
+                  </>
+                )}
               </div>
-              <div className={styles.heroSpecDivider} />
-              <div className={styles.heroSpec}>
-                <span className={styles.heroSpecLabel}>Сложность</span>
-                <span className={styles.heroSpecValue}>
-                  <DifficultyDots level={diff} />
-                </span>
-              </div>
-              <div className={styles.heroSpecDivider} />
-              <div className={styles.heroSpec}>
-                <span className={styles.heroSpecLabel}>Время</span>
-                <span className={styles.heroSpecValue}>{quest.durationMinutes} мин</span>
-              </div>
-              <div className={styles.heroSpecDivider} />
-              <div className={styles.heroSpec}>
-                <span className={styles.heroSpecLabel}>Игроки</span>
-                <span className={styles.heroSpecValue}>{quest.minPlayers}-{quest.maxPlayers}</span>
-              </div>
-              <div className={styles.heroSpecDivider} />
-              <div className={styles.heroSpec}>
-                <span className={styles.heroSpecLabel}>Возраст</span>
-                <span className={styles.heroSpecValue}>{quest.ageRestriction || '12+'}</span>
-              </div>
-              {quest.hasActors && (
-                <>
-                  <div className={styles.heroSpecDivider} />
-                  <div className={styles.heroSpec}>
-                    <span className={styles.heroSpecLabel}>Актёры</span>
-                    <span className={styles.heroSpecValue}>Есть</span>
-                  </div>
-                </>
-              )}
             </div>
           </div>
         </div>

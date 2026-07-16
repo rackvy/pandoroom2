@@ -98,9 +98,8 @@
 .heroContent {
   max-width: 700px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 24px;
 }
 
 .heroPoster {
