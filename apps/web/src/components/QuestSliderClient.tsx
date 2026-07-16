@@ -291,10 +291,11 @@ export default function QuestSliderClient({ title, quests }: Props) {
         }
         .qc-sub {
           display: block;
-          font-size: 20px;
-          font-weight: 600;
-          color: #fff;
-          margin-top: 2px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(255,255,255,0.85);
+          margin-top: 4px;
+          line-height: 1.4;
         }
         .qc-meta {
           display: flex;
