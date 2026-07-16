@@ -306,11 +306,16 @@
   border-radius: inherit;
   background-color: #0a0a0a;
   z-index: 0;
+  overflow: hidden;
 }
 
+/* Next.js Image: both the wrapper span and the <img> need border-radius */
 .qcardPosterImg {
-  width: 100% !important;
-  height: 100% !important;
+  border-radius: inherit !important;
+}
+
+.qcardPosterImg img {
+  border-radius: inherit !important;
   object-fit: cover;
 }
 
