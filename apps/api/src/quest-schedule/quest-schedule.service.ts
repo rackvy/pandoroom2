@@ -334,6 +334,10 @@ export class QuestScheduleService {
         questId: quest.id,
         questName: quest.name,
         durationMinutes: quest.durationMinutes,
+        maxPlayers: quest.maxPlayers,
+        extraPlayerPrice: quest.extraPlayerPrice,
+        allowAnimator: quest.allowAnimator,
+        animatorPrice: quest.animatorPrice,
         slots,
       };
     });

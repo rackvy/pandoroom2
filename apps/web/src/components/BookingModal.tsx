@@ -8,16 +8,12 @@ import styles from './BookingModal.module.css'
 /* ------------------------------------------------------------------ */
 
 function formatPhone(raw: string): string {
-  // Strip everything except digits
   let digits = raw.replace(/\D/g, '')
-  // If starts with 8, replace with 7
   if (digits.startsWith('8')) digits = '7' + digits.slice(1)
-  // If doesn't start with 7, prepend 7
   if (!digits.startsWith('7')) digits = '7' + digits
-  // Limit to 11 digits
   digits = digits.slice(0, 11)
 
-  const d = digits.slice(1) // remove country code
+  const d = digits.slice(1)
   let out = '+7'
   if (d.length > 0) out += ' (' + d.slice(0, 3)
   if (d.length >= 3) out += ') ' + d.slice(3, 6)
@@ -45,6 +41,12 @@ export interface BookingSlotData {
   eventDate: string // YYYY-MM-DD
   time: string      // HH:MM
   price: number
+  // Quest metadata for extras
+  maxPlayers: number
+  minPlayers: number
+  extraPlayerPrice: number
+  allowAnimator: boolean
+  animatorPrice: number
 }
 
 interface BookingModalProps {
@@ -66,6 +68,10 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
   const [success, setSuccess] = useState(false)
   const nameRef = useRef<HTMLInputElement>(null)
 
+  // Extras state
+  const [extraPlayers, setExtraPlayers] = useState(0)
+  const [addAnimator, setAddAnimator] = useState(false)
+
   // Reset form when modal opens/closes
   useEffect(() => {
     if (open) {
@@ -75,7 +81,8 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
       setError('')
       setSuccess(false)
       setLoading(false)
-      // Auto-focus name input
+      setExtraPlayers(0)
+      setAddAnimator(false)
       setTimeout(() => nameRef.current?.focus(), 100)
     }
   }, [open])
@@ -104,6 +111,15 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
     setPhone(formatPhone(e.target.value))
     setError('')
   }
+
+  // Calculate total price
+  const basePrice = slotData?.price ?? 0
+  const extraPlayersTotal = slotData ? extraPlayers * slotData.extraPlayerPrice : 0
+  const animatorTotal = (slotData?.allowAnimator && addAnimator) ? slotData.animatorPrice : 0
+  const totalPrice = basePrice + extraPlayersTotal + animatorTotal
+
+  // Max extra players = maxPlayers - minPlayers
+  const maxExtra = slotData ? slotData.maxPlayers - slotData.minPlayers : 0
 
   // Submit booking
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -137,6 +153,8 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
           eventDate: slotData.eventDate,
           name: name.trim(),
           phone: phoneToDigits(phone),
+          extraPlayers: extraPlayers > 0 ? extraPlayers : undefined,
+          addAnimator: addAnimator || undefined,
         }),
       })
 
@@ -186,7 +204,7 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
             <div className={styles.slotInfo}>
               <span className={styles.slotQuest}>{slotData.questName}</span>
               <span className={styles.slotDetails}>
-                {slotData.time} &mdash; {slotData.price.toLocaleString('ru-RU')} &#8381;
+                {slotData.time} &mdash; {basePrice.toLocaleString('ru-RU')} &#8381;
               </span>
             </div>
 
@@ -214,6 +232,73 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
                 inputMode="numeric"
               />
 
+              {/* ==================== EXTRAS ==================== */}
+              {maxExtra > 0 && slotData.extraPlayerPrice > 0 && (
+                <div className={styles.extrasBlock}>
+                  <div className={styles.extraRow}>
+                    <div className={styles.extraInfo}>
+                      <span className={styles.extraLabel}>Доп. игроки</span>
+                      <span className={styles.extraHint}>
+                        +{slotData.extraPlayerPrice.toLocaleString('ru-RU')} &#8381; / чел.
+                      </span>
+                    </div>
+                    <div className={styles.counter}>
+                      <button
+                        type="button"
+                        className={styles.counterBtn}
+                        onClick={() => setExtraPlayers(p => Math.max(0, p - 1))}
+                        disabled={loading || extraPlayers <= 0}
+                      >
+                        &minus;
+                      </button>
+                      <span className={styles.counterValue}>{extraPlayers}</span>
+                      <button
+                        type="button"
+                        className={styles.counterBtn}
+                        onClick={() => setExtraPlayers(p => Math.min(maxExtra, p + 1))}
+                        disabled={loading || extraPlayers >= maxExtra}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                  {extraPlayers > 0 && (
+                    <span className={styles.extraSubtotal}>
+                      +{extraPlayersTotal.toLocaleString('ru-RU')} &#8381;
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {slotData.allowAnimator && slotData.animatorPrice > 0 && (
+                <div className={styles.extrasBlock}>
+                  <label className={styles.animatorToggle}>
+                    <input
+                      type="checkbox"
+                      checked={addAnimator}
+                      onChange={(e) => setAddAnimator(e.target.checked)}
+                      disabled={loading}
+                    />
+                    <div className={styles.animatorInfo}>
+                      <span className={styles.extraLabel}>Аниматор</span>
+                      <span className={styles.extraHint}>
+                        +{slotData.animatorPrice.toLocaleString('ru-RU')} &#8381;
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {/* ==================== TOTAL ==================== */}
+              {(extraPlayers > 0 || addAnimator) && (
+                <div className={styles.totalBlock}>
+                  <span className={styles.totalLabel}>Итого</span>
+                  <span className={styles.totalPrice}>
+                    {totalPrice.toLocaleString('ru-RU')} &#8381;
+                  </span>
+                </div>
+              )}
+
               {error && <p className={styles.error}>{error}</p>}
 
               <label className={styles.consent}>
@@ -231,7 +316,7 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
                 className={styles.submitBtn}
                 disabled={loading || !consent}
               >
-                {loading ? 'Отправка...' : 'Забронировать'}
+                {loading ? 'Отправка...' : `Забронировать — ${totalPrice.toLocaleString('ru-RU')} ₽`}
               </button>
             </form>
           </>

@@ -25,6 +25,9 @@ export interface Quest {
   minPlayers: number
   maxPlayers: number
   address: string
+  extraPlayerPrice: number
+  allowAnimator: boolean
+  animatorPrice: number
   previewImage?: { id: string; url: string } | null
   backgroundImage?: { id: string; url: string } | null
 }
@@ -40,7 +43,6 @@ export interface QuestDetail extends Quest {
   rules: string
   safety: string
   extraServices: string
-  extraPlayerPrice: number
   galleryPhotos: QuestGalleryPhoto[]
   branch: { id: string; name: string; address?: string | null }
 }

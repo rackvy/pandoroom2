@@ -225,6 +225,11 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
         eventDate: dateKey,
         time: slotTime,
         price,
+        maxPlayers: quest.maxPlayers,
+        minPlayers: quest.minPlayers,
+        extraPlayerPrice: quest.extraPlayerPrice ?? 0,
+        allowAnimator: quest.allowAnimator ?? true,
+        animatorPrice: quest.animatorPrice ?? 0,
       })
     } else {
       setBookingData(null)

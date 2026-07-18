@@ -82,6 +82,10 @@ export class PublicController {
       questId: quest.questId,
       questName: quest.questName,
       durationMinutes: quest.durationMinutes,
+      maxPlayers: quest.maxPlayers,
+      extraPlayerPrice: quest.extraPlayerPrice,
+      allowAnimator: quest.allowAnimator,
+      animatorPrice: quest.animatorPrice,
       slots: quest.slots
         .filter(s => s.isAvailable)
         .map(s => ({
@@ -98,7 +102,15 @@ export class PublicController {
 
   @Post('bookings')
   async createPublicBooking(
-    @Body() body: { slotId: string; questId: string; eventDate: string; name: string; phone: string },
+    @Body() body: {
+      slotId: string;
+      questId: string;
+      eventDate: string;
+      name: string;
+      phone: string;
+      extraPlayers?: number;
+      addAnimator?: boolean;
+    },
   ) {
     if (!body.slotId || !body.questId || !body.eventDate || !body.name || !body.phone) {
       throw new BadRequestException('Заполните все поля');

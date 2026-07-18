@@ -162,6 +162,8 @@ export class PublicService {
     eventDate: string;
     name: string;
     phone: string;
+    extraPlayers?: number;
+    addAnimator?: boolean;
   }) {
     // 1. Look up the schedule slot
     const scheduleSlot = await this.prisma.questScheduleSlot.findUnique({
@@ -201,7 +203,21 @@ export class PublicService {
       throw new BadRequestException('Это время уже забронировано. Выберите другое.');
     }
 
-    // 5. Create Booking + QuestReservation
+    // 5. Calculate extras
+    const extraPlayers = Math.max(0, data.extraPlayers || 0);
+    const extraPlayersPrice = extraPlayers * quest.extraPlayerPrice;
+    const addAnimator = data.addAnimator && quest.allowAnimator;
+    const animatorPrice = addAnimator ? quest.animatorPrice : 0;
+    const basePrice = scheduleSlot.basePrice;
+    const totalPrice = basePrice + extraPlayersPrice + animatorPrice;
+
+    // 6. Build reservation title with extras
+    const extras: string[] = [];
+    if (extraPlayers > 0) extras.push(`+${extraPlayers} игрок(ов)`);
+    if (addAnimator) extras.push('аниматор');
+    const extrasStr = extras.length > 0 ? ` [${extras.join(', ')}]` : '';
+
+    // 7. Create Booking + QuestReservation
     const booking = await this.prisma.booking.create({
       data: {
         branchId: quest.branchId,
@@ -217,8 +233,11 @@ export class PublicService {
             eventDate,
             startTime,
             endTime,
-            title: `${data.name} — ${quest.name} ${scheduleSlot.startTime}`,
+            title: `${data.name} — ${quest.name} ${scheduleSlot.startTime}${extrasStr}`,
             status: 'draft',
+            extraPlayers,
+            extraPlayersPrice,
+            animatorName: addAnimator ? 'Аниматор' : null,
           },
         },
       },
@@ -232,7 +251,10 @@ export class PublicService {
       questName: quest.name,
       date: data.eventDate,
       time: scheduleSlot.startTime,
-      price: scheduleSlot.basePrice,
+      basePrice,
+      extraPlayersPrice,
+      animatorPrice,
+      totalPrice,
       clientName: booking.clientName,
     };
   }

@@ -72,6 +72,10 @@ interface QuestSchedule {
   questId: string
   questName: string
   durationMinutes: number
+  maxPlayers: number
+  extraPlayerPrice: number
+  allowAnimator: boolean
+  animatorPrice: number
   slots: ScheduleSlot[]
 }
 
@@ -90,7 +94,15 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
     return d
   })
 
-  const [scheduleMap, setScheduleMap] = useState<Record<string, { slots: ScheduleSlot[]; durationMinutes: number }>>({})
+  const [scheduleMap, setScheduleMap] = useState<Record<string, {
+    slots: ScheduleSlot[];
+    durationMinutes: number;
+    maxPlayers: number;
+    minPlayers: number;
+    extraPlayerPrice: number;
+    allowAnimator: boolean;
+    animatorPrice: number;
+  }>>({})
   const [loading, setLoading] = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
   const [bookingData, setBookingData] = useState<BookingSlotData | null>(null)
@@ -127,9 +139,25 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
       .then(res => res.ok ? res.json() : [])
       .then((data: QuestSchedule[]) => {
         if (cancelled) return
-        const map: Record<string, { slots: ScheduleSlot[]; durationMinutes: number }> = {}
+        const map: Record<string, {
+          slots: ScheduleSlot[];
+          durationMinutes: number;
+          maxPlayers: number;
+          minPlayers: number;
+          extraPlayerPrice: number;
+          allowAnimator: boolean;
+          animatorPrice: number;
+        }> = {}
         for (const qs of data) {
-          map[qs.questId] = { slots: qs.slots, durationMinutes: qs.durationMinutes }
+          map[qs.questId] = {
+            slots: qs.slots,
+            durationMinutes: qs.durationMinutes,
+            maxPlayers: qs.maxPlayers ?? 6,
+            minPlayers: questById[qs.questId]?.minPlayers ?? 2,
+            extraPlayerPrice: qs.extraPlayerPrice ?? 0,
+            allowAnimator: qs.allowAnimator ?? true,
+            animatorPrice: qs.animatorPrice ?? 0,
+          }
         }
         setScheduleMap(map)
       })
@@ -172,6 +200,7 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
   }, [quests, scheduleMap])
 
   const openBooking = (slotId: string, questId: string, questName: string, time: string, price: number) => {
+    const meta = scheduleMap[questId]
     setBookingData({
       slotId,
       questId,
@@ -179,6 +208,11 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
       eventDate: formatDateKey(selectedDate),
       time,
       price,
+      maxPlayers: meta?.maxPlayers ?? 6,
+      minPlayers: questById[questId]?.minPlayers ?? 2,
+      extraPlayerPrice: meta?.extraPlayerPrice ?? 0,
+      allowAnimator: meta?.allowAnimator ?? true,
+      animatorPrice: meta?.animatorPrice ?? 0,
     })
     setBookingOpen(true)
   }

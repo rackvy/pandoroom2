@@ -164,6 +164,8 @@ model Quest {
   safety            String    @db.Text
   extraServices     String    @db.Text
   extraPlayerPrice  Int       @default(0)
+  allowAnimator      Boolean   @default(true)
+  animatorPrice      Int       @default(0)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -634,6 +636,8 @@ model QuestReservation {
   title         String
   animatorName  String?
   comment       String?
+  extraPlayers      Int     @default(0)
+  extraPlayersPrice Int     @default(0)
 
   status        ReservationStatus @default(confirmed)
 
