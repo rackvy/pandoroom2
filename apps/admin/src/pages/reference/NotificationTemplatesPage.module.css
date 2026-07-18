@@ -1,0 +1,321 @@
+.page {
+  padding: 1.5rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1A1A18;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.code {
+  background: #f3f4f6;
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.85em;
+  color: #A0BF39;
+  font-weight: 600;
+}
+
+/* Template list */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.cardDisabled {
+  opacity: 0.6;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cardHeader:hover {
+  background: #fafafa;
+}
+
+.cardInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardName {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1A1A18;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badgeOff {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 0.15em 0.5em;
+  border-radius: 4px;
+}
+
+.cardMeta {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.trigger {
+  color: #6b7280;
+}
+
+.key {
+  font-family: monospace;
+  color: #A0BF39;
+}
+
+.expandBtn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: 1.2rem;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.expandBtn:hover {
+  background: #e5e7eb;
+}
+
+/* Card body (expanded) */
+.cardBody {
+  padding: 0 1.25rem 1.25rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.fieldGroup {
+  margin-top: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.35rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #1A1A18;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #A0BF39;
+  box-shadow: 0 0 0 3px rgba(160, 191, 57, 0.1);
+}
+
+.textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #1A1A18;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #A0BF39;
+  box-shadow: 0 0 0 3px rgba(160, 191, 57, 0.1);
+}
+
+/* Variable palette */
+.varPalette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.varChip {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: monospace;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.varChip:hover {
+  background: #A0BF39;
+  color: white;
+  border-color: #A0BF39;
+}
+
+.varUsed {
+  background: #f0f7d4;
+  border-color: #A0BF39;
+  color: #5a7a10;
+}
+
+.varHints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.usedLabel {
+  font-weight: 500;
+  color: #374151;
+}
+
+.usedVar {
+  color: #6b7280;
+}
+
+/* Description block */
+.description {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.description strong {
+  color: #374151;
+}
+
+/* Card actions */
+.cardActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.cardActionsRight {
+  display: flex;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.toggleBtn {
+  padding: 0.5rem 1rem;
+  background: white;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggleBtn:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.cancelBtn {
+  padding: 0.5rem 1rem;
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn:hover {
+  background: #f9fafb;
+}
+
+.saveBtn {
+  padding: 0.5rem 1rem;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.saveBtn:hover {
+  background: #8ba832;
+}
+
+.saveBtn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Loading */
+.loading {
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+}

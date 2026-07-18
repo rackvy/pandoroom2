@@ -701,6 +701,22 @@ model WaitlistEntry {
   @@index([createdAt])
 }
 
+// ==================== NOTIFICATION TEMPLATES ====================
+
+model NotificationTemplate {
+  id           String   @id @default(uuid())
+  key          String   @unique
+  name         String
+  trigger      String
+  templateText String   @db.Text
+  description  String?
+  channel      String   @default("sms")
+  isActive     Boolean  @default(true)
+  updatedAt    DateTime @updatedAt
+
+  @@index([key])
+}
+
 // ==================== VR ====================
 
 model VRHall {

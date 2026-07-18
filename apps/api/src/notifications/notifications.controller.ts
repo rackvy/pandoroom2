@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -19,5 +19,26 @@ export class NotificationsController {
   @Get('logs/:bookingId')
   async getLogs(@Param('bookingId') bookingId: string) {
     return this.notificationsService.getLogsByBooking(bookingId);
+  }
+
+  // ==================== TEMPLATES ====================
+
+  @Get('templates')
+  async getTemplates() {
+    return this.notificationsService.getTemplates();
+  }
+
+  @Patch('templates/:id')
+  async updateTemplate(
+    @Param('id') id: string,
+    @Body() body: {
+      templateText?: string;
+      name?: string;
+      description?: string;
+      channel?: string;
+      isActive?: boolean;
+    },
+  ) {
+    return this.notificationsService.updateTemplate(id, body);
   }
 }

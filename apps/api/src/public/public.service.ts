@@ -259,6 +259,7 @@ export class PublicService {
         questName: quest.name,
         eventDate: new Date(data.eventDate).toLocaleDateString('ru-RU'),
         time: scheduleSlot.startTime,
+        sumRub: String(totalPrice),
         branchPhone: branch?.phone || '',
       },
       channel: 'sms',

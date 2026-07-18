@@ -29,6 +29,7 @@ import ShowProgramForm from './pages/content/ShowProgramForm'
 import DecorationsListPage from './pages/content/DecorationsListPage'
 import DecorationForm from './pages/content/DecorationForm'
 import IikoMenuPage from './pages/reference/IikoMenuPage'
+import NotificationTemplatesPage from './pages/reference/NotificationTemplatesPage'
 import VRGamesListPage from './pages/content/VRGamesListPage'
 import VRGameForm from './pages/content/VRGameForm'
 import ReferenceLayout from './pages/reference/ReferenceLayout'
@@ -103,6 +104,7 @@ function AppRoutes() {
           <Route path="decorations/new" element={<DecorationForm />} />
           <Route path="decorations/:id/edit" element={<DecorationForm />} />
           <Route path="iiko-menu" element={<IikoMenuPage />} />
+          <Route path="notification-templates" element={<NotificationTemplatesPage />} />
         </Route>
         <Route path="employees" element={<EmployeesPage />} />
         <Route path="reports" element={<ReportsPage />} />
