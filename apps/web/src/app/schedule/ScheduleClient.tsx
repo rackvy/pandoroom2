@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from './schedule.module.css'
 import BookingModal from '@/components/BookingModal'
+import type { BookingSlotData } from '@/components/BookingModal'
 import type { Quest } from '@/lib/api'
 
 /* ------------------------------------------------------------------ */
@@ -61,6 +62,7 @@ function tagClass(genre: string): string {
 
 interface ScheduleSlot {
   slotId: string
+  questId: string
   startTime: string
   finalPrice: number
   isBooked: boolean
@@ -91,7 +93,7 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
   const [scheduleMap, setScheduleMap] = useState<Record<string, { slots: ScheduleSlot[]; durationMinutes: number }>>({})
   const [loading, setLoading] = useState(false)
   const [bookingOpen, setBookingOpen] = useState(false)
-  const [bookingSlotInfo, setBookingSlotInfo] = useState('')
+  const [bookingData, setBookingData] = useState<BookingSlotData | null>(null)
 
   const datePickerRef = useRef<HTMLDivElement>(null)
 
@@ -169,10 +171,15 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
     return quests.filter(q => scheduleMap[q.id]?.slots.length > 0)
   }, [quests, scheduleMap])
 
-  const openBooking = (questName: string, slotTime: string, price: number) => {
-    const dayNum = selectedDate.getDate()
-    const monthName = MONTH_NAMES[selectedDate.getMonth()]
-    setBookingSlotInfo(`${questName} — ${dayNum} ${monthName}, ${slotTime} — ${price} ₽`)
+  const openBooking = (slotId: string, questId: string, questName: string, time: string, price: number) => {
+    setBookingData({
+      slotId,
+      questId,
+      questName,
+      eventDate: formatDateKey(selectedDate),
+      time,
+      price,
+    })
     setBookingOpen(true)
   }
 
@@ -326,7 +333,7 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
                           <button
                             key={time}
                             className={styles.slotFree}
-                            onClick={() => openBooking(q.name, slot.startTime, slot.finalPrice)}
+                            onClick={() => openBooking(slot.slotId, q.id, q.name, slot.startTime, slot.finalPrice)}
                           >
                             <span className={styles.slotTime}>{time}</span>
                             <span className={styles.slotPrice}>{slot.finalPrice} ₽</span>
@@ -345,7 +352,7 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
       {/* Booking modal */}
       <BookingModal
         open={bookingOpen}
-        slotInfo={bookingSlotInfo}
+        slotData={bookingData}
         onClose={() => setBookingOpen(false)}
       />
     </main>

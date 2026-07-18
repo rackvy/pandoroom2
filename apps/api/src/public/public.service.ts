@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -152,5 +152,88 @@ export class PublicService {
     });
     if (!game) throw new NotFoundException('VR Game not found');
     return game;
+  }
+
+  // ==================== PUBLIC BOOKING ====================
+
+  async createPublicBooking(data: {
+    slotId: string;
+    questId: string;
+    eventDate: string;
+    name: string;
+    phone: string;
+  }) {
+    // 1. Look up the schedule slot
+    const scheduleSlot = await this.prisma.questScheduleSlot.findUnique({
+      where: { id: data.slotId },
+    });
+    if (!scheduleSlot || !scheduleSlot.isActive) {
+      throw new BadRequestException('Слот не найден или недоступен');
+    }
+
+    // 2. Get the quest
+    const quest = await this.prisma.quest.findUnique({
+      where: { id: data.questId },
+    });
+    if (!quest) {
+      throw new NotFoundException('Квест не найден');
+    }
+
+    // 3. Parse times
+    const eventDate = new Date(data.eventDate);
+    eventDate.setHours(0, 0, 0, 0);
+
+    const [hours, minutes] = scheduleSlot.startTime.split(':').map(Number);
+    const startTime = new Date();
+    startTime.setHours(hours, minutes, 0, 0);
+    const endTime = new Date(startTime.getTime() + quest.durationMinutes * 60000);
+
+    // 4. Check for existing reservation at this time
+    const existingReservation = await this.prisma.questReservation.findFirst({
+      where: {
+        questId: data.questId,
+        eventDate,
+        startTime,
+        status: { not: 'canceled' },
+      },
+    });
+    if (existingReservation) {
+      throw new BadRequestException('Это время уже забронировано. Выберите другое.');
+    }
+
+    // 5. Create Booking + QuestReservation
+    const booking = await this.prisma.booking.create({
+      data: {
+        branchId: quest.branchId,
+        eventDate,
+        clientName: data.name,
+        clientPhone: data.phone,
+        status: 'draft',
+        depositRub: 0,
+        questReservations: {
+          create: {
+            branchId: quest.branchId,
+            questId: data.questId,
+            eventDate,
+            startTime,
+            endTime,
+            title: `${data.name} — ${quest.name} ${scheduleSlot.startTime}`,
+            status: 'draft',
+          },
+        },
+      },
+      include: {
+        questReservations: true,
+      },
+    });
+
+    return {
+      id: booking.id,
+      questName: quest.name,
+      date: data.eventDate,
+      time: scheduleSlot.startTime,
+      price: scheduleSlot.basePrice,
+      clientName: booking.clientName,
+    };
   }
 }

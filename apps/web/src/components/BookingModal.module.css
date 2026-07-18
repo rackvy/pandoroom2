@@ -46,16 +46,35 @@
   font-size: 22px;
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
-  margin: 0 0 8px 0;
+  margin: 0 0 12px 0;
 }
 
+/* Slot info block */
 .slotInfo {
-  font-family: var(--font-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(181, 230, 29, 0.06);
+  border: 1px solid rgba(181, 230, 29, 0.15);
+  margin-bottom: 20px;
+}
+
+.slotQuest {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.slotDetails {
   font-size: 14px;
   color: var(--color-cta-green);
-  margin: 0 0 24px 0;
+  font-weight: 600;
 }
 
+/* Form */
 .form {
   display: flex;
   flex-direction: column;
@@ -80,6 +99,11 @@
 
 .input::placeholder {
   color: var(--color-text-muted);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .consent {
@@ -118,7 +142,60 @@
     transform var(--transition-fast);
 }
 
-.submitBtn:hover {
+.submitBtn:hover:not(:disabled) {
   background-color: #c5f52d;
   transform: translateY(-1px);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Error */
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: #ef4444;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Success state */
+.successWrap {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.successIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(181, 230, 29, 0.12);
+  color: var(--color-cta-green);
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.successTitle {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 10px 0;
+}
+
+.successText {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.successText strong {
+  color: var(--color-text);
 }

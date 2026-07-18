@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, BadRequestException } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
 import { PublicService } from './public.service';
 import { Public } from '../common/decorators/public.decorator';
@@ -86,10 +86,23 @@ export class PublicController {
         .filter(s => s.isAvailable)
         .map(s => ({
           slotId: s.slotId,
+          questId: quest.questId,
           startTime: s.startTime,
           finalPrice: s.finalPrice,
           isBooked: !!s.reservation,
         })),
     }));
+  }
+
+  // ==================== PUBLIC BOOKING ====================
+
+  @Post('bookings')
+  async createPublicBooking(
+    @Body() body: { slotId: string; questId: string; eventDate: string; name: string; phone: string },
+  ) {
+    if (!body.slotId || !body.questId || !body.eventDate || !body.name || !body.phone) {
+      throw new BadRequestException('Заполните все поля');
+    }
+    return this.publicService.createPublicBooking(body);
   }
 }

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from './quest-detail.module.css'
 import BookingModal from '@/components/BookingModal'
+import type { BookingSlotData } from '@/components/BookingModal'
 import Lightbox from '@/components/Lightbox'
 import type { QuestDetail, NewsItem } from '@/lib/api'
 
@@ -68,6 +69,7 @@ function isSameDay(a: Date, b: Date): boolean {
 
 interface ScheduleSlot {
   slotId: string
+  questId: string
   startTime: string
   finalPrice: number
   isBooked: boolean
@@ -87,7 +89,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [bookingOpen, setBookingOpen] = useState(false)
-  const [bookingSlotInfo, setBookingSlotInfo] = useState('')
+  const [bookingData, setBookingData] = useState<BookingSlotData | null>(null)
 
   // Schedule grid state — fetch all 14 days at once
   const [allSlots, setAllSlots] = useState<Record<string, ScheduleSlot[]>>({})
@@ -214,13 +216,18 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
   }, [galleryImages.length])
 
   /* Booking */
-  const openBooking = (slotTime?: string, price?: number, dateKey?: string) => {
-    if (slotTime && dateKey) {
-      const dateObj = new Date(dateKey + 'T00:00:00')
-      const dateStr = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
-      setBookingSlotInfo(`${quest.name} — ${dateStr}, ${slotTime} — ${price} ₽`)
+  const openBooking = (slotId?: string, slotTime?: string, price?: number, dateKey?: string) => {
+    if (slotId && slotTime && dateKey && price) {
+      setBookingData({
+        slotId,
+        questId: quest.id,
+        questName: quest.name,
+        eventDate: dateKey,
+        time: slotTime,
+        price,
+      })
     } else {
-      setBookingSlotInfo('')
+      setBookingData(null)
     }
     setBookingOpen(true)
   }
@@ -479,7 +486,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                           <button
                             key={time}
                             className={styles.slotBtn}
-                            onClick={() => openBooking(slot.startTime, slot.finalPrice, dateKey)}
+                            onClick={() => openBooking(slot.slotId, slot.startTime, slot.finalPrice, dateKey)}
                             title={`Свободно — ${slot.finalPrice} ₽`}
                           >
                             <span className={styles.slotTime}>{slot.startTime}</span>
@@ -563,7 +570,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
       {/* ==================== BOOKING MODAL ==================== */}
       <BookingModal
         open={bookingOpen}
-        slotInfo={bookingSlotInfo}
+        slotData={bookingData}
         onClose={closeBooking}
       />
 
