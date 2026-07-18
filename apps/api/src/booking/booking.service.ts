@@ -1,12 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClientsService } from '../clients/clients.service';
+import { WaitlistService } from '../waitlist/waitlist.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class BookingService {
+  private readonly logger = new Logger(BookingService.name);
+
   constructor(
     private prisma: PrismaService,
     private clientsService: ClientsService,
+    private waitlistService: WaitlistService,
+    private notifications: NotificationsService,
   ) {}
 
   async findAll(filters?: { branchId?: string; dateFrom?: string; dateTo?: string }) {
@@ -405,7 +411,43 @@ export class BookingService {
   }
 
   async removeQuestReservation(id: string) {
+    // Get reservation details before removing
+    const reservation = await this.prisma.questReservation.findUnique({
+      where: { id },
+      include: { booking: true, quest: true },
+    });
+
     await this.prisma.questReservation.delete({ where: { id } });
+
+    if (reservation) {
+      const timeStr = `${String(reservation.startTime.getHours()).padStart(2, '0')}:${String(reservation.startTime.getMinutes()).padStart(2, '0')}`;
+
+      // Notify client about cancellation
+      if (reservation.booking.clientPhone) {
+        const branch = await this.prisma.branch.findUnique({ where: { id: reservation.branchId } });
+        await this.notifications.enqueue({
+          templateKey: 'BOOKING_CANCELLED',
+          variables: {
+            clientName: reservation.booking.clientName,
+            questName: reservation.quest?.name || 'Квест',
+            eventDate: reservation.eventDate.toLocaleDateString('ru-RU'),
+            time: timeStr,
+            branchPhone: branch?.phone || '',
+          },
+          channel: 'sms',
+          recipient: reservation.booking.clientPhone,
+          bookingId: reservation.bookingId,
+        });
+      }
+
+      // Notify next person in waitlist
+      try {
+        await this.waitlistService.notifyNextInQueue(reservation.questId, reservation.eventDate, timeStr);
+      } catch (err) {
+        this.logger.warn(`Failed to notify waitlist for quest ${reservation.questId}: ${err}`);
+      }
+    }
+
     return { message: 'Резервация квеста удалена' };
   }
 

@@ -3,6 +3,7 @@ import { PageKey } from '@prisma/client';
 import { PublicService } from './public.service';
 import { Public } from '../common/decorators/public.decorator';
 import { QuestScheduleService } from '../quest-schedule/quest-schedule.service';
+import { WaitlistService } from '../waitlist/waitlist.service';
 
 @Controller('api/public')
 @Public()
@@ -10,6 +11,7 @@ export class PublicController {
   constructor(
     private publicService: PublicService,
     private questScheduleService: QuestScheduleService,
+    private waitlistService: WaitlistService,
   ) {}
 
   @Get('branches')
@@ -116,5 +118,23 @@ export class PublicController {
       throw new BadRequestException('Заполните все поля');
     }
     return this.publicService.createPublicBooking(body);
+  }
+
+  // ==================== PUBLIC WAITLIST ====================
+
+  @Post('waitlist')
+  async joinWaitlist(
+    @Body() body: {
+      questId: string;
+      clientName: string;
+      clientPhone: string;
+      desiredDate?: string;
+      desiredTime?: string;
+    },
+  ) {
+    if (!body.questId || !body.clientName || !body.clientPhone) {
+      throw new BadRequestException('Заполните обязательные поля');
+    }
+    return this.waitlistService.addToWaitlist(body);
   }
 }

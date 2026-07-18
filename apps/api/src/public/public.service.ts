@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Convert Prisma Decimal (or string) to plain number for JSON serialization
 function convertDecimalToNumber(val: any): number | null {
@@ -39,7 +40,10 @@ function convertQuestsResult(result: any): any {
 
 @Injectable()
 export class PublicService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   async findAllBranches() {
     const branches = await this.prisma.branch.findMany({
@@ -244,6 +248,22 @@ export class PublicService {
       include: {
         questReservations: true,
       },
+    });
+
+    // Auto-enqueue booking confirmation notification
+    const branch = await this.prisma.branch.findUnique({ where: { id: quest.branchId } });
+    await this.notifications.enqueue({
+      templateKey: 'BOOKING_CONFIRMED',
+      variables: {
+        clientName: data.name,
+        questName: quest.name,
+        eventDate: new Date(data.eventDate).toLocaleDateString('ru-RU'),
+        time: scheduleSlot.startTime,
+        branchPhone: branch?.phone || '',
+      },
+      channel: 'sms',
+      recipient: data.phone,
+      bookingId: booking.id,
     });
 
     return {

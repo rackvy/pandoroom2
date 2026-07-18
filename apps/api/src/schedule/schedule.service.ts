@@ -1,6 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReservationStatus, BookingStatus } from '@prisma/client';
+import { WaitlistService } from '../waitlist/waitlist.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   CreateTableReservationDto,
   MoveTableReservationDto,
@@ -20,9 +22,13 @@ import { ClientsService } from '../clients/clients.service';
 
 @Injectable()
 export class ScheduleService {
+  private readonly logger = new Logger(ScheduleService.name);
+
   constructor(
     private prisma: PrismaService,
     private clientsService: ClientsService,
+    private waitlistService: WaitlistService,
+    private notifications: NotificationsService,
   ) {}
 
   // ==================== TABLE SCHEDULE ====================
@@ -252,10 +258,45 @@ export class ScheduleService {
   }
 
   async cancelQuestReservation(id: string): Promise<void> {
+    // Get reservation details before canceling
+    const reservation = await this.prisma.questReservation.findUnique({
+      where: { id },
+      include: { booking: true, quest: true },
+    });
+
     await this.prisma.questReservation.update({
       where: { id },
       data: { status: ReservationStatus.canceled },
     });
+
+    if (reservation) {
+      const timeStr = `${String(reservation.startTime.getHours()).padStart(2, '0')}:${String(reservation.startTime.getMinutes()).padStart(2, '0')}`;
+
+      // Notify client about cancellation
+      if (reservation.booking.clientPhone) {
+        const branch = await this.prisma.branch.findUnique({ where: { id: reservation.branchId } });
+        await this.notifications.enqueue({
+          templateKey: 'BOOKING_CANCELLED',
+          variables: {
+            clientName: reservation.booking.clientName,
+            questName: reservation.quest?.name || 'Квест',
+            eventDate: reservation.eventDate.toLocaleDateString('ru-RU'),
+            time: timeStr,
+            branchPhone: branch?.phone || '',
+          },
+          channel: 'sms',
+          recipient: reservation.booking.clientPhone,
+          bookingId: reservation.bookingId,
+        });
+      }
+
+      // Notify next person in waitlist
+      try {
+        await this.waitlistService.notifyNextInQueue(reservation.questId, reservation.eventDate, timeStr);
+      } catch (err) {
+        this.logger.warn(`Failed to notify waitlist for quest ${reservation.questId}: ${err}`);
+      }
+    }
   }
 
   // ==================== QUICK BOOKING ====================

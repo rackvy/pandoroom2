@@ -176,6 +176,7 @@ model Quest {
   reservations      QuestReservation[]
   galleryPhotos     QuestGalleryPhoto[]
   scheduleSlots     QuestScheduleSlot[]
+  waitlistEntries   WaitlistEntry[]
 }
 
 model QuestGalleryPhoto {
@@ -659,18 +660,44 @@ model QuestReservation {
 // ==================== NOTIFICATIONS ====================
 
 model NotificationLog {
-  id        String   @id @default(uuid())
-  bookingId String
-  channel   String
-  template  String
-  recipient String
-  status    String   @default("pending")
-  errorText String?  @db.Text
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  bookingId    String?
+  waitlistId   String?
+  channel      String
+  template     String
+  recipient    String
+  status       String   @default("pending")
+  errorText    String?  @db.Text
+  createdAt    DateTime @default(now())
 
-  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking      Booking?       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  waitlist     WaitlistEntry? @relation(fields: [waitlistId], references: [id], onDelete: SetNull)
 
   @@index([bookingId])
+  @@index([waitlistId])
+  @@index([createdAt])
+}
+
+// ==================== WAITLIST ====================
+
+model WaitlistEntry {
+  id           String   @id @default(uuid())
+  questId      String
+  desiredDate  DateTime? @db.Date
+  desiredTime  String?
+  clientName   String
+  clientPhone  String
+  status       String   @default("waiting")  // waiting | notified | expired | booked
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+  notifiedAt   DateTime?
+  expiresAt    DateTime?
+
+  quest        Quest            @relation(fields: [questId], references: [id], onDelete: Cascade)
+  notifications NotificationLog[]
+
+  @@index([questId, status])
+  @@index([desiredDate])
   @@index([createdAt])
 }
 

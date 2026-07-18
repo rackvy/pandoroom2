@@ -18,6 +18,7 @@ import { GoogleCalendarModule } from './google-calendar/google-calendar.module';
 import { PaymentsModule } from './payments/payments.module';
 import { ReportsModule } from './reports/reports.module';
 import { IikoModule } from './iiko/iiko.module';
+import { WaitlistModule } from './waitlist/waitlist.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -43,6 +44,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     PaymentsModule,
     ReportsModule,
     IikoModule,
+    WaitlistModule,
   ],
   providers: [
     {
