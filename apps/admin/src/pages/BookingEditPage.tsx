@@ -461,6 +461,7 @@ export default function BookingEditPage() {
 
   // ==================== QUEST RESERVATION ADD/REMOVE ====================
   const handleQuestSelected = async (questId: string, questName: string) => {
+    if (!booking) return;
     setSelectedQuestForAdd({ questId, questName });
     setShowQuestSelector(false);
     // Fetch available slots for this quest on this date
@@ -499,7 +500,8 @@ export default function BookingEditPage() {
   };
 
   const handleRemoveQuestReservation = async (resId: string) => {
-    if (!confirm('Удалить квест из брони?')) return;
+    const ok = await confirm({ title: 'Удалить квест', message: 'Удалить квест из брони?', type: 'danger' });
+    if (!ok) return;
     try {
       await api.delete(`/api/admin/bookings/quest-reservations/${resId}`);
       toast.success('Квест удалён');
