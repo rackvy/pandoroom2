@@ -63,6 +63,10 @@ class CreateSpecialPriceDto {
   @IsOptional()
   @IsBoolean()
   isAvailable?: boolean;
+
+  @IsOptional()
+  @IsString()
+  maintenanceNote?: string;
 }
 
 class UpdateSpecialPriceDto {
@@ -73,6 +77,10 @@ class UpdateSpecialPriceDto {
   @IsOptional()
   @IsBoolean()
   isAvailable?: boolean;
+
+  @IsOptional()
+  @IsString()
+  maintenanceNote?: string;
 }
 
 @Controller('api/admin/quest-schedule')

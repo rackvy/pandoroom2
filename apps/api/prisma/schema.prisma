@@ -216,15 +216,16 @@ model QuestScheduleSlot {
 
 // Special prices for specific dates (overrides base price)
 model QuestScheduleSpecialPrice {
-  id          String   @id @default(uuid())
-  slotId      String
-  specialDate DateTime @db.Date  // Specific date for special price
-  specialPrice Int     // Override price in rubles
-  isAvailable Boolean  @default(true) // Can disable slot for specific date
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(uuid())
+  slotId           String
+  specialDate      DateTime @db.Date  // Specific date for special price
+  specialPrice     Int     // Override price in rubles
+  isAvailable      Boolean  @default(true) // Can disable slot for specific date
+  maintenanceNote  String?  // Reason for blocking (e.g. "Санитарный час", "Ремонт")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  slot        QuestScheduleSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  slot             QuestScheduleSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
 
   @@index([slotId])
   @@index([specialDate])

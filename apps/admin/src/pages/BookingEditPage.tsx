@@ -88,6 +88,10 @@ export default function BookingEditPage() {
   // Show/hide selectors state
   const [showTableSelector, setShowTableSelector] = useState(false);
   const [showQuestSelector, setShowQuestSelector] = useState(false);
+  const [selectedQuestForAdd, setSelectedQuestForAdd] = useState<{ questId: string; questName: string } | null>(null);
+  const [availableSlotsForQuest, setAvailableSlotsForQuest] = useState<Array<{ slotId: string; startTime: string; finalPrice: number; isBooked: boolean }>>([]);
+  const [newQuestTime, setNewQuestTime] = useState('');
+  const [addingQuestReservation, setAddingQuestReservation] = useState(false);
   const [notificationChannel, setNotificationChannel] = useState<'sms' | 'telegram' | 'max'>('sms');
   const [sendingNotification, setSendingNotification] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
@@ -455,6 +459,56 @@ export default function BookingEditPage() {
     }
   };
 
+  // ==================== QUEST RESERVATION ADD/REMOVE ====================
+  const handleQuestSelected = async (questId: string, questName: string) => {
+    setSelectedQuestForAdd({ questId, questName });
+    setShowQuestSelector(false);
+    // Fetch available slots for this quest on this date
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/api/public/schedule/grid?date=${booking.eventDate}`);
+      if (res.ok) {
+        const data = await res.json();
+        const questData = data.find((q: any) => q.questId === questId);
+        setAvailableSlotsForQuest(questData?.slots || []);
+      }
+    } catch (err) {
+      console.error('Failed to load slots:', err);
+      setAvailableSlotsForQuest([]);
+    }
+  };
+
+  const handleAddQuestReservation = async () => {
+    if (!id || !selectedQuestForAdd || !newQuestTime) return;
+    setAddingQuestReservation(true);
+    try {
+      await api.post(`/api/admin/bookings/${id}/quest-reservations`, {
+        questId: selectedQuestForAdd.questId,
+        startTime: newQuestTime,
+      });
+      toast.success('Квест добавлен');
+      setSelectedQuestForAdd(null);
+      setAvailableSlotsForQuest([]);
+      setNewQuestTime('');
+      await loadData();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Ошибка добавления квеста');
+    } finally {
+      setAddingQuestReservation(false);
+    }
+  };
+
+  const handleRemoveQuestReservation = async (resId: string) => {
+    if (!confirm('Удалить квест из брони?')) return;
+    try {
+      await api.delete(`/api/admin/bookings/quest-reservations/${resId}`);
+      toast.success('Квест удалён');
+      await loadData();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Ошибка удаления');
+    }
+  };
+
   if (loading) {
     return <div className={styles.loading}>Загрузка...</div>;
   }
@@ -736,26 +790,33 @@ export default function BookingEditPage() {
                 {booking.questReservations.map((res) => (
                   <div key={res.id} className={styles.addonRow}>
                     <div className={styles.tag}>{res.questName}</div>
-                    <div className={styles.timeDisplay}>{res.startTime.slice(0, 5)}</div>
-                    <button className={styles.iconBtn}>+ Аниматор</button>
+                    <div className={styles.timeDisplay}>
+                      {res.startTime.slice(0, 5)} – {res.endTime.slice(0, 5)}
+                    </div>
+                    {res.extraPlayers > 0 && (
+                      <span className={styles.quantity}>+{res.extraPlayers} доп. ({res.extraPlayersPrice} ₽)</span>
+                    )}
+                    {res.animatorName && (
+                      <span className={styles.quantity}>🎭 {res.animatorName}</span>
+                    )}
                     <div className={styles.rowActions}>
-                      <button className={styles.editBtn}>Изменить</button>
-                      <button className={styles.deleteBtn}>🗑</button>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => handleRemoveQuestReservation(res.id)}
+                      >
+                        🗑
+                      </button>
                     </div>
                   </div>
                 ))}
 
-                {/* Quest Selector */}
-                {showQuestSelector && booking?.branch?.id && (
+                {/* Add quest flow: step 1 — select quest */}
+                {showQuestSelector && !selectedQuestForAdd && booking?.branch?.id && (
                   <div className={styles.selectorContainer}>
                     <QuestSelector
                       branchId={booking.branch.id}
                       eventDate={booking.eventDate}
-                      onSelect={(_questId, questName) => {
-                        // TODO: Add quest reservation via API
-                        toast.success(`Выбран квест: ${questName}`);
-                        setShowQuestSelector(false);
-                      }}
+                      onSelect={handleQuestSelected}
                     />
                     <button
                       className={styles.cancelButton}
@@ -766,7 +827,57 @@ export default function BookingEditPage() {
                   </div>
                 )}
 
-                {!showQuestSelector && (
+                {/* Add quest flow: step 2 — select time slot */}
+                {selectedQuestForAdd && (
+                  <div className={styles.selectorContainer}>
+                    <p style={{ fontSize: 14, marginBottom: 8 }}>
+                      <strong>{selectedQuestForAdd.questName}</strong> — выберите время:
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {availableSlotsForQuest.length > 0 ? (
+                        availableSlotsForQuest.map((slot) => (
+                          <button
+                            key={slot.slotId}
+                            className={newQuestTime === slot.startTime ? styles.paymentBtnActive : styles.paymentBtn}
+                            onClick={() => setNewQuestTime(slot.startTime)}
+                          >
+                            {slot.startTime} ({slot.finalPrice} ₽)
+                          </button>
+                        ))
+                      ) : (
+                        <span style={{ color: '#999', fontSize: 13 }}>Нет свободных слотов</span>
+                      )}
+                    </div>
+                    {newQuestTime && (
+                      <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                        <button
+                          className={styles.addButton}
+                          onClick={handleAddQuestReservation}
+                          disabled={addingQuestReservation}
+                        >
+                          {addingQuestReservation ? 'Добавление...' : `Добавить на ${newQuestTime}`}
+                        </button>
+                        <button
+                          className={styles.cancelButton}
+                          onClick={() => { setSelectedQuestForAdd(null); setNewQuestTime(''); setAvailableSlotsForQuest([]); }}
+                        >
+                          Отмена
+                        </button>
+                      </div>
+                    )}
+                    {!newQuestTime && (
+                      <button
+                        className={styles.cancelButton}
+                        style={{ marginTop: 8 }}
+                        onClick={() => { setSelectedQuestForAdd(null); setAvailableSlotsForQuest([]); }}
+                      >
+                        Назад
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {!showQuestSelector && !selectedQuestForAdd && (
                   <button
                     className={styles.addButton}
                     onClick={() => setShowQuestSelector(true)}

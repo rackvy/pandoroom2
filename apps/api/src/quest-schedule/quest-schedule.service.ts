@@ -321,6 +321,7 @@ export class QuestScheduleService {
           finalPrice: price,
           hasSpecialPrice: !!specialPrice,
           isAvailable,
+          maintenanceNote: specialPrice?.maintenanceNote || null,
           reservation: reservation ? {
             id: reservation.id,
             bookingId: reservation.bookingId,

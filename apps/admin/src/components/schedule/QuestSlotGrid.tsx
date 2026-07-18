@@ -137,12 +137,19 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
               {quest.slots.map((slot) => {
                 const { top, height } = getSlotStyle(slot.startTime, quest.durationMinutes);
                 const isBooked = !!slot.reservation;
+                const isBlocked = !slot.isAvailable;
+
+                let className = styles.slot;
+                if (isBooked) className += ` ${styles.booked}`;
+                else if (isBlocked) className += ` ${styles.blocked}`;
+                else className += ` ${styles.available}`;
 
                 return (
                   <div
                     key={slot.slotId}
-                    className={`${styles.slot} ${isBooked ? styles.booked : styles.available}`}
+                    className={className}
                     style={{ top, height }}
+                    title={isBlocked && slot.maintenanceNote ? slot.maintenanceNote : undefined}
                     onClick={() => {
                       if (isBooked && slot.reservation) {
                         onReservationClick?.(quest.questId, slot);
@@ -155,6 +162,13 @@ export default function QuestSlotGrid({ quests, onSlotClick, onReservationClick 
                       <div className={styles.bookingInfo}>
                         <div className={styles.clientName}>{slot.reservation!.clientName}</div>
                         <div className={styles.bookingTime}>{slot.startTime}</div>
+                      </div>
+                    ) : isBlocked ? (
+                      <div className={styles.blockedInfo}>
+                        <div className={styles.blockedTime}>{slot.startTime}</div>
+                        <div className={styles.blockedLabel}>
+                          {slot.maintenanceNote || 'Заблокировано'}
+                        </div>
                       </div>
                     ) : (
                       <div className={styles.slotInfo}>

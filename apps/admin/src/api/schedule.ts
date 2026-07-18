@@ -156,6 +156,8 @@ export interface BookingFullDetails {
     status: string;
     title: string;
     animatorName: string | null;
+    extraPlayers: number;
+    extraPlayersPrice: number;
   }>;
   extraSlots: any[];
   bookingCakes: any[];
@@ -267,6 +269,7 @@ export interface QuestSlot {
   finalPrice: number;
   hasSpecialPrice: boolean;
   isAvailable: boolean;
+  maintenanceNote: string | null;
   reservation: {
     id: string;
     bookingId: string;

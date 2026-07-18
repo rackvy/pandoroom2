@@ -87,6 +87,17 @@ export class BookingController {
     return this.bookingService.removeQuestSlot(id);
   }
 
+  // ==================== QUEST RESERVATIONS ====================
+  @Post(':id/quest-reservations')
+  addQuestReservation(@Param('id') bookingId: string, @Body() data: any) {
+    return this.bookingService.addQuestReservation(bookingId, data);
+  }
+
+  @Delete('quest-reservations/:resId')
+  removeQuestReservation(@Param('resId') id: string) {
+    return this.bookingService.removeQuestReservation(id);
+  }
+
   // ==================== EXTRA SLOTS ====================
   @Post(':id/extra-slots')
   addExtraSlot(@Param('id') bookingId: string, @Body() data: any) {

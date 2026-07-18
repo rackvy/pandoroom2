@@ -220,6 +220,8 @@ export class BookingService {
         status: r.status,
         title: r.title,
         animatorName: r.animatorName,
+        extraPlayers: r.extraPlayers,
+        extraPlayersPrice: r.extraPlayersPrice,
       })),
       extraSlots: booking.extraSlots,
       bookingCakes: booking.bookingCakes,
@@ -357,6 +359,54 @@ export class BookingService {
   async removeQuestSlot(id: string) {
     await this.prisma.bookingQuestSlot.delete({ where: { id } });
     return { message: 'Слот квеста удален' };
+  }
+
+  // ==================== QUEST RESERVATIONS ====================
+  async addQuestReservation(bookingId: string, data: any) {
+    // Get booking for branchId and eventDate
+    const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) throw new NotFoundException('Бронирование не найдено');
+
+    // Get quest for duration and branchId
+    const quest = await this.prisma.quest.findUnique({ where: { id: data.questId } });
+    if (!quest) throw new NotFoundException('Квест не найден');
+
+    // Parse times
+    const eventDate = new Date(booking.eventDate);
+    eventDate.setHours(0, 0, 0, 0);
+
+    const [hours, minutes] = (data.startTime || '12:00').split(':').map(Number);
+    const startTime = new Date();
+    startTime.setHours(hours, minutes, 0, 0);
+    const duration = data.durationMinutes || quest.durationMinutes;
+    const endTime = new Date(startTime.getTime() + duration * 60000);
+
+    // Calculate extras
+    const extraPlayers = Math.max(0, data.extraPlayers || 0);
+    const extraPlayersPrice = extraPlayers * (quest.extraPlayerPrice || 0);
+    const addAnimator = data.addAnimator && quest.allowAnimator;
+
+    return this.prisma.questReservation.create({
+      data: {
+        bookingId,
+        branchId: quest.branchId,
+        questId: data.questId,
+        eventDate,
+        startTime,
+        endTime,
+        title: data.title || `${booking.clientName || 'Бронь'} — ${quest.name} ${data.startTime}`,
+        status: 'confirmed',
+        animatorName: addAnimator ? (data.animatorName || 'Аниматор') : null,
+        extraPlayers,
+        extraPlayersPrice,
+      },
+      include: { quest: true },
+    });
+  }
+
+  async removeQuestReservation(id: string) {
+    await this.prisma.questReservation.delete({ where: { id } });
+    return { message: 'Резервация квеста удалена' };
   }
 
   // ==================== EXTRA SLOTS ====================
