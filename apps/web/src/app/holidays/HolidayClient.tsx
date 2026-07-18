@@ -68,7 +68,7 @@ export default function HolidayClient({ data }: { data: HolidayPageData }) {
               <Link href="/schedule" className={styles.btnPink}>
                 Забронировать дату
               </Link>
-              <Link href="/schedule" className={styles.btnGreen}>
+              <Link href="/holidays" className={styles.btnGreen}>
                 Калькулятор дня рождения
               </Link>
             </div>

@@ -135,13 +135,13 @@ export default function ReviewsSlider({ reviews }: Props) {
           align-self: flex-start;
         }
         .rs-arrow {
-          display: none;
+          display: flex;
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
           z-index: 10;
-          width: 48px;
-          height: 48px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           background: rgba(20, 20, 20, 0.85);
           color: var(--color-text, #ccc);
@@ -151,6 +151,9 @@ export default function ReviewsSlider({ reviews }: Props) {
           border: 1px solid rgba(255, 255, 255, 0.12);
           backdrop-filter: blur(6px);
           cursor: pointer;
+        }
+        @media (min-width: 1024px) {
+          .rs-arrow { width: 48px; height: 48px; }
         }
         .rs-arrow:hover {
           background: var(--color-cta-green, #b5e61d);
@@ -162,11 +165,6 @@ export default function ReviewsSlider({ reviews }: Props) {
         }
         .rs-arrow-next {
           right: -56px;
-        }
-        @media (min-width: 1024px) {
-          .rs-arrow {
-            display: flex;
-          }
         }
       `}} />
     </div>

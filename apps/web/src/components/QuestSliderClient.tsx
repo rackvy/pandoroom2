@@ -184,13 +184,13 @@ export default function QuestSliderClient({ title, quests }: Props) {
         }
         .qc-track::-webkit-scrollbar { display: none; }
         .qc-arrow {
-          display: none;
+          display: flex;
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
           z-index: 10;
-          width: 56px;
-          height: 56px;
+          width: 44px;
+          height: 44px;
           border-radius: 50%;
           background: rgba(20,20,20,0.85);
           color: var(--color-text, #ccc);
@@ -201,6 +201,9 @@ export default function QuestSliderClient({ title, quests }: Props) {
           backdrop-filter: blur(6px);
           cursor: pointer;
         }
+        @media (min-width: 1024px) {
+          .qc-arrow { width: 56px; height: 56px; }
+        }
         .qc-arrow:hover {
           background: var(--color-cta-green, #b5e61d);
           color: #0a0a0a;
@@ -208,7 +211,6 @@ export default function QuestSliderClient({ title, quests }: Props) {
         }
         .qc-arrow-prev { left: max(12px, calc((100vw - 1280px) / 2 - 4px)); }
         .qc-arrow-next { right: 16px; }
-        @media (min-width: 1024px) { .qc-arrow { display: flex; } }
         .qc-card {
           position: relative;
           flex: 0 0 360px;

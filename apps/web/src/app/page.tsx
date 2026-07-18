@@ -274,7 +274,7 @@ export default async function Home() {
 
             <ul className={styles.heroFeatures}>
               {(heroFeatures.length > 0 ? heroFeatures : [
-                '16 разнообразных квестов для любой компании',
+                '19 разнообразных квестов для любой компании',
                 'три зала кафе, площадью более 350 м²',
                 'ваш праздник «под ключ»',
                 'работаем с 2015 года',

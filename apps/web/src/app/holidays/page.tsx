@@ -50,7 +50,7 @@ export default function HolidaysHubPage() {
                     <path d="M2 7l3.5 3.5L12 3.5" stroke="#b5e61d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
-                <span>16 разнообразных квестов для любой компании</span>
+                <span>19 разнообразных квестов для любой компании</span>
               </li>
               <li className={styles.heroFeature}>
                 <span className={styles.heroCheck}>
