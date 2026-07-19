@@ -2,7 +2,6 @@ import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { IS_CLIENT_KEY } from '../decorators/client.decorator';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class ClientGuard implements CanActivate {
@@ -17,19 +16,12 @@ export class ClientGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    // If route is not marked @Client(), skip this guard
+    // If route is not marked @Client(), skip this guard entirely
     if (!isClient) {
       return true;
     }
 
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) {
-      return true;
-    }
-
+    // Route requires client auth — validate the token
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers?.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -49,6 +41,7 @@ export class ClientGuard implements CanActivate {
       };
       return true;
     } catch (e) {
+      if (e instanceof UnauthorizedException) throw e;
       throw new UnauthorizedException('Недействительный токен');
     }
   }
