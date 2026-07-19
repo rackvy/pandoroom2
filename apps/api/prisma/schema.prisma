@@ -409,11 +409,13 @@ model Client {
   telegramChatId    String?
   maxChatId         String?
   preferredChannel  String?
+  passwordHash      String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   bookings          Booking[]
   questReservations QuestReservation[]
+  chatMessages      ChatMessage[]
 
   @@index([phone])
   @@index([name])
@@ -462,6 +464,7 @@ model Booking {
   questReservations    QuestReservation[]
   notifications        NotificationLog[]
   vrReservations       VRReservation[]
+  chatMessages         ChatMessage[]
 
   @@index([eventDate])
   @@index([branchId])
@@ -795,4 +798,23 @@ model IikoMenuItem {
   weight      String?
   isActive    Boolean  @default(true)
   updatedAt   DateTime @updatedAt
+}
+
+// ==================== CHAT ====================
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  clientId  String
+  bookingId String?
+  sender    String   // 'client' | 'admin' | 'system'
+  text      String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([bookingId])
+  @@index([isRead])
 }

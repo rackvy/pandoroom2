@@ -1,0 +1,276 @@
+.container {
+  padding: 24px;
+  max-width: 1200px;
+  height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1A1A18;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  background: #e74c3c;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.layout {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Sidebar - conversation list */
+.sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow-y: auto;
+  background: white;
+}
+
+.convItem {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  transition: background 0.15s;
+}
+
+.convItem:hover {
+  background: #f8f8f8;
+}
+
+.convActive {
+  background: #f0f7e0 !important;
+  border-left: 3px solid #A0BF39;
+}
+
+.convInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.convName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A18;
+  margin-bottom: 2px;
+}
+
+.convPhone {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 4px;
+}
+
+.convPreview {
+  font-size: 13px;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewLabel {
+  color: #A0BF39;
+  font-weight: 500;
+}
+
+.convBadge {
+  flex-shrink: 0;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: #e74c3c;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  margin-top: 2px;
+}
+
+.empty {
+  padding: 24px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+}
+
+/* Chat area */
+.chatArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: white;
+  min-height: 0;
+}
+
+.noChat {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 15px;
+}
+
+.chatHeader {
+  padding: 14px 20px;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.chatPhone {
+  color: #888;
+  font-size: 13px;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.message {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.msgClient {
+  align-self: flex-start;
+  background: #f0f0f0;
+  border-bottom-left-radius: 4px;
+}
+
+.msgAdmin {
+  align-self: flex-end;
+  background: #A0BF39;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.msgSystem {
+  align-self: center;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  font-size: 13px;
+  text-align: center;
+  max-width: 90%;
+}
+
+.msgSender {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+  margin-bottom: 3px;
+}
+
+.msgText {
+  word-break: break-word;
+}
+
+.msgBooking {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.msgTime {
+  font-size: 11px;
+  opacity: 0.5;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Input area */
+.inputArea {
+  padding: 12px 16px;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #A0BF39;
+}
+
+.sendBtn {
+  padding: 10px 20px;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.sendBtn:hover {
+  background: #8fa832;
+}
+
+.sendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

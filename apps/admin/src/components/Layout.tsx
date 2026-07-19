@@ -1,5 +1,7 @@
 import { Outlet, NavLink } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { getTotalUnread } from '../api/chat'
 import SidebarCalendar from './SidebarCalendar'
 import { ToastContainer } from './ui/Toast'
 import { ConfirmDialog } from './ui/ConfirmDialog'
@@ -11,6 +13,7 @@ const menuItems = [
   { path: '/quest-grid', label: 'Сетка квестов' },
   { path: '/vr-grid', label: 'VR Сетка' },
   { path: '/clients', label: 'Клиенты' },
+  { path: '/chat', label: 'Чат' },
   { path: '/content', label: 'Контент' },
   { path: '/reference', label: 'Справочники' },
   { path: '/employees', label: 'Сотрудники' },
@@ -20,6 +23,15 @@ const menuItems = [
 
 export default function Layout() {
   const { logout, user } = useAuth()
+  const [unread, setUnread] = useState(0)
+
+  useEffect(() => {
+    const load = () => getTotalUnread().then(d => setUnread(d.unread)).catch(() => {})
+    load()
+    const interval = setInterval(load, 15000)
+    return () => clearInterval(interval)
+  }, [])
+
   return (
     <div className={styles.container}>
       <aside className={styles.sidebar}>
@@ -70,6 +82,17 @@ export default function Layout() {
               }
             >
               {item.label}
+              {item.path === '/chat' && unread > 0 && (
+                <span style={{
+                  marginLeft: '8px',
+                  background: '#e74c3c',
+                  color: 'white',
+                  borderRadius: '10px',
+                  padding: '1px 7px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                }}>{unread}</span>
+              )}
             </NavLink>
           ))}
         </nav>

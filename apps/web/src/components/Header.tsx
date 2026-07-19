@@ -3,10 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import styles from './Header.module.css'
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { client } = useAuth()
+  const router = useRouter()
 
   return (
     <header className={styles.header}>
@@ -44,11 +48,17 @@ export default function Header() {
             <Link href="#kids" className={styles.mainLink}>Игровая для детей</Link>
           </nav>
 
-          <button className={styles.profile} aria-label="Личный кабинет">
+          <button
+            className={styles.profile}
+            aria-label="Личный кабинет"
+            onClick={() => router.push(client ? '/lk' : '/lk/login')}
+            title={client ? `Личный кабинет — ${client.name}` : 'Войти в личный кабинет'}
+          >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="8" r="4" />
               <path d="M4 21c0-4 4-7 8-7s8 3 8 7" />
             </svg>
+            {client && <span className={styles.profileName}>{client.name.split(' ')[0]}</span>}
           </button>
 
           <div className={styles.contacts}>
@@ -97,6 +107,14 @@ export default function Header() {
               <Link href="/loyalty" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Программа лояльности</Link>
               <Link href="/contacts" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Контакты</Link>
             </nav>
+            <Link
+              href={client ? '/lk' : '/lk/login'}
+              className={styles.mobileLink}
+              onClick={() => setMenuOpen(false)}
+              style={{ fontWeight: 600 }}
+            >
+              {client ? `Личный кабинет — ${client.name}` : 'Войти в ЛК'}
+            </Link>
           </div>
         )}
       </div>

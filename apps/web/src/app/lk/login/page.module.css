@@ -1,0 +1,125 @@
+.loginPage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--color-bg, #0a0a0a);
+}
+
+.loginCard {
+    width: 100%;
+    max-width: 420px;
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 16px;
+    padding: 48px 36px;
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 8px;
+    font-family: 'Actay Wide', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-primary, #b5e61d);
+    letter-spacing: 2px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 36px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.label {
+    font-size: 13px;
+    color: #aaa;
+    font-weight: 500;
+}
+
+.input {
+    padding: 14px 16px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    font-family: 'Manrope', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input:focus {
+    border-color: var(--color-primary, #b5e61d);
+}
+
+.input::placeholder {
+    color: #555;
+}
+
+.button {
+    padding: 16px;
+    background: var(--color-primary, #b5e61d);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    margin-top: 8px;
+}
+
+.button:hover {
+    opacity: 0.9;
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.error {
+    background: #2a1010;
+    border: 1px solid #5c1d1d;
+    color: #ff6b6b;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.hint {
+    text-align: center;
+    color: #666;
+    font-size: 12px;
+    margin-top: 20px;
+}
+
+.backLink {
+    display: block;
+    text-align: center;
+    margin-top: 16px;
+    color: #888;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.backLink:hover {
+    color: var(--color-primary, #b5e61d);
+}

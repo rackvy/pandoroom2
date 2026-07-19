@@ -1,0 +1,242 @@
+.chatPage {
+    min-height: 100vh;
+    background: var(--color-bg, #0a0a0a);
+    padding-top: 140px;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.chatHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.backBtn:hover {
+    color: #fff;
+}
+
+.chatTitle {
+    font-family: 'Actay Wide', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+/* Messages */
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 20px;
+    min-height: 300px;
+}
+
+.message {
+    max-width: 80%;
+    padding: 14px 18px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.5;
+    position: relative;
+}
+
+.messageClient {
+    align-self: flex-end;
+    background: var(--color-primary, #b5e61d);
+    color: #0a0a0a;
+    border-bottom-right-radius: 4px;
+}
+
+.messageAdmin {
+    align-self: flex-start;
+    background: #1a1a1a;
+    color: #fff;
+    border: 1px solid #222;
+    border-bottom-left-radius: 4px;
+}
+
+.messageSystem {
+    align-self: center;
+    background: #1a1a2a;
+    color: #888;
+    border: 1px solid #222;
+    font-size: 13px;
+    text-align: center;
+    max-width: 90%;
+}
+
+.messageSender {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    opacity: 0.7;
+}
+
+.messageText {
+    margin: 0;
+    word-break: break-word;
+}
+
+.messageTime {
+    font-size: 11px;
+    opacity: 0.5;
+    margin-top: 6px;
+    text-align: right;
+}
+
+.messageBooking {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Action buttons in messages */
+.messageActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.actionBtn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+}
+
+.actionBtn:hover {
+    opacity: 0.85;
+}
+
+.actionBtnPrimary {
+    background: var(--color-primary, #b5e61d);
+    color: #0a0a0a;
+}
+
+.actionBtnSecondary {
+    background: #333;
+    color: #fff;
+}
+
+/* Input */
+.inputArea {
+    display: flex;
+    gap: 12px;
+    padding: 20px 0;
+    border-top: 1px solid #222;
+    position: sticky;
+    bottom: 0;
+    background: var(--color-bg, #0a0a0a);
+}
+
+.input {
+    flex: 1;
+    padding: 14px 18px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    font-family: 'Manrope', sans-serif;
+    outline: none;
+    resize: none;
+    min-height: 48px;
+    max-height: 120px;
+}
+
+.input:focus {
+    border-color: var(--color-primary, #b5e61d);
+}
+
+.input::placeholder {
+    color: #555;
+}
+
+.sendBtn {
+    padding: 14px 24px;
+    background: var(--color-primary, #b5e61d);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+}
+
+.sendBtn:hover {
+    opacity: 0.9;
+}
+
+.sendBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Empty */
+.empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    padding: 48px 24px;
+}
+
+.emptyIcon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    color: #888;
+}
+
+@media (max-width: 768px) {
+    .chatPage {
+        padding-top: 100px;
+    }
+
+    .message {
+        max-width: 90%;
+    }
+}

@@ -39,6 +39,7 @@ import ClientsPage from './pages/ClientsPage'
 import ClientDetailPage from './pages/ClientDetailPage'
 import ClientCreatePage from './pages/ClientCreatePage'
 import ReportsPage from './pages/ReportsPage'
+import ChatPage from './pages/ChatPage'
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth()
@@ -107,6 +108,7 @@ function AppRoutes() {
           <Route path="notification-templates" element={<NotificationTemplatesPage />} />
         </Route>
         <Route path="employees" element={<EmployeesPage />} />
+        <Route path="chat" element={<ChatPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
