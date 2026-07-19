@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { getFoodReport, type FoodReport } from '../api/reports';
-import { getBranches, type Branch } from '../api/schedule';
+import { useBranchSelection } from '../hooks/useBranchSelection';
 import { toast } from '../components/ui/Toast';
 import styles from './ReportsPage.module.css';
 
@@ -14,23 +14,9 @@ function getTodayString(): string {
 
 export default function ReportsPage() {
   const [date, setDate] = useState(getTodayString());
-  const [branchId, setBranchId] = useState('');
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const { branches, branchId, setBranchId } = useBranchSelection();
   const [report, setReport] = useState<FoodReport | null>(null);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    loadBranches();
-  }, []);
-
-  const loadBranches = async () => {
-    try {
-      const data = await getBranches();
-      setBranches(data);
-    } catch (error) {
-      console.error('Failed to load branches:', error);
-    }
-  };
 
   const handleGenerate = async () => {
     if (!date) {

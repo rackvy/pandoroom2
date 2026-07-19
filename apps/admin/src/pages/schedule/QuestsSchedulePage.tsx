@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import QuestSlotGrid from '../../components/schedule/QuestSlotGrid';
 import QuestBookingModal from '../../components/schedule/QuestBookingModal';
 import QuestReservationModal from '../../components/schedule/QuestReservationModal';
-import { getQuestScheduleGrid, getBranches, type QuestWithSlots, type QuestSlot, type Branch } from '../../api/schedule';
+import { getQuestScheduleGrid, type QuestWithSlots, type QuestSlot } from '../../api/schedule';
+import { useBranchSelection } from '../../hooks/useBranchSelection';
 import { formatDateForApi, addDays } from '../../components/schedule/timeUtils';
 import styles from './SchedulePage.module.css';
 
 export default function QuestsSchedulePage() {
   const [date, setDate] = useState<Date>(new Date());
-  const [branchId, setBranchId] = useState<string>('');
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const { branches, branchId, setBranchId } = useBranchSelection();
   const [quests, setQuests] = useState<QuestWithSlots[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,19 +30,6 @@ export default function QuestsSchedulePage() {
     questName: string;
     slot: QuestSlot | null;
   }>({ isOpen: false, questId: '', questName: '', slot: null });
-
-
-  // Load branches on mount
-  useEffect(() => {
-    getBranches()
-      .then(data => {
-        setBranches(data);
-        if (data.length > 0 && !branchId) {
-          setBranchId(data[0].id);
-        }
-      })
-      .catch(console.error);
-  }, []);
 
   // Load schedule when date or branch changes
   useEffect(() => {

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import ScheduleGrid from '../../components/schedule/ScheduleGrid';
 import { getTablesSchedule, moveTableReservation, cancelTableReservation, type TablesScheduleResponse, type TableReservation } from '../../api/schedule';
-import { getBranches, type Branch } from '../../api/catalog';
+import { useBranchSelection } from '../../hooks/useBranchSelection';
 import { formatDateForApi, addDays, parseDateFromString } from '../../components/schedule/timeUtils';
 import styles from './SchedulePage.module.css';
 
@@ -15,8 +15,7 @@ export default function TablesSchedulePage() {
   const initialDate = urlDate ? parseDateFromString(urlDate) : new Date();
   
   const [date, setDate] = useState<Date>(initialDate);
-  const [branchId, setBranchId] = useState<string>('');
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const { branches, branchId, setBranchId } = useBranchSelection();
   const [scheduleData, setScheduleData] = useState<TablesScheduleResponse | null>(null);
   const [showOnlyFree, setShowOnlyFree] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,18 +23,6 @@ export default function TablesSchedulePage() {
 
   // Get selected branch details
   const selectedBranch = branches.find(b => b.id === branchId);
-
-  // Load branches on mount
-  useEffect(() => {
-    getBranches()
-      .then(data => {
-        setBranches(data);
-        if (data.length > 0 && !branchId) {
-          setBranchId(data[0].id);
-        }
-      })
-      .catch(console.error);
-  }, []);
 
   // Update date when URL changes
   useEffect(() => {

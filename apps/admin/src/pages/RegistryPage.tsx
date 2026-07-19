@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getBranches, Branch } from '../api/schedule';
+import { useBranchSelection } from '../hooks/useBranchSelection';
 import api from '../lib/axios';
 import NewOrderModal from '../components/NewOrderModal';
 import styles from './RegistryPage.module.css';
@@ -52,8 +52,7 @@ interface FilterState {
 export default function RegistryPage() {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState<BookingListItem[]>([]);
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string>('');
+  const { branches, branchId: selectedBranch, setBranchId: setSelectedBranch } = useBranchSelection();
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
   const [showNewOrderModal, setShowNewOrderModal] = useState(false);
@@ -97,26 +96,10 @@ export default function RegistryPage() {
   }, [filters]);
 
   useEffect(() => {
-    loadBranches();
-  }, []);
-
-  useEffect(() => {
     if (selectedBranch) {
       loadBookings();
     }
   }, [selectedBranch]);
-
-  const loadBranches = async () => {
-    try {
-      const data = await getBranches();
-      setBranches(data);
-      if (data.length > 0) {
-        setSelectedBranch(data[0].id);
-      }
-    } catch (error) {
-      console.error('Failed to load branches:', error);
-    }
-  };
 
   const loadBookings = async () => {
     setLoading(true);

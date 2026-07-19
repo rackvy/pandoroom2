@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getBranches, type Branch } from '../../api/catalog';
+import { useBranchSelection } from '../../hooks/useBranchSelection';
 import { getVRSchedule, cancelVRReservation, deleteVRReservation, type VRHallWithSchedule, type VRReservation } from '../../api/vrSchedule';
 import { formatDateForApi, addDays } from '../../components/schedule/timeUtils';
 import { toast } from '../../components/ui/Toast';
@@ -61,8 +61,7 @@ function getStatusClass(status: string): string {
 
 export default function VRSchedulePage() {
   const [date, setDate] = useState<Date>(new Date());
-  const [branchId, setBranchId] = useState<string>('');
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const { branches, branchId, setBranchId } = useBranchSelection();
   const [halls, setHalls] = useState<VRHallWithSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -71,17 +70,6 @@ export default function VRSchedulePage() {
   // Popover state
   const [popoverReservation, setPopoverReservation] = useState<VRReservation | null>(null);
   const [popoverPos, setPopoverPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
-
-  useEffect(() => {
-    getBranches()
-      .then(data => {
-        setBranches(data);
-        if (data.length > 0 && !branchId) {
-          setBranchId(data[0].id);
-        }
-      })
-      .catch(console.error);
-  }, []);
 
   const loadSchedule = useCallback(async () => {
     if (!branchId) return;
