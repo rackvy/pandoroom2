@@ -1,24 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import styles from './page.module.css'
 
+type LoginStep = 'phone' | 'sending' | 'code'
+
 export default function LoginPage() {
   const [phone, setPhone] = useState('')
-  const [password, setPassword] = useState('')
+  const [code, setCode] = useState('')
+  const [step, setStep] = useState<LoginStep>('phone')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, client } = useAuth()
   const router = useRouter()
+  const codeInputRef = useRef<HTMLInputElement>(null)
 
   // If already logged in, redirect to dashboard
-  if (client) {
-    router.push('/lk')
-    return null
-  }
+  useEffect(() => {
+    if (client) {
+      router.push('/lk')
+    }
+  }, [client, router])
+
+  // Focus code input when it appears
+  useEffect(() => {
+    if (step === 'code') {
+      codeInputRef.current?.focus()
+    }
+  }, [step])
 
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, '')
@@ -34,18 +46,39 @@ export default function LoginPage() {
     setPhone(formatPhone(e.target.value))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendCode = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length < 11) {
+      setError('Введите полный номер телефона')
+      return
+    }
+    // Simulate sending SMS
+    setStep('sending')
+    setTimeout(() => {
+      setStep('code')
+    }, 1500)
+  }
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await login(phone, password)
+      await login(phone, code)
       router.push('/lk')
     } catch (err: any) {
-      setError(err.message || 'Ошибка авторизации')
+      setError(err.message || 'Неверный код')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleBack = () => {
+    setStep('phone')
+    setCode('')
+    setError('')
   }
 
   return (
@@ -54,41 +87,73 @@ export default function LoginPage() {
         <div className={styles.logo}>PANDOROOM</div>
         <p className={styles.subtitle}>Вход в личный кабинет</p>
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {error && <div className={styles.error}>{error}</div>}
+        {error && <div className={styles.error}>{error}</div>}
 
-          <div className={styles.field}>
-            <label className={styles.label}>Номер телефона</label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={handlePhoneChange}
-              placeholder="+7 (999) 123-45-67"
-              className={styles.input}
-              required
-            />
+        {/* Step 1: Phone number */}
+        {step === 'phone' && (
+          <form onSubmit={handleSendCode} className={styles.form}>
+            <div className={styles.field}>
+              <label className={styles.label}>Номер телефона</label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={handlePhoneChange}
+                placeholder="+7 (999) 123-45-67"
+                className={styles.input}
+                required
+                autoFocus
+              />
+            </div>
+            <button type="submit" className={styles.button}>
+              Получить код
+            </button>
+          </form>
+        )}
+
+        {/* Step 2: Sending animation */}
+        {step === 'sending' && (
+          <div className={styles.sendingState}>
+            <div className={styles.sendingSpinner} />
+            <p className={styles.sendingText}>Отправляем код на {phone}</p>
           </div>
+        )}
 
-          <div className={styles.field}>
-            <label className={styles.label}>Пароль</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Введите пароль"
-              className={styles.input}
-              required
-            />
-          </div>
+        {/* Step 3: Code input */}
+        {step === 'code' && (
+          <form onSubmit={handleVerifyCode} className={styles.form}>
+            <div className={styles.sentInfo}>
+              <span className={styles.sentIcon}>✓</span>
+              Код отправлен на <strong>{phone}</strong>
+            </div>
 
-          <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? 'Входим...' : 'Войти'}
-          </button>
-        </form>
+            <div className={styles.field}>
+              <label className={styles.label}>Код подтверждения</label>
+              <input
+                ref={codeInputRef}
+                type="text"
+                inputMode="numeric"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="Введите код"
+                className={styles.codeInput}
+                required
+                autoComplete="one-time-code"
+              />
+            </div>
 
-        <p className={styles.hint}>
-          Временный пароль для всех: <strong>2424</strong>
-        </p>
+            <div className={styles.codeHint}>
+              Ваш код: <strong>2424</strong>
+            </div>
+
+            <button type="submit" className={styles.button} disabled={loading || code.length < 4}>
+              {loading ? 'Проверяем...' : 'Войти'}
+            </button>
+
+            <button type="button" className={styles.backBtn} onClick={handleBack}>
+              ← Изменить номер
+            </button>
+          </form>
+        )}
 
         <Link href="/" className={styles.backLink}>
           Вернуться на главную

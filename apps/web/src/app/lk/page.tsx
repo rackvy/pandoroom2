@@ -32,13 +32,16 @@ function formatTime(timeStr: string) {
 }
 
 export default function DashboardPage() {
-  const { client, isLoading: authLoading, logout } = useAuth()
+  const { client, isLoading: authLoading, logout, updateClient } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('holidays')
   const [profile, setProfile] = useState<ClientProfile | null>(null)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [savingName, setSavingName] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !client) {
@@ -80,6 +83,34 @@ export default function DashboardPage() {
   const bookings = profile?.bookings || []
   const questReservations = profile?.questReservations || []
   const lastMessage = chatMessages.length > 0 ? chatMessages[chatMessages.length - 1] : null
+
+  const startEditName = () => {
+    setEditName(client.name)
+    setIsEditingName(true)
+  }
+
+  const cancelEditName = () => {
+    setIsEditingName(false)
+    setEditName('')
+  }
+
+  const saveName = async () => {
+    const trimmed = editName.trim()
+    if (!trimmed || trimmed === client.name) {
+      cancelEditName()
+      return
+    }
+    setSavingName(true)
+    try {
+      const updated = await lkFetch('/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: trimmed }) })
+      updateClient({ name: updated.name })
+      setIsEditingName(false)
+    } catch (err) {
+      console.error('Failed to update name:', err)
+    } finally {
+      setSavingName(false)
+    }
+  }
 
   return (
     <div className={styles.dashboard}>
@@ -252,7 +283,33 @@ export default function DashboardPage() {
             <div className={styles.profileCard}>
               <div className={styles.profileRow}>
                 <span className={styles.profileLabel}>Имя</span>
-                <span className={styles.profileValue}>{client.name}</span>
+                {isEditingName ? (
+                  <div className={styles.editNameGroup}>
+                    <input
+                      className={styles.editNameInput}
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') saveName()
+                        if (e.key === 'Escape') cancelEditName()
+                      }}
+                    />
+                    <button className={styles.editNameBtn} onClick={saveName} disabled={savingName}>
+                      {savingName ? '...' : 'Сохранить'}
+                    </button>
+                    <button className={styles.editNameCancel} onClick={cancelEditName}>
+                      Отмена
+                    </button>
+                  </div>
+                ) : (
+                  <div className={styles.profileValueGroup}>
+                    <span className={styles.profileValue}>{client.name}</span>
+                    <button className={styles.editBtn} onClick={startEditName} title="Изменить имя">
+                      ✎
+                    </button>
+                  </div>
+                )}
               </div>
               <div className={styles.profileRow}>
                 <span className={styles.profileLabel}>Телефон</span>

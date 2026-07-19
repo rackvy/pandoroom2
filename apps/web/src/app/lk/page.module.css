@@ -300,6 +300,85 @@
     background: #2a1010;
 }
 
+/* Name editing */
+.profileValueGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.editBtn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.editBtn:hover {
+    color: var(--color-primary, #b5e61d);
+    background: #1a1a1a;
+}
+
+.editNameGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.editNameInput {
+    padding: 6px 12px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 15px;
+    font-family: 'Manrope', sans-serif;
+    outline: none;
+    width: 180px;
+}
+
+.editNameInput:focus {
+    border-color: var(--color-primary, #b5e61d);
+}
+
+.editNameBtn {
+    padding: 6px 14px;
+    background: var(--color-primary, #b5e61d);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+}
+
+.editNameBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.editNameCancel {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #888;
+    font-size: 13px;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+}
+
+.editNameCancel:hover {
+    border-color: #555;
+    color: #fff;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .dashboard {
