@@ -28,14 +28,14 @@ export interface Quest {
   extraPlayerPrice: number
   allowAnimator: boolean
   animatorPrice: number
-  previewImage?: { id: string; url: string } | null
-  backgroundImage?: { id: string; url: string } | null
+  previewImage?: { id: string; url: string; altText?: string | null } | null
+  backgroundImage?: { id: string; url: string; altText?: string | null } | null
 }
 
 export interface QuestGalleryPhoto {
   id: string
   sortOrder: number
-  image: { id: string; url: string }
+  image: { id: string; url: string; altText?: string | null }
 }
 
 export interface QuestDetail extends Quest {
@@ -56,7 +56,7 @@ export interface NewsItem {
   coverSub?: string | null
   coverVariant?: string | null
   cardBg?: string | null
-  image?: { id: string; url: string } | null
+  image?: { id: string; url: string; altText?: string | null } | null
 }
 
 export interface ReviewItem {
@@ -75,7 +75,7 @@ export interface PageBlock {
   title?: string | null
   text?: string | null
   linkUrl?: string | null
-  image?: { id: string; url: string } | null
+  image?: { id: string; url: string; altText?: string | null } | null
   extraJson?: any
   sortOrder: number
 }

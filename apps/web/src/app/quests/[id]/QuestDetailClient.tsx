@@ -247,7 +247,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
           <div className={styles.heroBg}>
             <Image
               src={quest.backgroundImage?.url || quest.previewImage?.url || ''}
-              alt={quest.name}
+              alt={quest.backgroundImage?.altText || quest.previewImage?.altText || quest.name}
               fill
               sizes="100vw"
               priority
@@ -272,7 +272,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
               <div className={styles.heroPoster}>
                 <Image
                   src={quest.previewImage.url}
-                  alt={quest.name}
+                  alt={quest.previewImage.altText || quest.name}
                   fill
                   sizes="120px"
                   priority
@@ -534,7 +534,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                       <div className={styles.newsCardImage}>
                         <Image
                           src={item.image.url}
-                          alt={item.title}
+                          alt={item.image.altText || item.title}
                           fill
                           sizes="(max-width: 768px) 100vw, 25vw"
                           className={styles.newsCardImg}

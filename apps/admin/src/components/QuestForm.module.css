@@ -111,6 +111,18 @@
   object-fit: cover;
 }
 
+.altTextInput {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #333;
+}
+
+.altTextInput::placeholder {
+  color: #999;
+}
+
 .gallerySection {
   margin-top: 16px;
 }

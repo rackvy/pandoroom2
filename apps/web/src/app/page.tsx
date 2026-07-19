@@ -229,6 +229,10 @@ export default async function Home() {
   const heroTitle = homeBlocks.find(b => b.blockKey === 'hero_title')?.title || 'Самый большой квеструм и площадки для праздников во Владивостоке'
   const heroFeatures = (() => { try { return JSON.parse(homeBlocks.find(b => b.blockKey === 'hero_features')?.extraJson || '[]') as string[] } catch { return [] } })()
   const heroCtaText = homeBlocks.find(b => b.blockKey === 'hero_cta_text')?.title || 'Забронируйте праздник прямо сейчас'
+  const heroBgUrl = homeBlocks.find(b => b.blockKey === 'hero_bg')?.image?.url || null
+  const heroPhoto1Url = homeBlocks.find(b => b.blockKey === 'hero_photo_1')?.image?.url || null
+  const heroPhoto2Url = homeBlocks.find(b => b.blockKey === 'hero_photo_2')?.image?.url || null
+  const heroPhoto3Url = homeBlocks.find(b => b.blockKey === 'hero_photo_3')?.image?.url || null
   const holidayCardsFallback = [
     { kicker: 'праздники', title: 'для малышей', poster: '/images/main/6.png', href: '/holidays/toddlers' },
     { kicker: 'праздники для детей', title: '6 — 10 лет', poster: '/images/main/5.png', href: '/holidays/kids' },
@@ -247,7 +251,9 @@ export default async function Home() {
   return (
     <main>
       {/* ==================== HERO ==================== */}
-      <section className={styles.hero}>
+      <section className={styles.hero} style={heroBgUrl ? {
+        backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.7) 60%, rgba(10,10,10,0.95) 100%), url('${heroBgUrl}')`,
+      } : undefined}>
         <div className={`container ${styles.heroInner}`}>
           <div className={styles.heroContent}>
             <h1 className={styles.heroTitle}>
@@ -290,9 +296,9 @@ export default async function Home() {
 
         {/* Photo collage — desktop only */}
         <div className={styles.heroMedia} aria-hidden="true">
-          <div className={`${styles.heroPhoto} ${styles.heroPhoto1}`} />
-          <div className={`${styles.heroPhoto} ${styles.heroPhoto2}`} />
-          <div className={`${styles.heroPhoto} ${styles.heroPhoto3}`} />
+          <div className={`${styles.heroPhoto} ${styles.heroPhoto1}`} style={heroPhoto1Url ? { backgroundImage: `url('${heroPhoto1Url}')` } : undefined} />
+          <div className={`${styles.heroPhoto} ${styles.heroPhoto2}`} style={heroPhoto2Url ? { backgroundImage: `url('${heroPhoto2Url}')` } : undefined} />
+          <div className={`${styles.heroPhoto} ${styles.heroPhoto3}`} style={heroPhoto3Url ? { backgroundImage: `url('${heroPhoto3Url}')` } : undefined} />
 
           <Link href="/holidays" className={styles.heroCta}>
             <span className={styles.heroCtaText}>

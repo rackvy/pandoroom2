@@ -58,6 +58,8 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>(
     initialData?.galleryPhotos?.map(p => getMediaUrl(p.image.url)) || []
   );
+  const [previewAltText, setPreviewAltText] = useState(initialData?.previewImage?.altText || '');
+  const [backgroundAltText, setBackgroundAltText] = useState(initialData?.backgroundImage?.altText || '');
   
   // Schedule slots (only for new quests)
   const [scheduleSlots, setScheduleSlots] = useState<ScheduleSlot[]>([]);
@@ -115,7 +117,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     // Upload preview image if changed
     if (previewImageFile) {
       try {
-        const media = await uploadMedia(previewImageFile);
+        const media = await uploadMedia(previewImageFile, previewAltText || undefined);
         submitData.previewImageId = media.id;
       } catch (error) {
         console.error('Failed to upload preview image:', error);
@@ -127,7 +129,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     // Upload background image if changed
     if (backgroundImageFile) {
       try {
-        const media = await uploadMedia(backgroundImageFile);
+        const media = await uploadMedia(backgroundImageFile, backgroundAltText || undefined);
         submitData.backgroundImageId = media.id;
       } catch (error) {
         console.error('Failed to upload background image:', error);
@@ -317,6 +319,13 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
               accept="image/*"
               onChange={handlePreviewImageChange}
             />
+            <input
+              type="text"
+              placeholder="Alt-текст (описание для SEO)"
+              value={previewAltText}
+              onChange={(e) => setPreviewAltText(e.target.value)}
+              className={styles.altTextInput}
+            />
           </div>
 
           <div className={styles.imageField}>
@@ -333,6 +342,13 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
               type="file"
               accept="image/*"
               onChange={handleBackgroundImageChange}
+            />
+            <input
+              type="text"
+              placeholder="Alt-текст (описание для SEO)"
+              value={backgroundAltText}
+              onChange={(e) => setBackgroundAltText(e.target.value)}
+              className={styles.altTextInput}
             />
           </div>
         </div>

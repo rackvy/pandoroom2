@@ -308,7 +308,7 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
                           <div className={styles.questPoster}>
                             <Image
                               src={posterUrl}
-                              alt={q.name}
+                              alt={q.previewImage?.altText || q.name}
                               fill
                               sizes="60px"
                               className={styles.questPosterImg}

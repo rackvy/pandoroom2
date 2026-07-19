@@ -341,7 +341,7 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                         {posterUrl ? (
                           <Image
                             src={posterUrl}
-                            alt={q.name}
+                            alt={q.previewImage?.altText || q.name}
                             fill
                             sizes="(max-width: 768px) 50vw, 25vw"
                             className={styles.qcardPosterImg}

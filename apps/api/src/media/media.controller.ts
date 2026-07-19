@@ -2,8 +2,10 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
+  Body,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -28,8 +30,19 @@ export class MediaController {
 
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
-  uploadFile(@UploadedFile() file: any) {
-    return this.mediaService.upload(file);
+  uploadFile(
+    @UploadedFile() file: any,
+    @Body('altText') altText?: string,
+  ) {
+    return this.mediaService.upload(file, altText);
+  }
+
+  @Patch(':id')
+  updateMedia(
+    @Param('id') id: string,
+    @Body() body: { altText?: string },
+  ) {
+    return this.mediaService.update(id, body);
   }
 
   @Delete(':id')

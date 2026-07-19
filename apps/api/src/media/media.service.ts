@@ -46,7 +46,7 @@ export class MediaService {
     }));
   }
 
-  async upload(file: UploadedFile) {
+  async upload(file: UploadedFile, altText?: string) {
     const id = randomUUID();
     const ext = path.extname(file.originalname);
     const filename = `${id}${ext}`;
@@ -78,6 +78,7 @@ export class MediaService {
         mimeType: file.mimetype,
         sizeBytes: BigInt(file.size),
         type,
+        altText: altText || null,
       },
     });
 
@@ -86,6 +87,20 @@ export class MediaService {
       ...media,
       sizeBytes: Number(media.sizeBytes),
     };
+  }
+
+  async update(id: string, data: { altText?: string }) {
+    const media = await this.prisma.media.findUnique({ where: { id } });
+    if (!media) throw new NotFoundException('Media not found');
+
+    const updated = await this.prisma.media.update({
+      where: { id },
+      data: {
+        ...(data.altText !== undefined && { altText: data.altText || null }),
+      },
+    });
+
+    return { ...updated, sizeBytes: Number(updated.sizeBytes) };
   }
 
   async remove(id: string) {

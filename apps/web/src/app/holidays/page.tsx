@@ -40,7 +40,7 @@ export default function HolidaysHubPage() {
               во Владивостоке
             </h1>
             <div className={styles.heroButtons}>
-              <Link href="/quests" className={styles.btnPink}>Забронировать квест</Link>
+              <Link href="/schedule" className={styles.btnPink}>Забронировать квест</Link>
               <a href="#holidays-grid" className={styles.btnGreen}>Отметить праздник</a>
             </div>
             <ul className={styles.heroFeatures}>

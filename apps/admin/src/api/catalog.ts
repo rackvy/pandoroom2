@@ -140,10 +140,12 @@ export interface Quest {
   previewImage?: {
     id: string;
     url: string;
+    altText?: string | null;
   } | null;
   backgroundImage?: {
     id: string;
     url: string;
+    altText?: string | null;
   } | null;
   galleryPhotos: QuestGalleryPhoto[];
 }
