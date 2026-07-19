@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { io, Socket } from 'socket.io-client'
 import { useAuth } from '@/contexts/AuthContext'
-import { lkFetch, type ChatMessage } from '@/lib/lk-api'
+import { lkFetch, LK_API_BASE, type ChatMessage } from '@/lib/lk-api'
 import styles from './page.module.css'
+
+const API_ROOT = process.env.NEXT_PUBLIC_API_URL?.replace('/api/public', '') || 'http://localhost:3001'
 
 function formatTime(dateStr: string) {
   const date = new Date(dateStr)
@@ -28,13 +31,15 @@ function formatDate(dateStr: string) {
 }
 
 export default function ChatPage() {
-  const { client, isLoading: authLoading } = useAuth()
+  const { client, token, isLoading: authLoading } = useAuth()
   const router = useRouter()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [connected, setConnected] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const socketRef = useRef<Socket | null>(null)
 
   useEffect(() => {
     if (!authLoading && !client) {
@@ -42,13 +47,50 @@ export default function ChatPage() {
     }
   }, [authLoading, client, router])
 
+  // Load initial messages via REST
   useEffect(() => {
     if (!client) return
     loadMessages()
-    // Poll for new messages every 10 seconds
-    const interval = setInterval(loadMessages, 10000)
-    return () => clearInterval(interval)
   }, [client])
+
+  // WebSocket connection
+  useEffect(() => {
+    if (!client || !token) return
+
+    const socket = io(`${API_ROOT}/chat`, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    })
+
+    socketRef.current = socket
+
+    socket.on('connect', () => {
+      setConnected(true)
+      // Mark existing messages as read
+      socket.emit('message:read')
+    })
+
+    socket.on('disconnect', () => {
+      setConnected(false)
+    })
+
+    socket.on('message:new', (msg: ChatMessage) => {
+      setMessages(prev => {
+        // Avoid duplicates
+        if (prev.some(m => m.id === msg.id)) return prev
+        return [...prev, msg]
+      })
+      // Mark new admin/system messages as read immediately
+      if (msg.sender !== 'client') {
+        socket.emit('message:read')
+      }
+    })
+
+    return () => {
+      socket.disconnect()
+      socketRef.current = null
+    }
+  }, [client, token])
 
   const loadMessages = async () => {
     try {
@@ -65,21 +107,12 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSend = async () => {
-    if (!text.trim() || sending) return
+  const handleSend = () => {
+    if (!text.trim() || sending || !socketRef.current) return
     setSending(true)
-    try {
-      const msg = await lkFetch('/chat', {
-        method: 'POST',
-        body: JSON.stringify({ text: text.trim() }),
-      })
-      setMessages(prev => [...prev, msg])
-      setText('')
-    } catch (err) {
-      console.error('Failed to send message:', err)
-    } finally {
-      setSending(false)
-    }
+    socketRef.current.emit('message:send', { text: text.trim() })
+    setText('')
+    setSending(false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -115,6 +148,7 @@ export default function ChatPage() {
             ←
           </button>
           <h1 className={styles.chatTitle}>Чат с Pandoroom</h1>
+          <span className={styles.connectionDot} style={{ background: connected ? '#4ade80' : '#888' }} />
         </div>
 
         {/* Messages */}

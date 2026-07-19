@@ -38,6 +38,14 @@
   font-weight: 600;
 }
 
+.connectionDot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 0 8px;
+}
+
 .layout {
   display: flex;
   gap: 16px;

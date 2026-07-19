@@ -3,12 +3,13 @@ import { ClientChatService } from './client-chat.service';
 import { ClientChatController } from './client-chat.controller';
 import { AdminChatService } from './admin-chat.service';
 import { AdminChatController } from './admin-chat.controller';
+import { ChatGateway } from './chat.gateway';
 import { ClientAuthModule } from '../client-auth/client-auth.module';
 
 @Module({
   imports: [ClientAuthModule],
   controllers: [ClientChatController, AdminChatController],
-  providers: [ClientChatService, AdminChatService],
+  providers: [ClientChatService, AdminChatService, ChatGateway],
   exports: [ClientChatService, AdminChatService],
 })
 export class ClientChatModule {}

@@ -231,6 +231,14 @@
     color: #888;
 }
 
+.connectionDot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-left: 8px;
+}
+
 @media (max-width: 768px) {
     .chatPage {
         padding-top: 100px;

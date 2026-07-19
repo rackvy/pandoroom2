@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { getConversations, getChatMessages, sendChatMessage, getTotalUnread, type Conversation, type ChatMessageAdmin } from '../api/chat';
+import { io, Socket } from 'socket.io-client';
+import { getConversations, getChatMessages, getTotalUnread, type Conversation, type ChatMessageAdmin } from '../api/chat';
 import styles from './ChatPage.module.css';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+
+// Extended message shape from WebSocket (includes client info for admin broadcasts)
+interface WSMessage extends ChatMessageAdmin {
+  client?: { id: string; name: string; phone: string } | null;
+}
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -9,27 +17,70 @@ export default function ChatPage() {
   const [clientInfo, setClientInfo] = useState<{ name: string; phone: string } | null>(null);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
   const [totalUnread, setTotalUnread] = useState(0);
+  const [connected, setConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const selectedClientRef = useRef<string | null>(null);
 
+  // Keep ref in sync with state for use in socket callbacks
+  useEffect(() => {
+    selectedClientRef.current = selectedClient;
+  }, [selectedClient]);
+
+  // Initial load via REST
   useEffect(() => {
     loadConversations();
     loadUnread();
-    const interval = setInterval(() => {
-      loadConversations();
-      loadUnread();
-    }, 15000);
-    return () => clearInterval(interval);
   }, []);
 
+  // WebSocket connection
   useEffect(() => {
-    if (selectedClient) {
-      loadMessages(selectedClient);
-      const interval = setInterval(() => loadMessages(selectedClient), 5000);
-      return () => clearInterval(interval);
-    }
-  }, [selectedClient]);
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const socket = io(`${API_BASE}/chat`, {
+      auth: { token },
+      transports: ['websocket', 'polling'],
+    });
+
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      setConnected(true);
+    });
+
+    socket.on('disconnect', () => {
+      setConnected(false);
+    });
+
+    // Real-time new messages
+    socket.on('message:new', (msg: WSMessage) => {
+      // If this message is for the currently open conversation
+      if (selectedClientRef.current && msg.clientId === selectedClientRef.current) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
+        // Mark client messages as read immediately
+        if (msg.sender === 'client') {
+          socket.emit('admin:message:read', { clientId: msg.clientId });
+        }
+      }
+      // Always refresh conversation list on new message
+      loadConversations();
+    });
+
+    // Real-time unread count updates
+    socket.on('unread:update', (data: { unread: number }) => {
+      setTotalUnread(data.unread);
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,30 +104,29 @@ export default function ChatPage() {
     } catch {}
   };
 
-  const loadMessages = async (clientId: string) => {
+  const handleSelectClient = async (clientId: string) => {
+    setSelectedClient(clientId);
+    setMessages([]);
     try {
       const data = await getChatMessages(clientId);
       setMessages(data.messages);
       setClientInfo(data.client);
+      // Mark client messages as read via WebSocket
+      if (socketRef.current) {
+        socketRef.current.emit('admin:message:read', { clientId });
+      }
     } catch (err) {
       console.error('Failed to load messages:', err);
     }
   };
 
-  const handleSend = async () => {
-    if (!text.trim() || !selectedClient || sending) return;
-    setSending(true);
-    try {
-      const msg = await sendChatMessage(selectedClient, text.trim());
-      setMessages(prev => [...prev, msg]);
-      setText('');
-      loadConversations();
-      loadUnread();
-    } catch (err) {
-      console.error('Failed to send:', err);
-    } finally {
-      setSending(false);
-    }
+  const handleSend = () => {
+    if (!text.trim() || !selectedClient || !socketRef.current) return;
+    socketRef.current.emit('admin:message:send', {
+      clientId: selectedClient,
+      text: text.trim(),
+    });
+    setText('');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -101,7 +151,15 @@ export default function ChatPage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>Чат с клиентами {totalUnread > 0 && <span className={styles.badge}>{totalUnread}</span>}</h1>
+        <h1>
+          Чат с клиентами
+          <span
+            className={styles.connectionDot}
+            style={{ background: connected ? '#4ade80' : '#ccc' }}
+            title={connected ? 'Подключено' : 'Отключено'}
+          />
+          {totalUnread > 0 && <span className={styles.badge}>{totalUnread}</span>}
+        </h1>
       </div>
 
       <div className={styles.layout}>
@@ -114,7 +172,7 @@ export default function ChatPage() {
               <div
                 key={conv.client.id}
                 className={`${styles.convItem} ${selectedClient === conv.client.id ? styles.convActive : ''}`}
-                onClick={() => setSelectedClient(conv.client.id)}
+                onClick={() => handleSelectClient(conv.client.id)}
               >
                 <div className={styles.convInfo}>
                   <div className={styles.convName}>{conv.client.name}</div>
@@ -185,9 +243,9 @@ export default function ChatPage() {
                 <button
                   className={styles.sendBtn}
                   onClick={handleSend}
-                  disabled={!text.trim() || sending}
+                  disabled={!text.trim() || !connected}
                 >
-                  {sending ? '...' : 'Отправить'}
+                  {connected ? 'Отправить' : 'Нет связи'}
                 </button>
               </div>
             </>
