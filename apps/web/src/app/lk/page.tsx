@@ -25,10 +25,9 @@ function formatDate(dateStr: string) {
 }
 
 function formatTime(timeStr: string) {
-  return new Date(timeStr).toLocaleTimeString('ru-RU', {
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  // Parse HH:MM or HH:MM:SS directly to avoid timezone issues
+  const parts = timeStr.split(':')
+  return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`
 }
 
 export default function DashboardPage() {
