@@ -110,9 +110,9 @@ function ChatPageContent() {
     }
   }, [bookingIdParam, bookings])
 
-  // Load messages when selected booking changes
+  // Load messages when selected booking changes (or null for general chat)
   useEffect(() => {
-    if (!selectedBookingId) return
+    if (bookingIdParam) return // handled by the other useEffect
     loadMessages(selectedBookingId)
   }, [selectedBookingId])
 
@@ -148,7 +148,7 @@ function ChatPageContent() {
         })
         // Mark as read if it's from admin/system
         if (msg.sender !== 'client') {
-          socket.emit('message:read', { bookingId: msg.bookingId })
+          socket.emit('message:read', msg.bookingId ? { bookingId: msg.bookingId } : undefined)
         }
       }
       // Update booking list (unread counts, last message)
@@ -191,10 +191,8 @@ function ChatPageContent() {
       setLoadingBookings(true)
       const data = await lkFetch('/chat/bookings')
       setBookings(data)
-      // Auto-select first booking if none selected
-      if (data.length > 0 && !selectedBookingId && !bookingIdParam) {
-        setSelectedBookingId(data[0].booking.id)
-      }
+      // If URL has bookingId, it will be handled by the other useEffect
+      // Otherwise stay on general chat (selectedBookingId = null)
     } catch (err) {
       console.error('Failed to load bookings:', err)
     } finally {
@@ -202,14 +200,15 @@ function ChatPageContent() {
     }
   }
 
-  const loadMessages = async (bookingId: string) => {
+  const loadMessages = async (bookingId: string | null) => {
     try {
       setLoadingMessages(true)
-      const data = await lkFetch(`/chat?bookingId=${bookingId}`)
+      const url = bookingId ? `/chat?bookingId=${bookingId}` : '/chat'
+      const data = await lkFetch(url)
       setMessages(data)
       // Mark as read via socket
       if (socketRef.current?.connected) {
-        socketRef.current.emit('message:read', { bookingId })
+        socketRef.current.emit('message:read', bookingId ? { bookingId } : undefined)
       }
     } catch (err) {
       console.error('Failed to load messages:', err)
@@ -229,16 +228,22 @@ function ChatPageContent() {
     ))
   }
 
+  const selectGeneral = () => {
+    setSelectedBookingId(null)
+    setShowSidebar(false)
+    router.push('/lk/chat', { scroll: false })
+  }
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const handleSend = () => {
-    if (!text.trim() || sending || !socketRef.current || !selectedBookingId) return
+    if (!text.trim() || sending || !socketRef.current) return
     setSending(true)
     socketRef.current.emit('message:send', {
       text: text.trim(),
-      bookingId: selectedBookingId,
+      ...(selectedBookingId ? { bookingId: selectedBookingId } : {}),
     })
     setText('')
     setSending(false)
@@ -285,13 +290,27 @@ function ChatPageContent() {
 
           {loadingBookings ? (
             <div className={styles.sidebarEmpty}>Загрузка...</div>
-          ) : bookings.length === 0 ? (
-            <div className={styles.sidebarEmpty}>
-              <p>У вас пока нет бронирований</p>
-            </div>
           ) : (
             <div className={styles.bookingList}>
-              {bookings.map(item => (
+              {/* General chat */}
+              <button
+                className={`${styles.bookingItem} ${selectedBookingId === null ? styles.bookingItemActive : ''}`}
+                onClick={selectGeneral}
+              >
+                <div className={styles.bookingItemTop}>
+                  <span className={styles.bookingItemName}>💬 Общий чат</span>
+                </div>
+                <div className={styles.bookingItemBottom}>
+                  <span className={styles.bookingItemPreview}>Написать общий вопрос</span>
+                </div>
+              </button>
+
+              {/* Per-booking chats */}
+              {bookings.length === 0 ? (
+                <div className={styles.sidebarEmpty}>
+                  <p>У вас пока нет бронирований</p>
+                </div>
+              ) : bookings.map(item => (
                 <button
                   key={item.booking.id}
                   className={`${styles.bookingItem} ${selectedBookingId === item.booking.id ? styles.bookingItemActive : ''}`}
@@ -339,7 +358,12 @@ function ChatPageContent() {
             >
               ←
             </button>
-            {selectedBooking ? (
+            {selectedBookingId === null ? (
+              <div className={styles.chatHeaderInfo}>
+                <h1 className={styles.chatTitle}>Общий чат</h1>
+                <span className={styles.chatSubtitle}>Pandoroom</span>
+              </div>
+            ) : selectedBooking ? (
               <div className={styles.chatHeaderInfo}>
                 <h1 className={styles.chatTitle}>
                   {selectedBooking.booking.clientName}
@@ -349,18 +373,13 @@ function ChatPageContent() {
                 </span>
               </div>
             ) : (
-              <h1 className={styles.chatTitle}>Выберите бронирование</h1>
+              <h1 className={styles.chatTitle}>Выберите чат</h1>
             )}
           </div>
 
           {/* Messages */}
           <div className={styles.messages}>
-            {!selectedBookingId ? (
-              <div className={styles.empty}>
-                <div className={styles.emptyIcon}>💬</div>
-                <p>Выберите бронирование слева, чтобы начать чат</p>
-              </div>
-            ) : loadingMessages ? (
+            {loadingMessages ? (
               <div className={styles.empty}>
                 <p>Загрузка сообщений...</p>
               </div>
@@ -400,9 +419,8 @@ function ChatPageContent() {
           </div>
 
           {/* Input */}
-          {selectedBookingId && (
-            <div className={styles.inputArea}>
-              <textarea
+          <div className={styles.inputArea}>
+            <textarea
                 className={styles.input}
                 placeholder="Написать сообщение..."
                 value={text}
@@ -418,7 +436,6 @@ function ChatPageContent() {
                 {sending ? '...' : 'Отправить'}
               </button>
             </div>
-          )}
         </div>
       </div>
     </div>

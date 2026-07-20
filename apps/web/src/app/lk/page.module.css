@@ -243,6 +243,62 @@
     flex-shrink: 0;
 }
 
+/* Per-booking chats list */
+.bookingChatsList {
+    margin-top: 20px;
+}
+
+.bookingChatsTitle {
+    font-size: 15px;
+    font-weight: 600;
+    color: #888;
+    margin: 0 0 12px 0;
+}
+
+.bookingChatItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #141414;
+    border: 1px solid #222;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.bookingChatItem:hover {
+    border-color: #444;
+}
+
+.bookingChatInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.bookingChatName {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 2px 0;
+}
+
+.bookingChatDate {
+    font-size: 12px;
+    color: var(--color-primary, #b5e61d);
+    margin: 0 0 4px 0;
+}
+
+.bookingChatPreview {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Empty state */
 .empty {
     text-align: center;

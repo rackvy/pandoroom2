@@ -37,6 +37,7 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<Tab>('holidays')
   const [profile, setProfile] = useState<ClientProfile | null>(null)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
+  const [bookingChats, setBookingChats] = useState<any[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isEditingName, setIsEditingName] = useState(false)
@@ -57,14 +58,16 @@ export default function DashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [profileData, messages, unread] = await Promise.all([
+      const [profileData, messages, unread, bookingChatsData] = await Promise.all([
         lkFetch('/profile'),
         lkFetch('/chat').catch(() => []),
         lkFetch('/chat/unread').catch(() => ({ unread: 0 })),
+        lkFetch('/chat/bookings').catch(() => []),
       ])
       setProfile(profileData)
       setChatMessages(messages)
       setUnreadCount(unread.unread)
+      setBookingChats(bookingChatsData)
     } catch (err) {
       console.error('Failed to load ЛК data:', err)
     } finally {
@@ -234,21 +237,55 @@ export default function DashboardPage() {
         {activeTab === 'chat' && (
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Чат</h2>
+
+            {/* General chat */}
             <div
               className={styles.chatPreview}
               onClick={() => router.push('/lk/chat')}
             >
               <div className={styles.chatIcon}>💬</div>
               <div className={styles.chatInfo}>
-                <p className={styles.chatTitle}>Сообщения от Pandoroom</p>
+                <p className={styles.chatTitle}>Общий чат с Pandoroom</p>
                 <p className={styles.chatLastMessage}>
-                  {lastMessage ? lastMessage.text : 'Пока нет сообщений'}
+                  {lastMessage ? lastMessage.text : 'Написать общий вопрос'}
                 </p>
               </div>
               {unreadCount > 0 && (
                 <span className={styles.chatBadge}>{unreadCount}</span>
               )}
             </div>
+
+            {/* Per-booking chats */}
+            {bookingChats.length > 0 && (
+              <div className={styles.bookingChatsList}>
+                <h3 className={styles.bookingChatsTitle}>Чаты по бронированиям</h3>
+                {bookingChats.map((item: any) => (
+                  <div
+                    key={item.booking.id}
+                    className={styles.bookingChatItem}
+                    onClick={() => router.push(`/lk/chat?bookingId=${item.booking.id}`)}
+                  >
+                    <div className={styles.bookingChatInfo}>
+                      <p className={styles.bookingChatName}>
+                        {item.booking.clientName}
+                      </p>
+                      <p className={styles.bookingChatDate}>
+                        {new Date(item.booking.eventDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                      </p>
+                      {item.lastMessage && (
+                        <p className={styles.bookingChatPreview}>
+                          {item.lastMessage.sender === 'client' ? 'Вы: ' : item.lastMessage.sender === 'system' ? '🔔 ' : ''}
+                          {item.lastMessage.text}
+                        </p>
+                      )}
+                    </div>
+                    {item.unreadCount > 0 && (
+                      <span className={styles.chatBadge}>{item.unreadCount}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
