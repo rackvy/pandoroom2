@@ -201,6 +201,19 @@ export default function RegistryPage() {
     });
   };
 
+  const handleStatusChange = async (bookingId: string, status: string) => {
+    try {
+      await api.patch(`/api/admin/bookings/${bookingId}`, { status });
+      setBookings(prev => prev.map(b =>
+        b.id === bookingId ? { ...b, status } : b
+      ));
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      // Reload on error
+      loadBookings();
+    }
+  };
+
   // Group bookings by date
   const groupedBookings = useMemo(() => {
     const groups: Record<string, BookingListItem[]> = {};
@@ -510,6 +523,7 @@ export default function RegistryPage() {
                       <th>предзаказ</th>
                       <th>украш.</th>
                       <th>доп. развлечения</th>
+                      <th>статус</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -542,13 +556,27 @@ export default function RegistryPage() {
                         <td className={booking.hasExtra ? styles.yesCell : styles.noCell}>
                           {booking.hasExtra ? 'Да' : 'Нет'}
                         </td>
+                        <td>
+                          <select
+                            className={styles.statusSelect}
+                            value={booking.status}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => handleStatusChange(booking.id, e.target.value)}
+                          >
+                            <option value="draft">Черновик</option>
+                            <option value="confirmed">Подтверждено</option>
+                            <option value="paid">Оплачено</option>
+                            <option value="done">Завершено</option>
+                            <option value="cancelled">Отменено</option>
+                          </select>
+                        </td>
                       </tr>
                     ))}
                     <tr className={styles.totalRow}>
                       <td colSpan={3}>Итого за {formatDate(date)}</td>
                       <td>{getDailyTotal(items).toLocaleString()}</td>
                       <td>{getDailyDeposit(items).toLocaleString()}</td>
-                      <td colSpan={10}></td>
+                      <td colSpan={11}></td>
                     </tr>
                   </tbody>
                 </table>

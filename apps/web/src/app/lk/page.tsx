@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { lkFetch, type ClientProfile, type ChatMessage } from '@/lib/lk-api'
 import styles from './page.module.css'
 
-type Tab = 'holidays' | 'quests' | 'chat' | 'photos' | 'bonuses' | 'passport' | 'profile'
+type Tab = 'bookings' | 'quests' | 'chat' | 'photos' | 'bonuses' | 'passport' | 'profile'
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   draft: { label: 'Черновик', className: styles.statusDraft },
@@ -33,7 +33,7 @@ function formatTime(timeStr: string) {
 export default function DashboardPage() {
   const { client, isLoading: authLoading, logout, updateClient } = useAuth()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<Tab>('holidays')
+  const [activeTab, setActiveTab] = useState<Tab>('bookings')
   const [profile, setProfile] = useState<ClientProfile | null>(null)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [bookingChats, setBookingChats] = useState<any[]>([])
@@ -128,7 +128,7 @@ export default function DashboardPage() {
         {/* Tabs */}
         <div className={styles.tabs}>
           {[
-            { key: 'holidays' as Tab, label: 'Мои праздники' },
+            { key: 'bookings' as Tab, label: 'Мои брони' },
             { key: 'quests' as Tab, label: 'Квесты' },
             { key: 'chat' as Tab, label: 'Чат' },
             { key: 'photos' as Tab, label: 'Фотоотчеты' },
@@ -146,14 +146,14 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Tab: Мои праздники */}
-        {activeTab === 'holidays' && (
+        {/* Tab: Мои брони */}
+        {activeTab === 'bookings' && (
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>Мои праздники</h2>
+            <h2 className={styles.sectionTitle}>Мои брони</h2>
             {bookings.length === 0 ? (
               <div className={styles.empty}>
                 <div className={styles.emptyIcon}>🎉</div>
-                <p className={styles.emptyText}>У вас пока нет забронированных праздников</p>
+                <p className={styles.emptyText}>У вас пока нет бронирований</p>
               </div>
             ) : (
               <div className={styles.cardGrid}>
@@ -164,7 +164,7 @@ export default function DashboardPage() {
                       <h3 className={styles.cardTitle}>
                         {booking.questReservations.length > 0
                           ? booking.questReservations.map(qr => qr.quest.name).join(', ')
-                          : 'Праздник'}
+                          : 'Бронирование'}
                       </h3>
                       <p className={styles.cardMeta}>
                         {formatDate(booking.eventDate)} &middot; {booking.branch.name}

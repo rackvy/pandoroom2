@@ -364,3 +364,20 @@
     padding: 8px 6px;
   }
 }
+
+.statusSelect {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  outline: none;
+  min-width: 120px;
+}
+
+.statusSelect:focus {
+  border-color: #A0BF39;
+}
