@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, type FormEvent, type ChangeEvent } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 import styles from './BookingModal.module.css'
 
 /* ------------------------------------------------------------------ */
@@ -60,6 +61,7 @@ interface BookingModalProps {
 /* ------------------------------------------------------------------ */
 
 export default function BookingModal({ open, slotData, onClose }: BookingModalProps) {
+  const { client } = useAuth()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [consent, setConsent] = useState(false)
@@ -72,11 +74,11 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
   const [extraPlayers, setExtraPlayers] = useState(0)
   const [addAnimator, setAddAnimator] = useState(false)
 
-  // Reset form when modal opens/closes
+  // Reset / auto-fill form when modal opens
   useEffect(() => {
     if (open) {
-      setName('')
-      setPhone('')
+      setName(client?.name || '')
+      setPhone(client?.phone ? formatPhone(client.phone) : '')
       setConsent(false)
       setError('')
       setSuccess(false)
@@ -85,7 +87,7 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
       setAddAnimator(false)
       setTimeout(() => nameRef.current?.focus(), 100)
     }
-  }, [open])
+  }, [open, client])
 
   // Close on Escape
   const handleKeyDown = useCallback(
