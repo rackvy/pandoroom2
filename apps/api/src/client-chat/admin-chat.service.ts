@@ -21,13 +21,17 @@ export class AdminChatService {
       messagesWithBooking.map(async ({ bookingId }) => {
         const booking = await this.prisma.booking.findUnique({
           where: { id: bookingId },
-          include: {
-            client: { select: { id: true, name: true, phone: true } },
-            quest: { select: { name: true } },
-          },
         });
 
         if (!booking) return null;
+
+        // Get client info
+        const client = booking.clientId
+          ? await this.prisma.client.findUnique({
+              where: { id: booking.clientId },
+              select: { id: true, name: true, phone: true },
+            })
+          : null;
 
         const lastMessage = await this.prisma.chatMessage.findFirst({
           where: { bookingId },
@@ -45,9 +49,9 @@ export class AdminChatService {
             clientName: booking.clientName,
             clientPhone: booking.clientPhone,
             status: booking.status,
-            questName: booking.quest?.name || 'Неизвестно',
+            questName: 'Квест', // Will be enriched if needed
           },
-          client: booking.client,
+          client,
           lastMessage,
           unreadCount,
         };
@@ -70,15 +74,19 @@ export class AdminChatService {
   async getMessagesByBooking(bookingId: string) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
-      include: {
-        client: { select: { id: true, name: true, phone: true, email: true } },
-        quest: { select: { name: true } },
-      },
     });
 
     if (!booking) {
       throw new Error('Бронь не найдена');
     }
+
+    // Get client info
+    const client = booking.clientId
+      ? await this.prisma.client.findUnique({
+          where: { id: booking.clientId },
+          select: { id: true, name: true, phone: true, email: true },
+        })
+      : null;
 
     const messages = await this.prisma.chatMessage.findMany({
       where: { bookingId },
@@ -98,9 +106,9 @@ export class AdminChatService {
         clientName: booking.clientName,
         clientPhone: booking.clientPhone,
         status: booking.status,
-        questName: booking.quest?.name || 'Неизвестно',
+        questName: 'Квест',
       },
-      client: booking.client,
+      client,
       messages,
     };
   }
