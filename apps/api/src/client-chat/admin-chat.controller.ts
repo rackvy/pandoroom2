@@ -15,6 +15,11 @@ export class AdminChatController {
     return this.adminChatService.getTotalUnread();
   }
 
+  @Get('booking/:bookingId')
+  getMessagesByBooking(@Param('bookingId') bookingId: string) {
+    return this.adminChatService.getMessagesByBooking(bookingId);
+  }
+
   @Get(':clientId')
   getMessages(@Param('clientId') clientId: string) {
     return this.adminChatService.getMessages(clientId);

@@ -26,8 +26,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(ChatGateway.name);
 
-  // Map socket.id → { userId, userType, room }
-  private connections = new Map<string, { userId: string; userType: string }>();
+  // Map socket.id → { userId, userType, rooms: string[] }
+  private connections = new Map<string, { userId: string; userType: string; rooms: string[] }>();
 
   constructor(
     private jwtService: JwtService,
@@ -47,17 +47,33 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       }
 
       const payload = this.jwtService.verify(token);
+      const rooms: string[] = [];
 
       if (payload.userType === 'client') {
-        // Client connection
-        const room = `client:${payload.sub}`;
-        socket.join(room);
-        this.connections.set(socket.id, { userId: payload.sub, userType: 'client' });
-        this.logger.log(`Client ${payload.sub} connected (${socket.id})`);
+        // Client connection - join general client room
+        const generalRoom = `client:${payload.sub}`;
+        socket.join(generalRoom);
+        rooms.push(generalRoom);
+
+        // Join all booking-specific rooms for this client
+        const bookings = await this.prisma.booking.findMany({
+          where: { clientId: payload.sub },
+          select: { id: true },
+        });
+
+        for (const booking of bookings) {
+          const bookingRoom = `client:${payload.sub}:booking:${booking.id}`;
+          socket.join(bookingRoom);
+          rooms.push(bookingRoom);
+        }
+
+        this.connections.set(socket.id, { userId: payload.sub, userType: 'client', rooms });
+        this.logger.log(`Client ${payload.sub} connected (${socket.id}), joined ${rooms.length} rooms`);
       } else if (payload.role) {
         // Admin/employee connection
         socket.join('admin:chat');
-        this.connections.set(socket.id, { userId: payload.sub, userType: 'admin' });
+        rooms.push('admin:chat');
+        this.connections.set(socket.id, { userId: payload.sub, userType: 'admin', rooms });
         this.logger.log(`Admin ${payload.email || payload.sub} connected (${socket.id})`);
       } else {
         this.logger.warn(`Socket ${socket.id}: unknown token type, disconnecting`);
@@ -78,7 +94,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Client sends a new message
+   * Client sends a new message (optionally for a specific booking)
    */
   @SubscribeMessage('message:send')
   async handleMessageSend(
@@ -114,13 +130,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Update admin unread count
     const unread = await this.prisma.chatMessage.count({
-      where: { sender: 'client', isRead: false },
+      where: { sender: 'client', isRead: false, bookingId: { not: null } },
     });
     this.server.to('admin:chat').emit('unread:update', { unread });
   }
 
   /**
-   * Admin sends a message to a client
+   * Admin sends a message to a client (for specific booking)
    */
   @SubscribeMessage('admin:message:send')
   async handleAdminMessageSend(
@@ -152,7 +168,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // Send to the specific client room
-    this.server.to(`client:${data.clientId}`).emit('message:new', message);
+    if (data.bookingId) {
+      // Send to booking-specific room
+      this.server.to(`client:${data.clientId}:booking:${data.bookingId}`).emit('message:new', message);
+    } else {
+      // Send to general client room
+      this.server.to(`client:${data.clientId}`).emit('message:new', message);
+    }
 
     // Update client unread count
     const unread = await this.prisma.chatMessage.count({
@@ -162,42 +184,62 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   /**
-   * Admin reads a client's messages — mark as read
+   * Admin reads a client's messages — mark as read (for specific booking)
    */
   @SubscribeMessage('admin:message:read')
   async handleAdminMessageRead(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() data: { clientId: string },
+    @MessageBody() data: { clientId: string; bookingId?: string },
   ) {
     const info = this.connections.get(socket.id);
     if (!info || info.userType !== 'admin') return;
 
+    const where: any = { clientId: data.clientId, sender: 'client', isRead: false };
+    if (data.bookingId) {
+      where.bookingId = data.bookingId;
+    }
+
     await this.prisma.chatMessage.updateMany({
-      where: { clientId: data.clientId, sender: 'client', isRead: false },
+      where,
       data: { isRead: true },
     });
 
     // Update admin unread totals
     const unread = await this.prisma.chatMessage.count({
-      where: { sender: 'client', isRead: false },
+      where: { sender: 'client', isRead: false, bookingId: { not: null } },
     });
     this.server.to('admin:chat').emit('unread:update', { unread });
   }
 
   /**
-   * Client reads messages
+   * Client reads messages (for specific booking or all)
    */
   @SubscribeMessage('message:read')
-  async handleMessageRead(@ConnectedSocket() socket: Socket) {
+  async handleMessageRead(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data?: { bookingId?: string },
+  ) {
     const info = this.connections.get(socket.id);
     if (!info || info.userType !== 'client') return;
 
+    const where: any = { clientId: info.userId, sender: { in: ['admin', 'system'] }, isRead: false };
+    if (data?.bookingId) {
+      where.bookingId = data.bookingId;
+    }
+
     await this.prisma.chatMessage.updateMany({
-      where: { clientId: info.userId, sender: { in: ['admin', 'system'] }, isRead: false },
+      where,
       data: { isRead: true },
     });
 
-    this.server.to(`client:${info.userId}`).emit('unread:update', { unread: 0 });
+    // Update unread count
+    const unread = data?.bookingId
+      ? 0 // For specific booking, just return 0
+      : await this.prisma.chatMessage.count({
+          where: { clientId: info.userId, sender: { in: ['admin', 'system'] }, isRead: false },
+        });
+
+    this.server.to(`client:${info.userId}`).emit('unread:update', { unread });
   }
 
   private async getClientInfo(clientId: string) {

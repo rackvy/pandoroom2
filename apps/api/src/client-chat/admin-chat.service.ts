@@ -6,49 +6,107 @@ export class AdminChatService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Get all conversations (grouped by client), showing last message and unread count
+   * Get all conversations grouped by booking (for admin chat page)
+   * Returns list of bookings with chat activity
    */
   async getConversations() {
-    // Get all clients that have at least one chat message
-    const clientsWithMessages = await this.prisma.chatMessage.findMany({
-      select: { clientId: true },
-      distinct: ['clientId'],
+    // Get all messages with bookingId
+    const messagesWithBooking = await this.prisma.chatMessage.findMany({
+      where: { bookingId: { not: null } },
+      select: { bookingId: true },
+      distinct: ['bookingId'],
     });
 
     const conversations = await Promise.all(
-      clientsWithMessages.map(async ({ clientId }) => {
-        const client = await this.prisma.client.findUnique({
-          where: { id: clientId },
-          select: { id: true, name: true, phone: true },
+      messagesWithBooking.map(async ({ bookingId }) => {
+        const booking = await this.prisma.booking.findUnique({
+          where: { id: bookingId },
+          include: {
+            client: { select: { id: true, name: true, phone: true } },
+            quest: { select: { name: true } },
+          },
         });
 
+        if (!booking) return null;
+
         const lastMessage = await this.prisma.chatMessage.findFirst({
-          where: { clientId },
+          where: { bookingId },
           orderBy: { createdAt: 'desc' },
         });
 
         const unreadCount = await this.prisma.chatMessage.count({
-          where: { clientId, sender: 'client', isRead: false },
+          where: { bookingId, sender: 'client', isRead: false },
         });
 
         return {
-          client,
+          booking: {
+            id: booking.id,
+            eventDate: booking.eventDate,
+            clientName: booking.clientName,
+            clientPhone: booking.clientPhone,
+            status: booking.status,
+            questName: booking.quest?.name || 'Неизвестно',
+          },
+          client: booking.client,
           lastMessage,
           unreadCount,
         };
       }),
     );
 
-    // Sort by last message date desc
-    return conversations.sort((a, b) => {
-      const dateA = a.lastMessage?.createdAt?.getTime() || 0;
-      const dateB = b.lastMessage?.createdAt?.getTime() || 0;
-      return dateB - dateA;
-    });
+    // Filter out nulls and sort by last message date desc
+    return conversations
+      .filter((c) => c !== null)
+      .sort((a, b) => {
+        const dateA = a.lastMessage?.createdAt?.getTime() || 0;
+        const dateB = b.lastMessage?.createdAt?.getTime() || 0;
+        return dateB - dateA;
+      });
   }
 
   /**
-   * Get all messages for a specific client
+   * Get all messages for a specific booking
+   */
+  async getMessagesByBooking(bookingId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        client: { select: { id: true, name: true, phone: true, email: true } },
+        quest: { select: { name: true } },
+      },
+    });
+
+    if (!booking) {
+      throw new Error('Бронь не найдена');
+    }
+
+    const messages = await this.prisma.chatMessage.findMany({
+      where: { bookingId },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    // Mark client messages as read
+    await this.prisma.chatMessage.updateMany({
+      where: { bookingId, sender: 'client', isRead: false },
+      data: { isRead: true },
+    });
+
+    return {
+      booking: {
+        id: booking.id,
+        eventDate: booking.eventDate,
+        clientName: booking.clientName,
+        clientPhone: booking.clientPhone,
+        status: booking.status,
+        questName: booking.quest?.name || 'Неизвестно',
+      },
+      client: booking.client,
+      messages,
+    };
+  }
+
+  /**
+   * Get all messages for a specific client (legacy, for general chat)
    */
   async getMessages(clientId: string) {
     const client = await this.prisma.client.findUnique({
@@ -81,7 +139,7 @@ export class AdminChatService {
   }
 
   /**
-   * Admin sends a message to a client
+   * Admin sends a message to a client (for specific booking)
    */
   async sendMessage(clientId: string, text: string, bookingId?: string) {
     // Verify client exists
@@ -127,11 +185,11 @@ export class AdminChatService {
   }
 
   /**
-   * Get total unread count across all clients
+   * Get total unread count across all bookings
    */
   async getTotalUnread() {
     const count = await this.prisma.chatMessage.count({
-      where: { sender: 'client', isRead: false },
+      where: { sender: 'client', isRead: false, bookingId: { not: null } },
     });
     return { unread: count };
   }
