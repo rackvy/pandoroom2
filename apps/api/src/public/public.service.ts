@@ -221,13 +221,40 @@ export class PublicService {
     if (addAnimator) extras.push('аниматор');
     const extrasStr = extras.length > 0 ? ` [${extras.join(', ')}]` : '';
 
-    // 7. Create Booking + QuestReservation
+    // 7. Find or create Client by phone, link booking to them
+    const phoneDigits = data.phone.replace(/\D/g, '');
+    const existingClient = await this.prisma.client.findUnique({
+      where: { phone: phoneDigits },
+    });
+
+    let clientId: string;
+    if (existingClient) {
+      clientId = existingClient.id;
+      // Update name if it changed (e.g. user filled different name in booking form)
+      if (existingClient.name !== data.name.trim()) {
+        await this.prisma.client.update({
+          where: { id: existingClient.id },
+          data: { name: data.name.trim() },
+        });
+      }
+    } else {
+      const newClient = await this.prisma.client.create({
+        data: {
+          phone: phoneDigits,
+          name: data.name.trim(),
+        },
+      });
+      clientId = newClient.id;
+    }
+
+    // 8. Create Booking + QuestReservation linked to Client
     const booking = await this.prisma.booking.create({
       data: {
         branchId: quest.branchId,
+        clientId,
         eventDate,
         clientName: data.name,
-        clientPhone: data.phone,
+        clientPhone: phoneDigits,
         status: 'draft',
         depositRub: 0,
         questReservations: {
