@@ -20,7 +20,7 @@ export class AdminChatService {
     const conversations = await Promise.all(
       messagesWithBooking.map(async ({ bookingId }) => {
         const booking = await this.prisma.booking.findUnique({
-          where: { id: bookingId },
+          where: { id: bookingId as string },
         });
 
         if (!booking) return null;
@@ -73,7 +73,7 @@ export class AdminChatService {
    */
   async getMessagesByBooking(bookingId: string) {
     const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
+      where: { id: bookingId as string },
     });
 
     if (!booking) {
