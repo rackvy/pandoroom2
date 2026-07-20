@@ -102,6 +102,8 @@ export default function BookingEditPage() {
   const [iikoLoading, setIikoLoading] = useState(false);
   const [iikoOrderId, setIikoOrderId] = useState<string | null>(null);
   const [iikoStatus, setIikoStatus] = useState<string | null>(null);
+  const [bookingStatus, setBookingStatus] = useState<string>('');
+  const [savingStatus, setSavingStatus] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -136,6 +138,7 @@ export default function BookingEditPage() {
       setExtraSlots(data.extraSlots || []);
       setIikoOrderId(data.iikoOrderId || null);
       setIikoStatus(data.iikoOrderStatus || null);
+      setBookingStatus(data.status || 'draft');
     } catch (error) {
       console.error('Failed to load booking:', error);
     } finally {
@@ -460,6 +463,22 @@ export default function BookingEditPage() {
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    setSavingStatus(true);
+    try {
+      await api.patch(`/api/admin/bookings/${id}`, { status: newStatus });
+      setBookingStatus(newStatus);
+      toast.success('Статус обновлён');
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      toast.error('Ошибка смены статуса');
+      // Revert on error
+      loadData();
+    } finally {
+      setSavingStatus(false);
+    }
+  };
+
   // ==================== QUEST RESERVATION ADD/REMOVE ====================
   const handleQuestSelected = async (questId: string, questName: string) => {
     if (!booking) return;
@@ -551,6 +570,21 @@ export default function BookingEditPage() {
           </div>
         </div>
         <div className={styles.headerRight}>
+          <div className={styles.dateField}>
+            <label>Статус брони</label>
+            <select
+              className={styles.statusSelect}
+              value={bookingStatus}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              disabled={savingStatus}
+            >
+              <option value="draft">Черновик</option>
+              <option value="confirmed">Подтверждено</option>
+              <option value="paid">Оплачено</option>
+              <option value="done">Завершено</option>
+              <option value="cancelled">Отменено</option>
+            </select>
+          </div>
           <div className={styles.dateField}>
             <label>Дата мероприятия</label>
             <input 
