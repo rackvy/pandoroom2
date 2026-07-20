@@ -30,6 +30,13 @@ export class ClientChatController {
     return this.chatService.sendMessage(user.userId, data.text, data.bookingId);
   }
 
+  @Get('bookings')
+  @Public()
+  @Client()
+  async getBookingsWithChat(@CurrentClient() user: ClientUserPayload) {
+    return this.chatService.getBookingsWithChatInfo(user.userId);
+  }
+
   @Get('unread')
   @Public()
   @Client()

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { getConversations, getChatMessages, getTotalUnread, type Conversation, type ChatMessageAdmin } from '../api/chat';
+import { getConversations, getBookingChatMessages, getTotalUnread, type Conversation, type ChatMessageAdmin } from '../api/chat';
 import styles from './ChatPage.module.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
@@ -12,21 +12,22 @@ interface WSMessage extends ChatMessageAdmin {
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedClient, setSelectedClient] = useState<string | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessageAdmin[]>([]);
-  const [clientInfo, setClientInfo] = useState<{ name: string; phone: string } | null>(null);
+  const [bookingInfo, setBookingInfo] = useState<{ clientName: string; eventDate: string } | null>(null);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
   const [totalUnread, setTotalUnread] = useState(0);
   const [connected, setConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
-  const selectedClientRef = useRef<string | null>(null);
+  const selectedBookingRef = useRef<string | null>(null);
 
   // Keep ref in sync with state for use in socket callbacks
   useEffect(() => {
-    selectedClientRef.current = selectedClient;
-  }, [selectedClient]);
+    selectedBookingRef.current = selectedBookingId;
+  }, [selectedBookingId]);
 
   // Initial load via REST
   useEffect(() => {
@@ -56,15 +57,15 @@ export default function ChatPage() {
 
     // Real-time new messages
     socket.on('message:new', (msg: WSMessage) => {
-      // If this message is for the currently open conversation
-      if (selectedClientRef.current && msg.clientId === selectedClientRef.current) {
+      // If this message is for the currently open booking conversation
+      if (selectedBookingRef.current && msg.bookingId === selectedBookingRef.current) {
         setMessages(prev => {
           if (prev.some(m => m.id === msg.id)) return prev;
           return [...prev, msg];
         });
         // Mark client messages as read immediately
-        if (msg.sender === 'client') {
-          socket.emit('admin:message:read', { clientId: msg.clientId });
+        if (msg.sender === 'client' && msg.clientId) {
+          socket.emit('admin:message:read', { clientId: msg.clientId, bookingId: msg.bookingId });
         }
       }
       // Always refresh conversation list on new message
@@ -104,16 +105,20 @@ export default function ChatPage() {
     } catch {}
   };
 
-  const handleSelectClient = async (clientId: string) => {
-    setSelectedClient(clientId);
+  const handleSelectBooking = async (bookingId: string, clientId: string | null) => {
+    setSelectedBookingId(bookingId);
+    setSelectedClientId(clientId);
     setMessages([]);
     try {
-      const data = await getChatMessages(clientId);
+      const data = await getBookingChatMessages(bookingId);
       setMessages(data.messages);
-      setClientInfo(data.client);
+      setBookingInfo({
+        clientName: data.booking.clientName,
+        eventDate: data.booking.eventDate,
+      });
       // Mark client messages as read via WebSocket
-      if (socketRef.current) {
-        socketRef.current.emit('admin:message:read', { clientId });
+      if (socketRef.current && clientId) {
+        socketRef.current.emit('admin:message:read', { clientId, bookingId });
       }
     } catch (err) {
       console.error('Failed to load messages:', err);
@@ -121,10 +126,11 @@ export default function ChatPage() {
   };
 
   const handleSend = () => {
-    if (!text.trim() || !selectedClient || !socketRef.current) return;
+    if (!text.trim() || !selectedBookingId || !selectedClientId || !socketRef.current) return;
     socketRef.current.emit('admin:message:send', {
-      clientId: selectedClient,
+      clientId: selectedClientId,
       text: text.trim(),
+      bookingId: selectedBookingId,
     });
     setText('');
   };
@@ -141,6 +147,10 @@ export default function ChatPage() {
   };
 
   const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  };
+
+  const formatBookingDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   };
 
@@ -170,13 +180,18 @@ export default function ChatPage() {
           ) : (
             conversations.map(conv => (
               <div
-                key={conv.client.id}
-                className={`${styles.convItem} ${selectedClient === conv.client.id ? styles.convActive : ''}`}
-                onClick={() => handleSelectClient(conv.client.id)}
+                key={conv.booking.id}
+                className={`${styles.convItem} ${selectedBookingId === conv.booking.id ? styles.convActive : ''}`}
+                onClick={() => handleSelectBooking(conv.booking.id, conv.client?.id || null)}
               >
                 <div className={styles.convInfo}>
-                  <div className={styles.convName}>{conv.client.name}</div>
-                  <div className={styles.convPhone}>{conv.client.phone}</div>
+                  <div className={styles.convName}>
+                    {conv.client?.name || conv.booking.clientName}
+                  </div>
+                  <div className={styles.convPhone}>
+                    {conv.booking.eventDate ? formatBookingDate(conv.booking.eventDate) : ''}
+                    {conv.client?.phone ? ` · ${conv.client.phone}` : ''}
+                  </div>
                   {conv.lastMessage && (
                     <div className={styles.convPreview}>
                       {conv.lastMessage.sender === 'client' && <span className={styles.previewLabel}>Клиент: </span>}
@@ -194,16 +209,16 @@ export default function ChatPage() {
 
         {/* Chat area */}
         <div className={styles.chatArea}>
-          {!selectedClient ? (
+          {!selectedBookingId ? (
             <div className={styles.noChat}>
               <p>Выберите диалог слева</p>
             </div>
           ) : (
             <>
-              {clientInfo && (
+              {bookingInfo && (
                 <div className={styles.chatHeader}>
-                  <strong>{clientInfo.name}</strong>
-                  <span className={styles.chatPhone}>{clientInfo.phone}</span>
+                  <strong>{bookingInfo.clientName}</strong>
+                  <span className={styles.chatPhone}>{formatDate(bookingInfo.eventDate)}</span>
                 </div>
               )}
 
@@ -217,14 +232,9 @@ export default function ChatPage() {
                     }`}
                   >
                     <div className={styles.msgSender}>
-                      {msg.sender === 'client' ? clientInfo?.name : msg.sender === 'system' ? 'Система' : 'Вы'}
+                      {msg.sender === 'client' ? bookingInfo?.clientName : msg.sender === 'system' ? 'Система' : 'Вы'}
                     </div>
                     <div className={styles.msgText}>{msg.text}</div>
-                    {msg.booking && (
-                      <div className={styles.msgBooking}>
-                        Бронь: {msg.booking.clientName} — {new Date(msg.booking.eventDate).toLocaleDateString('ru-RU')}
-                      </div>
-                    )}
                     <div className={styles.msgTime}>{formatDate(msg.createdAt)} {formatTime(msg.createdAt)}</div>
                   </div>
                 ))}

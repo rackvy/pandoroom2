@@ -175,6 +175,15 @@ export default function DashboardPage() {
                       <span className={`${styles.cardStatus} ${status.className}`}>
                         {status.label}
                       </span>
+                      <button
+                        className={styles.cardChatBtn}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/lk/chat?bookingId=${booking.id}`)
+                        }}
+                      >
+                        💬 Чат
+                      </button>
                     </div>
                   )
                 })}

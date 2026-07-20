@@ -10,6 +10,7 @@ import { sendNotification } from '../api/notifications';
 import { createPaymentLink, getPaymentStatus } from '../api/payments';
 import { syncBookingToCalendar } from '../api/googleCalendar';
 import { createIikoOrder, getIikoOrderStatus } from '../api/iiko';
+import BookingChat from '../components/booking/BookingChat';
 import styles from './BookingEditPage.module.css';
 
 interface Cake {
@@ -1013,6 +1014,13 @@ export default function BookingEditPage() {
           </section>
         </div>
       </div>
+
+      {/* Booking Chat */}
+      <BookingChat
+        bookingId={booking.id}
+        clientId={booking.clientId}
+        clientName={booking.clientName}
+      />
 
       {/* Footer Actions */}
       <div className={styles.footer}>

@@ -1,11 +1,19 @@
 import api from '../lib/axios';
 
 export interface Conversation {
+  booking: {
+    id: string;
+    eventDate: string;
+    clientName: string;
+    clientPhone: string;
+    status: string;
+    questName: string;
+  };
   client: {
     id: string;
     name: string;
     phone: string;
-  };
+  } | null;
   lastMessage: {
     id: string;
     sender: string;
@@ -31,6 +39,24 @@ export interface ChatMessageAdmin {
   } | null;
 }
 
+export interface BookingChatDetail {
+  booking: {
+    id: string;
+    eventDate: string;
+    clientName: string;
+    clientPhone: string;
+    status: string;
+    questName: string;
+  };
+  client: {
+    id: string;
+    name: string;
+    phone: string;
+    email: string | null;
+  } | null;
+  messages: ChatMessageAdmin[];
+}
+
 export interface ChatDetail {
   client: {
     id: string;
@@ -43,6 +69,11 @@ export interface ChatDetail {
 
 export const getConversations = async (): Promise<Conversation[]> => {
   const response = await api.get('/api/admin/chat/conversations');
+  return response.data;
+};
+
+export const getBookingChatMessages = async (bookingId: string): Promise<BookingChatDetail> => {
+  const response = await api.get(`/api/admin/chat/booking/${bookingId}`);
   return response.data;
 };
 

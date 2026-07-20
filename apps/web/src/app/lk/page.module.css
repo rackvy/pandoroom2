@@ -162,6 +162,28 @@
     color: #ff6b6b;
 }
 
+.cardChatBtn {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 10px 16px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Manrope', sans-serif;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.cardChatBtn:hover {
+    border-color: var(--color-primary, #b5e61d);
+    background: #1a1a1a;
+}
+
 /* Chat preview */
 .chatPreview {
     display: flex;

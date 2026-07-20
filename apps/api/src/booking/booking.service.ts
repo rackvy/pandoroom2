@@ -195,6 +195,7 @@ export class BookingService {
       id: booking.id,
       status: booking.status,
       eventDate: booking.eventDate.toISOString().split('T')[0],
+      clientId: booking.clientId,
       clientName: booking.clientName,
       clientPhone: booking.clientPhone,
       birthdayPersonName: booking.birthdayPersonName,

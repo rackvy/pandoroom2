@@ -125,6 +125,7 @@ export interface BookingFullDetails {
   id: string;
   status: string;
   eventDate: string;
+  clientId: string | null;
   clientName: string;
   clientPhone: string;
   birthdayPersonName: string | null;
