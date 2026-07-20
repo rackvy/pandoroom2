@@ -25,8 +25,12 @@ function formatDate(dateStr: string) {
 }
 
 function formatTime(timeStr: string) {
-  // Parse HH:MM or HH:MM:SS directly to avoid timezone issues
-  const parts = timeStr.split(':')
+  // Handle ISO date strings like "1970-01-01T12:10:00.000Z" — extract just the time part
+  let t = timeStr
+  if (t.includes('T')) {
+    t = t.split('T')[1] // "12:10:00.000Z"
+  }
+  const parts = t.split(':')
   return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`
 }
 
