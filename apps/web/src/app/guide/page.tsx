@@ -219,10 +219,9 @@ function DifficultyDots({ level }: { level: number }) {
   return (
     <span className={styles.questCardDifficulty} aria-label={`Сложность ${level} из 5`}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <i
-          key={i}
-          className={`${styles.questCardDot}${i > level ? ` ${styles.questCardDotOff}` : ''}`}
-        />
+        <span key={i} className={`${styles.questCardDot}${i > level ? ` ${styles.questCardDotOff}` : ''}`}>
+          {i <= level ? '🔥' : ''}
+        </span>
       ))}
     </span>
   )
