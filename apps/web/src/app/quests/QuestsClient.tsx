@@ -5,6 +5,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from './quests.module.css'
 import type { Quest } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
+import BookingModal from '@/components/BookingModal'
+import type { BookingSlotData } from '@/components/BookingModal'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -122,6 +125,7 @@ interface QuestsClientProps {
 }
 
 export default function QuestsClient({ quests }: QuestsClientProps) {
+  const { client } = useAuth()
   const [activeDifficulty, setActiveDifficulty] = useState('Все квесты')
   const [activeGenre, setActiveGenre] = useState('все жанры')
   const [actorsOnly, setActorsOnly] = useState(false)
@@ -137,6 +141,17 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
   const [scheduleMap, setScheduleMap] = useState<Record<string, ScheduleSlot[]>>({})
   const [scheduleLoading, setScheduleLoading] = useState(false)
   const datePickerRef = useRef<HTMLDivElement>(null)
+
+  // Booking modal
+  const [bookingOpen, setBookingOpen] = useState(false)
+  const [bookingData, setBookingData] = useState<BookingSlotData | null>(null)
+
+  // Subscribe modal
+  const [subscribeOpen, setSubscribeOpen] = useState(false)
+  const [subscribeSlot, setSubscribeSlot] = useState<{ questId: string; questName: string; slotId: string; startTime: string } | null>(null)
+  const [subscribePhone, setSubscribePhone] = useState('')
+  const [subscribeLoading, setSubscribeLoading] = useState(false)
+  const [subscribeSuccess, setSubscribeSuccess] = useState(false)
 
   // Generate 14 days starting from today
   const dates = useMemo(() => {
@@ -208,6 +223,74 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
       return true
     })
   }, [quests, activeDifficulty, activeGenre, actorsOnly])
+
+  // Slot click handlers
+  function handleSlotClick(quest: Quest, slot: ScheduleSlot) {
+    if (slot.isBooked) {
+      setSubscribeSlot({ questId: quest.id, questName: quest.name, slotId: slot.slotId, startTime: slot.startTime })
+      setSubscribePhone(client?.phone || '')
+      setSubscribeSuccess(false)
+      setSubscribeOpen(true)
+    } else {
+      const slotData: BookingSlotData = {
+        slotId: slot.slotId,
+        questId: quest.id,
+        questName: quest.name,
+        eventDate: formatDateKey(selectedDate),
+        time: slot.startTime,
+        price: slot.finalPrice,
+        maxPlayers: quest.maxPlayers,
+        minPlayers: quest.minPlayers,
+        extraPlayerPrice: quest.extraPlayerPrice || 0,
+        allowAnimator: quest.allowAnimator || false,
+        animatorPrice: quest.animatorPrice || 0,
+      }
+      setBookingData(slotData)
+      setBookingOpen(true)
+    }
+  }
+
+  function handleBookingSuccess(slotId: string) {
+    setScheduleMap(prev => {
+      const newMap = { ...prev }
+      for (const questId in newMap) {
+        newMap[questId] = newMap[questId].map(s =>
+          s.slotId === slotId ? { ...s, isBooked: true } : s
+        )
+      }
+      return newMap
+    })
+  }
+
+  async function handleSubscribeSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!subscribeSlot) return
+    const digits = subscribePhone.replace(/\D/g, '')
+    if (digits.length < 11) return
+
+    setSubscribeLoading(true)
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api/public'
+      const res = await fetch(`${apiUrl}/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questId: subscribeSlot.questId,
+          desiredDate: formatDateKey(selectedDate),
+          desiredTime: subscribeSlot.startTime,
+          clientName: client?.name || 'Гость',
+          clientPhone: digits,
+        }),
+      })
+      if (res.ok) {
+        setSubscribeSuccess(true)
+      }
+    } catch (err) {
+      console.error('Waitlist error:', err)
+    } finally {
+      setSubscribeLoading(false)
+    }
+  }
 
   return (
     <main>
@@ -381,13 +464,15 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                     {slots.length > 0 ? (
                       <div className={styles.qcardSlots}>
                         {slots.map((slot) => (
-                          <span
+                          <button
                             key={slot.slotId}
+                            type="button"
                             className={`${styles.qcardSlot}${slot.isBooked ? ` ${styles.qcardSlotBooked}` : ''}`}
-                            title={slot.isBooked ? 'Забронировано' : `Свободно — ${slot.finalPrice} ₽`}
+                            title={slot.isBooked ? 'Подписаться на уведомление' : `Свободно — ${slot.finalPrice} ₽`}
+                            onClick={() => handleSlotClick(q, slot)}
                           >
                             {slot.startTime}
-                          </span>
+                          </button>
                         ))}
                       </div>
                     ) : (
@@ -402,6 +487,65 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
           )}
         </div>
       </section>
+
+      {/* ==================== BOOKING MODAL ==================== */}
+      <BookingModal
+        open={bookingOpen}
+        slotData={bookingData}
+        onClose={() => setBookingOpen(false)}
+        onSuccess={handleBookingSuccess}
+      />
+
+      {/* ==================== SUBSCRIBE MODAL ==================== */}
+      {subscribeOpen && subscribeSlot && (
+        <div className={styles.subscribeModal}>
+          <div className={styles.subscribeOverlay} onClick={() => setSubscribeOpen(false)} />
+          <div className={styles.subscribeDialog}>
+            <button className={styles.subscribeClose} onClick={() => setSubscribeOpen(false)}>&times;</button>
+            {subscribeSuccess ? (
+              <div className={styles.subscribeSuccess}>
+                <div className={styles.subscribeSuccessIcon}>&#10003;</div>
+                <h3 className={styles.subscribeTitle}>Вы подписаны!</h3>
+                <p className={styles.subscribeText}>
+                  Мы уведомим вас, когда время <strong>{subscribeSlot.startTime}</strong> на квест{' '}
+                  <strong>{subscribeSlot.questName}</strong> освободится.
+                </p>
+                <button className={styles.subscribeBtn} onClick={() => setSubscribeOpen(false)}>
+                  Закрыть
+                </button>
+              </div>
+            ) : (
+              <>
+                <h3 className={styles.subscribeTitle}>Подписаться на уведомление</h3>
+                <p className={styles.subscribeDesc}>
+                  Время <strong>{subscribeSlot.startTime}</strong> на квест{' '}
+                  <strong>{subscribeSlot.questName}</strong> занято. Оставьте номер телефона — мы
+                  отправим уведомление, когда оно освободится.
+                </p>
+                <form className={styles.subscribeForm} onSubmit={handleSubscribeSubmit}>
+                  <input
+                    type="tel"
+                    className={styles.subscribeInput}
+                    placeholder="+7 (___) ___-__-__"
+                    value={subscribePhone}
+                    onChange={(e) => setSubscribePhone(e.target.value)}
+                    required
+                    disabled={subscribeLoading}
+                    inputMode="numeric"
+                  />
+                  <button
+                    type="submit"
+                    className={styles.subscribeBtn}
+                    disabled={subscribeLoading || subscribePhone.replace(/\D/g, '').length < 11}
+                  >
+                    {subscribeLoading ? 'Отправка...' : 'Подписаться'}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   )
 }

@@ -54,13 +54,14 @@ interface BookingModalProps {
   open: boolean
   slotData: BookingSlotData | null
   onClose: () => void
+  onSuccess?: (slotId: string) => void
 }
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function BookingModal({ open, slotData, onClose }: BookingModalProps) {
+export default function BookingModal({ open, slotData, onClose, onSuccess }: BookingModalProps) {
   const { client } = useAuth()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -166,6 +167,7 @@ export default function BookingModal({ open, slotData, onClose }: BookingModalPr
       }
 
       setSuccess(true)
+      onSuccess?.(slotData.slotId)
     } catch (err: any) {
       setError(err.message || 'Ошибка сети. Попробуйте ещё раз.')
     } finally {

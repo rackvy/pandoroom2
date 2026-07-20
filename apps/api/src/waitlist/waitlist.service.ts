@@ -130,6 +130,27 @@ export class WaitlistService {
       data: { status: 'notified', notifiedAt: new Date() },
     });
 
+    // Send notification to client's ЛК chat
+    try {
+      const clientRecord = await this.prisma.client.findFirst({
+        where: { phone: entry.clientPhone },
+      });
+      if (clientRecord) {
+        const chatText = `Время ${timeStr} на квест «${quest.name}» ${eventDateStr} освободилось! Успейте забронировать.`;
+        await this.prisma.chatMessage.create({
+          data: {
+            clientId: clientRecord.id,
+            sender: 'system',
+            text: chatText,
+            isRead: false,
+          },
+        });
+        this.logger.log(`Chat notification sent to client ${clientRecord.id} about freed slot`);
+      }
+    } catch (chatErr) {
+      this.logger.warn('Failed to send chat notification', chatErr);
+    }
+
     this.logger.log(`Notified ${entry.clientName} (${entry.clientPhone}) about freed slot for ${quest.name}`);
     return entry;
   }
