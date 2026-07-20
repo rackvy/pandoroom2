@@ -274,10 +274,12 @@
 
 .galleryImg {
   border-radius: inherit !important;
+  object-fit: cover !important;
 }
 
 .galleryImg img {
   border-radius: inherit !important;
+  object-fit: cover !important;
 }
 
 .galleryMore {
