@@ -124,7 +124,7 @@ export default function QuestSliderClient({ title, quests }: Props) {
                     Проведите этот день максимально весело. Отдохните после квеста в наших кафе и игровой
                   </p>
                   <div className="qc-hover-actions">
-                    <Link href="/quests" className="qc-btn qc-btn-pink qc-btn-full">
+                    <Link href={`/quests/${quest.id}`} className="qc-btn qc-btn-pink qc-btn-full">
                       Перейти в квест
                     </Link>
                     <Link href="/holidays" className="qc-btn qc-btn-green qc-btn-full">
