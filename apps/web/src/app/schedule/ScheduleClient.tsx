@@ -147,6 +147,7 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
           durationMinutes: number;
           maxPlayers: number;
           minPlayers: number;
+          maxExtraPlayers: number;
           extraPlayerPrice: number;
           allowAnimator: boolean;
           animatorPrice: number;
