@@ -55,6 +55,57 @@ export async function deleteNews(id: string): Promise<void> {
   await api.delete(`/api/admin/content/news/${id}`);
 }
 
+// ==================== BLOG ====================
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  date: string;
+  imageId: string | null;
+  content: string;
+  excerpt: string | null;
+  cardBg: string | null;
+  image?: {
+    id: string;
+    url: string;
+  } | null;
+}
+
+export interface CreateBlogData {
+  title: string;
+  date: string;
+  imageId?: string | null;
+  content: string;
+  excerpt?: string | null;
+  cardBg?: string | null;
+}
+
+export type UpdateBlogData = Partial<CreateBlogData>;
+
+export async function getBlog(): Promise<BlogPost[]> {
+  const response = await api.get('/api/admin/content/blog');
+  return response.data;
+}
+
+export async function getBlogItem(id: string): Promise<BlogPost> {
+  const response = await api.get(`/api/admin/content/blog/${id}`);
+  return response.data;
+}
+
+export async function createBlog(data: CreateBlogData): Promise<BlogPost> {
+  const response = await api.post('/api/admin/content/blog', data);
+  return response.data;
+}
+
+export async function updateBlog(id: string, data: UpdateBlogData): Promise<BlogPost> {
+  const response = await api.patch(`/api/admin/content/blog/${id}`, data);
+  return response.data;
+}
+
+export async function deleteBlog(id: string): Promise<void> {
+  await api.delete(`/api/admin/content/blog/${id}`);
+}
+
 // ==================== REVIEWS ====================
 
 export interface ReviewSource {

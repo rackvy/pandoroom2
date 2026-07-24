@@ -47,6 +47,16 @@ export class PublicController {
     return this.publicService.findOneNews(id);
   }
 
+  @Get('blog')
+  findAllBlog() {
+    return this.publicService.findAllBlog();
+  }
+
+  @Get('blog/:id')
+  findOneBlog(@Param('id') id: string) {
+    return this.publicService.findOneBlog(id);
+  }
+
   @Get('reviews')
   findAllReviews() {
     return this.publicService.findAllReviews();

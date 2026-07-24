@@ -60,6 +60,16 @@ export interface NewsItem {
   image?: { id: string; url: string; altText?: string | null } | null
 }
 
+export interface BlogItem {
+  id: string
+  title: string
+  date: string
+  content: string
+  excerpt?: string | null
+  cardBg?: string | null
+  image?: { id: string; url: string; altText?: string | null } | null
+}
+
 export interface ReviewItem {
   id: string
   name: string

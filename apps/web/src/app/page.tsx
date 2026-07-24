@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import styles from './page.module.css'
-import { fetchApi, type Quest, type NewsItem, type ReviewItem, type PageBlock } from '@/lib/api'
+import { fetchApi, type Quest, type NewsItem, type BlogItem, type ReviewItem, type PageBlock } from '@/lib/api'
 import ReviewsSlider from '@/components/ReviewsSlider'
 import QuestSliderClient from '@/components/QuestSliderClient'
 
@@ -20,6 +20,14 @@ async function getQuests() {
 async function getNews() {
   try {
     return await fetchApi('/news') as NewsItem[]
+  } catch {
+    return []
+  }
+}
+
+async function getBlog() {
+  try {
+    return await fetchApi('/blog') as BlogItem[]
   } catch {
     return []
   }
@@ -182,9 +190,10 @@ function QuestSlider({ title, quests }: { title: string; quests: QuestCard[] }) 
 /* ==================== PAGE ==================== */
 
 export default async function Home() {
-  const [allQuests, newsData, reviewsData, homeBlocks] = await Promise.all([
+  const [allQuests, newsData, blogData, reviewsData, homeBlocks] = await Promise.all([
     getQuests(),
     getNews(),
+    getBlog(),
     getReviews(),
     getHomeBlocks(),
   ])
@@ -213,6 +222,17 @@ export default async function Home() {
       date: new Date(n.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
       title: n.title,
       text: n.content.substring(0, 100) + '...',
+    }))
+
+  const blogItems = blogData
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 4)
+    .map(b => ({
+      id: b.id,
+      cardBg: b.cardBg || 'linear-gradient(180deg, #1a1520 0%, #07080a 100%)',
+      date: new Date(b.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+      title: b.title,
+      text: (b.excerpt || b.content.replace(/<[^>]*>/g, '')).substring(0, 100) + '...',
     }))
 
   const reviewItems = reviewsData
@@ -421,6 +441,38 @@ export default async function Home() {
             </div>
           </div>
         </section>
+
+        {/* ==================== BLOG ==================== */}
+        {blogItems.length > 0 && (
+          <section className={styles.section}>
+            <div className="container">
+              <h2 className={`${styles.sectionTitle} title-effect`}>Блог</h2>
+              <div className={styles.newsGrid}>
+                {blogItems.map((item) => (
+                  <article
+                    key={item.id}
+                    className={styles.newsCard}
+                    style={{ '--card-bg': item.cardBg } as React.CSSProperties}
+                  >
+                    <div className={styles.newsCardCover}>
+                      <span className={styles.newsCardCoverTitle}>
+                        {item.title}
+                      </span>
+                    </div>
+                    <div className={styles.newsCardContent}>
+                      <span className={styles.newsCardDate}>{item.date}</span>
+                      <h3 className={styles.newsCardTitle}>{item.title}</h3>
+                      <p className={styles.newsCardText}>{item.text}</p>
+                      <Link href={`/blog/${item.id}`} className={styles.newsCardLink}>
+                        читать
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ==================== REVIEWS ==================== */}
         <section className={styles.section}>

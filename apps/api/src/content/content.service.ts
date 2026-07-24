@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateNewsDto } from './dto/create-news.dto';
+import { CreateBlogDto } from './dto/create-blog.dto';
 import { CreatePageBlockDto } from './dto/create-page-block.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
 
@@ -79,6 +80,67 @@ export class ContentService {
     await this.findOneNews(id);
     await this.prisma.news.delete({ where: { id } });
     return { message: 'Новость удалена' };
+  }
+
+  // ==================== BLOG ====================
+  async findAllBlog() {
+    const posts = await this.prisma.blogPost.findMany({
+      orderBy: { date: 'desc' },
+      include: { image: true },
+    });
+    return posts.map((p: any) => ({
+      ...p,
+      image: convertMediaBigInt(p.image),
+    }));
+  }
+
+  async findOneBlog(id: string) {
+    const post = await this.prisma.blogPost.findUnique({
+      where: { id },
+      include: { image: true },
+    });
+    if (!post) throw new NotFoundException('Статья не найдена');
+    return {
+      ...post,
+      image: convertMediaBigInt(post.image),
+    };
+  }
+
+  async createBlog(dto: CreateBlogDto) {
+    const data = {
+      ...dto,
+      date: new Date(dto.date),
+    };
+    const post = await this.prisma.blogPost.create({
+      data,
+      include: { image: true },
+    });
+    return {
+      ...post,
+      image: convertMediaBigInt(post.image),
+    };
+  }
+
+  async updateBlog(id: string, dto: Partial<CreateBlogDto>) {
+    await this.findOneBlog(id);
+    const data = dto.date
+      ? { ...dto, date: new Date(dto.date) }
+      : dto;
+    const post = await this.prisma.blogPost.update({
+      where: { id },
+      data,
+      include: { image: true },
+    });
+    return {
+      ...post,
+      image: convertMediaBigInt(post.image),
+    };
+  }
+
+  async removeBlog(id: string) {
+    await this.findOneBlog(id);
+    await this.prisma.blogPost.delete({ where: { id } });
+    return { message: 'Статья удалена' };
   }
 
   // ==================== PAGE BLOCKS ====================

@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ContentService } from './content.service';
 import { CreateNewsDto } from './dto/create-news.dto';
+import { CreateBlogDto } from './dto/create-blog.dto';
 import { CreatePageBlockDto } from './dto/create-page-block.dto';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
@@ -55,6 +56,32 @@ export class ContentController {
   @Delete('news/:id')
   removeNews(@Param('id') id: string) {
     return this.contentService.removeNews(id);
+  }
+
+  // ==================== BLOG ====================
+  @Get('blog')
+  findAllBlog() {
+    return this.contentService.findAllBlog();
+  }
+
+  @Get('blog/:id')
+  findOneBlog(@Param('id') id: string) {
+    return this.contentService.findOneBlog(id);
+  }
+
+  @Post('blog')
+  createBlog(@Body() dto: CreateBlogDto) {
+    return this.contentService.createBlog(dto);
+  }
+
+  @Patch('blog/:id')
+  updateBlog(@Param('id') id: string, @Body() dto: Partial<CreateBlogDto>) {
+    return this.contentService.updateBlog(id, dto);
+  }
+
+  @Delete('blog/:id')
+  removeBlog(@Param('id') id: string) {
+    return this.contentService.removeBlog(id);
   }
 
   // ==================== PAGE BLOCKS ====================

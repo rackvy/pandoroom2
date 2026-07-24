@@ -135,6 +135,7 @@ model Media {
   questBackgrounds  Quest[] @relation("QuestBackground")
   questGallery      QuestGalleryPhoto[] @relation("QuestGallery")
   newsImages        News[]
+  blogImages        BlogPost[]
   aboutFactIcons    AboutFact[]
   reviewSourceIcons ReviewSource[]
   pageBlockFiles    PageBlock[] @relation("PageBlockFile")
@@ -245,6 +246,20 @@ model News {
   coverTitle   String?
   coverSub     String?
   coverVariant String?
+  cardBg       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  image        Media?   @relation(fields: [imageId], references: [id], onDelete: SetNull)
+}
+
+model BlogPost {
+  id           String   @id @default(uuid())
+  title        String
+  date         DateTime @db.Date
+  imageId      String?
+  content      String   @db.Text
+  excerpt      String?
   cardBg       String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

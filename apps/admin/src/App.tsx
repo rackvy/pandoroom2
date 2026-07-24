@@ -15,6 +15,8 @@ import QuestEditPage from './pages/content/QuestEditPage'
 import QuestSchedulePage from './pages/content/QuestSchedulePage'
 import NewsListPage from './pages/content/NewsListPage'
 import NewsForm from './pages/content/NewsForm'
+import BlogListPage from './pages/content/BlogListPage'
+import BlogForm from './pages/content/BlogForm'
 import ReviewsListPage from './pages/content/ReviewsListPage'
 import ReviewForm from './pages/content/ReviewForm'
 import ReviewSourcesPage from './pages/content/ReviewSourcesPage'
@@ -78,6 +80,9 @@ function AppRoutes() {
           <Route path="news" element={<NewsListPage />} />
           <Route path="news/new" element={<NewsForm />} />
           <Route path="news/:id/edit" element={<NewsForm />} />
+          <Route path="blog" element={<BlogListPage />} />
+          <Route path="blog/new" element={<BlogForm />} />
+          <Route path="blog/:id/edit" element={<BlogForm />} />
           <Route path="reviews" element={<ReviewsListPage />} />
           <Route path="reviews/new" element={<ReviewForm />} />
           <Route path="reviews/:id/edit" element={<ReviewForm />} />

@@ -20,6 +20,7 @@ export default function Header() {
           <nav className={styles.utilityNav} aria-label="Дополнительная навигация">
             <Link href="/about" className={styles.topLink}>О центре</Link>
             <Link href="/news" className={styles.topLink}>Новости и акции</Link>
+            <Link href="/blog" className={styles.topLink}>Блог</Link>
             <Link href="/rules" className={styles.topLink}>Правила</Link>
             <Link href="/loyalty" className={styles.topLink}>Программа лояльности</Link>
             <Link href="/contacts" className={styles.topLink}>Контакты</Link>
@@ -103,6 +104,7 @@ export default function Header() {
             <nav className={styles.mobileUtility}>
               <Link href="/about" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>О центре</Link>
               <Link href="/news" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Новости и акции</Link>
+              <Link href="/blog" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Блог</Link>
               <Link href="/rules" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Правила</Link>
               <Link href="/loyalty" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Программа лояльности</Link>
               <Link href="/contacts" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Контакты</Link>

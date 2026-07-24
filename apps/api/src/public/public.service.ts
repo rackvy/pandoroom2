@@ -116,6 +116,22 @@ export class PublicService {
     return news;
   }
 
+  async findAllBlog() {
+    return this.prisma.blogPost.findMany({
+      orderBy: { date: 'desc' },
+      include: { image: true },
+    });
+  }
+
+  async findOneBlog(id: string) {
+    const post = await this.prisma.blogPost.findUnique({
+      where: { id },
+      include: { image: true },
+    });
+    if (!post) throw new NotFoundException('Статья не найдена');
+    return post;
+  }
+
   async findAllReviews() {
     return this.prisma.review.findMany({
       orderBy: { createdAt: 'desc' },
