@@ -47,6 +47,8 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     safety: initialData?.safety || '',
     extraServices: initialData?.extraServices || '',
     extraPlayerPrice: initialData?.extraPlayerPrice || 0,
+    allowAnimator: initialData?.allowAnimator ?? true,
+    animatorPrice: initialData?.animatorPrice || 0,
     hasActors: initialData?.hasActors || false,
     ageRestriction: initialData?.ageRestriction || '',
     subtitle: initialData?.subtitle || '',
@@ -302,6 +304,30 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
             onChange={(e) => handleNumberChange('extraPlayerPrice', e.target.value)}
           />
         </div>
+
+        <div className={styles.field}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={formData.allowAnimator || false}
+              onChange={(e) => handleChange('allowAnimator', e.target.checked)}
+            />
+            Аниматор доступен
+          </label>
+        </div>
+
+        {formData.allowAnimator && (
+          <div className={styles.field}>
+            <label htmlFor="animatorPrice">Цена аниматора</label>
+            <input
+              id="animatorPrice"
+              type="number"
+              min={0}
+              value={formData.animatorPrice}
+              onChange={(e) => handleNumberChange('animatorPrice', e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
       <div className={styles.field}>

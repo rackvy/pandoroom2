@@ -93,6 +93,7 @@ export default function BookingEditPage() {
   const [availableSlotsForQuest, setAvailableSlotsForQuest] = useState<Array<{ slotId: string; startTime: string; finalPrice: number; isBooked: boolean }>>([]);
   const [newQuestTime, setNewQuestTime] = useState('');
   const [addingQuestReservation, setAddingQuestReservation] = useState(false);
+  const [addAnimatorToQuest, setAddAnimatorToQuest] = useState(false);
   const [notificationChannel, setNotificationChannel] = useState<'sms' | 'telegram' | 'max'>('sms');
   const [sendingNotification, setSendingNotification] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
@@ -506,11 +507,13 @@ export default function BookingEditPage() {
       await api.post(`/api/admin/bookings/${id}/quest-reservations`, {
         questId: selectedQuestForAdd.questId,
         startTime: newQuestTime,
+        addAnimator: addAnimatorToQuest || undefined,
       });
       toast.success('Квест добавлен');
       setSelectedQuestForAdd(null);
       setAvailableSlotsForQuest([]);
       setNewQuestTime('');
+      setAddAnimatorToQuest(false);
       await loadData();
     } catch (err: any) {
       toast.error(err?.response?.data?.message || 'Ошибка добавления квеста');
@@ -886,7 +889,16 @@ export default function BookingEditPage() {
                       )}
                     </div>
                     {newQuestTime && (
-                      <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                      <div style={{ marginTop: 12 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 14, cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={addAnimatorToQuest}
+                            onChange={(e) => setAddAnimatorToQuest(e.target.checked)}
+                          />
+                          🎭 Добавить аниматора
+                        </label>
+                        <div style={{ display: 'flex', gap: 8 }}>
                         <button
                           className={styles.addButton}
                           onClick={handleAddQuestReservation}
@@ -896,10 +908,11 @@ export default function BookingEditPage() {
                         </button>
                         <button
                           className={styles.cancelButton}
-                          onClick={() => { setSelectedQuestForAdd(null); setNewQuestTime(''); setAvailableSlotsForQuest([]); }}
+                          onClick={() => { setSelectedQuestForAdd(null); setNewQuestTime(''); setAvailableSlotsForQuest([]); setAddAnimatorToQuest(false); }}
                         >
                           Отмена
                         </button>
+                      </div>
                       </div>
                     )}
                     {!newQuestTime && (

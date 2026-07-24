@@ -134,6 +134,8 @@ export interface Quest {
   safety: string;
   extraServices: string;
   extraPlayerPrice: number;
+  allowAnimator: boolean;
+  animatorPrice: number;
   hasActors: boolean;
   ageRestriction: string | null;
   subtitle: string | null;
