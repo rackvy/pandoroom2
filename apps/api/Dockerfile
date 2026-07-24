@@ -27,6 +27,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # ✅ Generate Prisma Client BEFORE build
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 RUN pnpm --filter @pandoroom/api prisma:generate
 
 # build api
@@ -53,6 +54,7 @@ COPY --from=builder /out ./
 COPY --from=builder /app/apps/api/prisma ./prisma
 
 # ✅ ВАЖНО: generate делаем ЗДЕСЬ
+ENV PRISMA_ENGINES_MIRROR=https://registry.npmmirror.com/-/binary/prisma
 RUN pnpm exec prisma generate
 
 EXPOSE 3001
