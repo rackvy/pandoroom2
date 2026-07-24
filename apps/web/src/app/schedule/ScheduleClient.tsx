@@ -190,15 +190,6 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
   const now = useMemo(() => new Date(), [])
   const viewingToday = isSameDay(selectedDate, now)
 
-  // Collect all unique time slots across all quests for column alignment
-  const allTimeSlots = useMemo(() => {
-    const timeSet = new Set<string>()
-    Object.values(scheduleMap).forEach(({ slots }) => {
-      slots.forEach(s => timeSet.add(s.startTime))
-    })
-    return Array.from(timeSet).sort()
-  }, [scheduleMap])
-
   // Filter quests that have schedule slots for this date
   const questsForDate = useMemo(() => {
     return quests.filter(q => scheduleMap[q.id]?.slots.length > 0)
@@ -286,22 +277,13 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
             </p>
           ) : (
             <div className={styles.scheduleTable}>
-              {/* Time column header */}
-              <div className={styles.scheduleHeader}>
-                <div className={styles.questCol}>Квест</div>
-                <div className={styles.slotsCol}>
-                  {allTimeSlots.map(time => (
-                    <span key={time} className={styles.timeHeader}>{time}</span>
-                  ))}
-                </div>
-              </div>
-
               {/* Quest rows */}
               {questsForDate.map((q) => {
                 const entry = scheduleMap[q.id]
                 if (!entry) return null
                 const { slots } = entry
-                const slotMap = new Map(slots.map(s => [s.startTime, s]))
+                // Sort quest's own slots by time
+                const sortedSlots = [...slots].sort((a, b) => a.startTime.localeCompare(b.startTime))
                 const posterUrl = q.previewImage?.url || ''
                 const tCls = tagClass(q.genre)
 
@@ -337,15 +319,9 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
                       </Link>
                     </div>
 
-                    {/* Time slots column */}
+                    {/* Quest's own time slots */}
                     <div className={styles.slotsCol}>
-                      {allTimeSlots.map((time) => {
-                        const slot = slotMap.get(time)
-
-                        if (!slot) {
-                          return <div key={time} className={styles.slotEmpty} />
-                        }
-
+                      {sortedSlots.map((slot) => {
                         // Filter past slots when viewing today
                         if (viewingToday) {
                           const [h, m] = slot.startTime.split(':').map(Number)
@@ -353,8 +329,8 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
                           const nowM = now.getMinutes()
                           if (h < nowH || (h === nowH && m <= nowM)) {
                             return (
-                              <div key={time} className={styles.slotPassed}>
-                                <span className={styles.slotTime}>{time}</span>
+                              <div key={slot.slotId} className={styles.slotPassed}>
+                                <span className={styles.slotTime}>{slot.startTime}</span>
                               </div>
                             )
                           }
@@ -362,8 +338,8 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
 
                         if (slot.isBooked) {
                           return (
-                            <div key={time} className={styles.slotBooked}>
-                              <span className={styles.slotTime}>{time}</span>
+                            <div key={slot.slotId} className={styles.slotBooked}>
+                              <span className={styles.slotTime}>{slot.startTime}</span>
                               <span className={styles.slotStatus}>Занято</span>
                             </div>
                           )
@@ -371,11 +347,11 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
 
                         return (
                           <button
-                            key={time}
+                            key={slot.slotId}
                             className={styles.slotFree}
                             onClick={() => openBooking(slot.slotId, q.id, q.name, slot.startTime, slot.finalPrice)}
                           >
-                            <span className={styles.slotTime}>{time}</span>
+                            <span className={styles.slotTime}>{slot.startTime}</span>
                             <span className={styles.slotPrice}>{slot.finalPrice} ₽</span>
                           </button>
                         )

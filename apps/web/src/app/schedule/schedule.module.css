@@ -138,62 +138,21 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-  -webkit-overflow-scrolling: touch;
-}
-
-.scheduleTable::-webkit-scrollbar {
-  height: 6px;
-}
-
-.scheduleTable::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scheduleTable::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
-}
-
-/* Table header row with time labels */
-.scheduleHeader {
-  display: flex;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 8px;
-  min-width: max-content;
 }
 
 .questCol {
-  min-width: 320px;
-  width: 320px;
+  min-width: 300px;
+  width: 300px;
   flex-shrink: 0;
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: var(--color-bg, #111);
   padding-right: 16px;
-  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.5);
 }
 
 .slotsCol {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   flex: 1;
   align-items: center;
-}
-
-.timeHeader {
-  min-width: 90px;
-  text-align: center;
-  font-family: var(--font-heading);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  padding: 4px 0;
 }
 
 /* Quest row */
@@ -203,7 +162,6 @@
   padding: 14px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   align-items: center;
-  min-width: max-content;
 }
 
 .scheduleRow:last-child {
@@ -360,12 +318,6 @@
   text-decoration: line-through;
 }
 
-.slotEmpty {
-  min-width: 90px;
-  height: 50px;
-  visibility: hidden;
-}
-
 /* ---- Empty state ---- */
 .emptyMsg {
   text-align: center;
@@ -378,6 +330,7 @@
 @media (max-width: 1023px) {
   .questCol {
     min-width: 240px;
+    width: 240px;
   }
 }
 
@@ -386,45 +339,25 @@
     padding-top: 120px;
   }
 
-  .scheduleTable {
-    overflow-x: visible;
-  }
-
-  .scheduleHeader {
-    display: none;
-  }
-
   .scheduleRow {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-    min-width: unset;
   }
 
   .questCol {
-    position: static;
     min-width: unset;
     width: 100%;
-    box-shadow: none;
     padding-right: 0;
   }
 
   .slotsCol {
     width: 100%;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-  }
-
-  .slotsCol::-webkit-scrollbar {
-    display: none;
   }
 
   .slotFree,
   .slotBooked,
-  .slotPassed,
-  .slotEmpty {
+  .slotPassed {
     min-width: 80px;
   }
 }
