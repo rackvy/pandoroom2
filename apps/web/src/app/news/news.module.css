@@ -1,6 +1,6 @@
 .pageHero {
   text-align: center;
-  padding: 60px 24px 40px;
+  padding: 140px 24px 40px;
   background: #1A1A18;
 }
 
@@ -29,6 +29,12 @@
   gap: 2rem;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+.newsCardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 
 .newsCard {

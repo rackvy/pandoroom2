@@ -25,7 +25,7 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
       <main style={{
         maxWidth: '800px',
         margin: '0 auto',
-        padding: '80px 24px',
+        padding: '140px 24px 80px',
         minHeight: '60vh',
         color: '#fff',
       }}>
@@ -67,7 +67,7 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
     <main style={{
       maxWidth: '800px',
       margin: '0 auto',
-      padding: '80px 24px',
+      padding: '140px 24px 80px',
       minHeight: '60vh',
       color: '#fff',
     }}>

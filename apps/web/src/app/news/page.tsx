@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { fetchApi, type NewsItem } from '@/lib/api'
 import newsStyles from './news.module.css'
 
@@ -39,35 +40,37 @@ export default async function NewsPage() {
         ) : (
           <div className={newsStyles.newsGrid}>
             {news.map((item) => (
-              <article key={item.id} className={newsStyles.newsCard}>
-                {item.image ? (
-                  <div className={newsStyles.imageWrapper}>
-                    <Image
-                      src={item.image.url}
-                      alt={item.title}
-                      fill
-                      className={newsStyles.image}
-                    />
+              <Link key={item.id} href={`/news/${item.id}`} className={newsStyles.newsCardLink}>
+                <article className={newsStyles.newsCard}>
+                  {item.image ? (
+                    <div className={newsStyles.imageWrapper}>
+                      <Image
+                        src={item.image.url}
+                        alt={item.title}
+                        fill
+                        className={newsStyles.image}
+                      />
+                    </div>
+                  ) : (
+                    <div className={newsStyles.placeholder}>
+                      <span>📰</span>
+                    </div>
+                  )}
+                  <div className={newsStyles.content}>
+                    <time className={newsStyles.date}>
+                      {new Date(item.date).toLocaleDateString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
+                    </time>
+                    <h3>{item.title}</h3>
+                    <p className={newsStyles.excerpt}>
+                      {item.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                    </p>
                   </div>
-                ) : (
-                  <div className={newsStyles.placeholder}>
-                    <span>📰</span>
-                  </div>
-                )}
-                <div className={newsStyles.content}>
-                  <time className={newsStyles.date}>
-                    {new Date(item.date).toLocaleDateString('ru-RU', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                    })}
-                  </time>
-                  <h3>{item.title}</h3>
-                  <p className={newsStyles.excerpt}>
-                    {item.content.substring(0, 150)}...
-                  </p>
-                </div>
-              </article>
+                </article>
+              </Link>
             ))}
           </div>
         )}
