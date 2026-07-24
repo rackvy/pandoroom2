@@ -73,7 +73,7 @@ export class PublicService {
     }
     const quests = await this.prisma.quest.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       include: {
         branch: true,
         previewImage: true,

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Quest" ADD COLUMN "sortOrder" INTEGER NOT NULL DEFAULT 0;

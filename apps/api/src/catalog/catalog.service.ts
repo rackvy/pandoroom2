@@ -73,7 +73,7 @@ export class CatalogService {
   // ==================== QUESTS ====================
   async findAllQuests() {
     const quests = await this.prisma.quest.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       include: { 
         branch: true, 
         previewImage: true, 

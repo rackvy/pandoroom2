@@ -136,6 +136,7 @@ export interface Quest {
   extraPlayerPrice: number;
   allowAnimator: boolean;
   animatorPrice: number;
+  sortOrder: number;
   hasActors: boolean;
   ageRestriction: string | null;
   subtitle: string | null;

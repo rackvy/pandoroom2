@@ -168,6 +168,7 @@ model Quest {
   extraPlayerPrice  Int       @default(0)
   allowAnimator      Boolean   @default(true)
   animatorPrice      Int       @default(0)
+  sortOrder          Int       @default(0)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

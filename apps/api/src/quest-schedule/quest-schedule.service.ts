@@ -260,6 +260,7 @@ export class QuestScheduleService {
     // Get all quests with their slots for this day
     const quests = await this.prisma.quest.findMany({
       where: branchId ? { branchId } : undefined,
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       include: {
         scheduleSlots: {
           where: {

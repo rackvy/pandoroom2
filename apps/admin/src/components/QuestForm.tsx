@@ -49,6 +49,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     extraPlayerPrice: initialData?.extraPlayerPrice || 0,
     allowAnimator: initialData?.allowAnimator ?? true,
     animatorPrice: initialData?.animatorPrice || 0,
+    sortOrder: initialData?.sortOrder ?? 0,
     hasActors: initialData?.hasActors || false,
     ageRestriction: initialData?.ageRestriction || '',
     subtitle: initialData?.subtitle || '',
@@ -328,6 +329,18 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
             />
           </div>
         )}
+
+        <div className={styles.field}>
+          <label htmlFor="sortOrder">Порядок отображения</label>
+          <input
+            id="sortOrder"
+            type="number"
+            min={0}
+            value={formData.sortOrder}
+            onChange={(e) => handleNumberChange('sortOrder', e.target.value)}
+          />
+          <span className={styles.fieldHint}>Чем меньше число, тем выше квест в списке</span>
+        </div>
       </div>
 
       <div className={styles.field}>

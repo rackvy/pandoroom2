@@ -164,7 +164,7 @@ export class ScheduleService {
     const [quests, reservations] = await Promise.all([
       this.prisma.quest.findMany({
         where: { branchId },
-        orderBy: { name: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
         select: { id: true, name: true, durationMinutes: true },
       }),
       this.prisma.questReservation.findMany({

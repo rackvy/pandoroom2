@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getQuests, deleteQuest, type Quest } from '../../api/catalog';
+import { getQuests, deleteQuest, updateQuest, type Quest } from '../../api/catalog';
 import { getMediaUrl } from '../../utils/media';
 import { toast } from '../../components/ui/Toast';
 import { confirm } from '../../components/ui/ConfirmDialog';
@@ -71,6 +71,23 @@ export default function QuestsListPage() {
     }
   };
 
+  const handleMove = async (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= quests.length) return;
+
+    const reordered = [...quests];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+
+    try {
+      await Promise.all(
+        reordered.map((q, i) => updateQuest(q.id, { sortOrder: i }))
+      );
+      await loadQuests();
+    } catch (err) {
+      toast.error('Не удалось изменить порядок');
+    }
+  };
+
   if (loading) {
     return <div className={styles.loading}>Загрузка...</div>;
   }
@@ -93,6 +110,7 @@ export default function QuestsListPage() {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th>Порядок</th>
               <th>Квест</th>
               <th>Филиал</th>
               <th>Сложность</th>
@@ -103,8 +121,28 @@ export default function QuestsListPage() {
             </tr>
           </thead>
           <tbody>
-            {quests.map((quest) => (
+            {quests.map((quest, index) => (
               <tr key={quest.id}>
+                <td>
+                  <div className={styles.orderControls}>
+                    <button
+                      className={styles.orderButton}
+                      onClick={() => handleMove(index, -1)}
+                      disabled={index === 0}
+                      title="Выше"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      className={styles.orderButton}
+                      onClick={() => handleMove(index, 1)}
+                      disabled={index === quests.length - 1}
+                      title="Ниже"
+                    >
+                      ↓
+                    </button>
+                  </div>
+                </td>
                 <td>
                   <div className={styles.questInfo}>
                     <img
