@@ -134,7 +134,7 @@ export default function QuestsListPage() {
                     <button
                       className={styles.actionButton}
                       onClick={() => handleSchedule(quest.id)}
-                      title="Расписание"
+                      title="Расписание и цена"
                     >
                       📅
                     </button>
