@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Quest, CreateQuestData, Branch } from '../api/catalog';
 import { getBranches } from '../api/catalog';
+import { getAgeRestrictions } from '../api/content';
 import { uploadMedia, Media } from '../api/media';
 import { getMediaUrl } from '../utils/media';
 import QuestScheduleEditor, { ScheduleSlot } from './QuestScheduleEditor';
@@ -20,16 +21,11 @@ const DIFFICULTY_OPTIONS = [
   { value: 'hard', label: 'Сложный' },
 ];
 
-const AGE_RESTRICTION_OPTIONS = [
-  { value: '', label: 'Без ограничений' },
-  { value: '0+', label: '0+' },
-  { value: '8+', label: '8+' },
-  { value: '12+', label: '12+' },
-  { value: '18+', label: '18+' },
-];
-
 export default function QuestForm({ initialData, onSubmit, onCancel, isSubmitting }: QuestFormProps) {
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [ageOptions, setAgeOptions] = useState<{ value: string; label: string }[]>([
+    { value: '', label: 'Без ограничений' },
+  ]);
   const [formData, setFormData] = useState<CreateQuestData>({
     branchId: initialData?.branchId || '',
     name: initialData?.name || '',
@@ -70,6 +66,19 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
 
   useEffect(() => {
     getBranches().then(setBranches).catch(console.error);
+    getAgeRestrictions()
+      .then((items) => {
+        const opts = [
+          { value: '', label: 'Без ограничений' },
+          ...items.map((item) => ({ value: item.value, label: item.value })),
+        ];
+        const current = initialData?.ageRestriction || '';
+        if (current && !opts.some((o) => o.value === current)) {
+          opts.push({ value: current, label: current });
+        }
+        setAgeOptions(opts);
+      })
+      .catch(console.error);
   }, []);
 
   const handleChange = (field: keyof CreateQuestData, value: any) => {
@@ -231,7 +240,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
             value={formData.ageRestriction || ''}
             onChange={(e) => handleChange('ageRestriction', e.target.value)}
           >
-            {AGE_RESTRICTION_OPTIONS.map(opt => (
+            {ageOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>

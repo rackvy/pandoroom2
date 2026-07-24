@@ -365,6 +365,14 @@ model Decoration {
   bookingItems BookingDecorationItem[]
 }
 
+model AgeRestriction {
+  id        String   @id @default(uuid())
+  value     String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ==================== EMPLOYEES ====================
 
 model Employee {

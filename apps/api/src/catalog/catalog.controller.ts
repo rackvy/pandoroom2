@@ -194,6 +194,30 @@ export class CatalogController {
     return this.catalogService.removeDecoration(id);
   }
 
+  // ==================== AGE RESTRICTIONS ====================
+  @Get('age-restrictions')
+  findAllAgeRestrictions() {
+    return this.catalogService.findAllAgeRestrictions();
+  }
+
+  @Post('age-restrictions')
+  @Roles(EmployeeRole.ADMIN)
+  createAgeRestriction(@Body() data: any) {
+    return this.catalogService.createAgeRestriction(data);
+  }
+
+  @Patch('age-restrictions/:id')
+  @Roles(EmployeeRole.ADMIN)
+  updateAgeRestriction(@Param('id') id: string, @Body() data: any) {
+    return this.catalogService.updateAgeRestriction(id, data);
+  }
+
+  @Delete('age-restrictions/:id')
+  @Roles(EmployeeRole.ADMIN)
+  removeAgeRestriction(@Param('id') id: string) {
+    return this.catalogService.removeAgeRestriction(id);
+  }
+
   // ==================== TABLE ZONES ====================
   @Get('branches/:branchId/zones')
   findZonesByBranch(@Param('branchId') branchId: string) {

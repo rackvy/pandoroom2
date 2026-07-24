@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 // Helper to convert BigInt to Number for JSON serialization
@@ -321,6 +321,54 @@ export class CatalogService {
     await this.findOneDecoration(id);
     await this.prisma.decoration.delete({ where: { id } });
     return { message: 'Декорация удалена' };
+  }
+
+  // ==================== AGE RESTRICTIONS ====================
+  async findAllAgeRestrictions() {
+    return this.prisma.ageRestriction.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { value: 'asc' }],
+    });
+  }
+
+  async findOneAgeRestriction(id: string) {
+    const item = await this.prisma.ageRestriction.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Возрастное ограничение не найдено');
+    return item;
+  }
+
+  async createAgeRestriction(data: any) {
+    const value = String(data.value ?? '').trim();
+    if (!value) throw new BadRequestException('Укажите значение');
+
+    const exists = await this.prisma.ageRestriction.findUnique({ where: { value } });
+    if (exists) throw new BadRequestException('Такое значение уже есть');
+
+    const max = await this.prisma.ageRestriction.aggregate({ _max: { sortOrder: true } });
+    return this.prisma.ageRestriction.create({
+      data: { value, sortOrder: (max._max.sortOrder ?? -1) + 1 },
+    });
+  }
+
+  async updateAgeRestriction(id: string, data: any) {
+    await this.findOneAgeRestriction(id);
+
+    const update: any = {};
+    if (data.value !== undefined) {
+      const value = String(data.value).trim();
+      if (!value) throw new BadRequestException('Укажите значение');
+      const dup = await this.prisma.ageRestriction.findUnique({ where: { value } });
+      if (dup && dup.id !== id) throw new BadRequestException('Такое значение уже есть');
+      update.value = value;
+    }
+    if (data.sortOrder !== undefined) update.sortOrder = data.sortOrder;
+
+    return this.prisma.ageRestriction.update({ where: { id }, data: update });
+  }
+
+  async removeAgeRestriction(id: string) {
+    await this.findOneAgeRestriction(id);
+    await this.prisma.ageRestriction.delete({ where: { id } });
+    return { message: 'Возрастное ограничение удалено' };
   }
 
   // ==================== TABLE ZONES ====================
