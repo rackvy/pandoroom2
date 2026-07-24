@@ -23,11 +23,11 @@ export default async function NewsPage() {
   const news = await getNews()
 
   return (
-    <main style={{ minHeight: '60vh' }}>
+    <main className={newsStyles.detailPage}>
       <section className={newsStyles.pageHero}>
-        <h1 className={newsStyles.pageTitle}>Новости</h1>
+        <h1 className={newsStyles.pageTitle}>Новости Pandoroom</h1>
         <p className={newsStyles.pageSubtitle}>
-          Последние новости и события Pandoroom
+          Последние новости и события
         </p>
       </section>
 
@@ -41,10 +41,7 @@ export default async function NewsPage() {
           <div className={newsStyles.newsGrid}>
             {news.map((item) => (
               <Link key={item.id} href={`/news/${item.id}`} className={newsStyles.newsCardLink}>
-                <article
-                  className={`${newsStyles.newsCard}${item.cardBg ? ` ${newsStyles.newsCardDark}` : ''}`}
-                  style={item.cardBg ? { background: item.cardBg } : undefined}
-                >
+                <article className={newsStyles.newsCard}>
                   {item.image ? (
                     <div className={newsStyles.imageWrapper}>
                       <Image
@@ -71,6 +68,7 @@ export default async function NewsPage() {
                     <p className={newsStyles.excerpt}>
                       {item.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
                     </p>
+                    <span className={newsStyles.moreLink}>подробнее</span>
                   </div>
                 </article>
               </Link>

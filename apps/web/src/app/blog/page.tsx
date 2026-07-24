@@ -23,9 +23,9 @@ export default async function BlogPage() {
   const posts = await getBlog()
 
   return (
-    <main style={{ minHeight: '60vh' }}>
+    <main className={newsStyles.detailPage}>
       <section className={newsStyles.pageHero}>
-        <h1 className={newsStyles.pageTitle}>Блог</h1>
+        <h1 className={newsStyles.pageTitle}>Блог Pandoroom</h1>
         <p className={newsStyles.pageSubtitle}>
           Статьи и советы по организации праздников
         </p>
@@ -41,10 +41,7 @@ export default async function BlogPage() {
           <div className={newsStyles.newsGrid}>
             {posts.map((item) => (
               <Link key={item.id} href={`/blog/${item.id}`} className={newsStyles.newsCardLink}>
-                <article
-                  className={`${newsStyles.newsCard}${item.cardBg ? ` ${newsStyles.newsCardDark}` : ''}`}
-                  style={item.cardBg ? { background: item.cardBg } : undefined}
-                >
+                <article className={newsStyles.newsCard}>
                   {item.image ? (
                     <div className={newsStyles.imageWrapper}>
                       <Image
@@ -71,6 +68,7 @@ export default async function BlogPage() {
                     <p className={newsStyles.excerpt}>
                       {item.excerpt || item.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
                     </p>
+                    <span className={newsStyles.moreLink}>подробнее</span>
                   </div>
                 </article>
               </Link>

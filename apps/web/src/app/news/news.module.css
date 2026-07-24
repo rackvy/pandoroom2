@@ -1,6 +1,8 @@
+/* ===== News / Blog shared styles ===== */
+
 .pageHero {
   text-align: center;
-  padding: 140px 24px 40px;
+  padding: 140px 24px 48px;
   background: #1A1A18;
 }
 
@@ -13,22 +15,30 @@
 
 .pageSubtitle {
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
   margin: 0;
 }
 
+/* ===== List grid ===== */
+
 .newsSection {
-  padding: 3rem;
-  background: #f8f9fa;
+  padding: 0 24px 80px;
+  background: #1A1A18;
   min-height: 400px;
 }
 
 .newsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
-  max-width: 1400px;
+  max-width: 1100px;
   margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .newsGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .newsCardLink {
@@ -38,35 +48,25 @@
 }
 
 .newsCard {
-  background: white;
+  background: #242420;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .newsCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.newsCardDark .content h3 {
-  color: #fff;
-}
-
-.newsCardDark .excerpt {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.newsCardDark .date {
-  color: #A0BF39;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
 .imageWrapper {
   position: relative;
   width: 100%;
-  height: 200px;
-  background: #e9ecef;
+  aspect-ratio: 16 / 10;
+  background: #2a2a25;
 }
 
 .image {
@@ -75,60 +75,153 @@
 
 .placeholder {
   width: 100%;
-  height: 200px;
+  aspect-ratio: 16 / 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1A1A18 0%, #2a2a25 100%);
+  background: linear-gradient(135deg, #2a2a25 0%, #333330 100%);
 }
 
 .placeholder span {
-  font-size: 4rem;
+  font-size: 3.5rem;
 }
 
 .content {
-  padding: 1.5rem;
+  padding: 1.25rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .date {
   display: block;
   font-size: 0.85rem;
-  color: #A0BF39;
+  color: rgba(255, 255, 255, 0.45);
   margin-bottom: 0.5rem;
 }
 
 .content h3 {
   margin: 0 0 0.75rem 0;
-  color: #1A1A18;
-  font-size: 1.25rem;
-  line-height: 1.3;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .excerpt {
-  color: #666;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.9rem;
-  line-height: 1.5;
-  margin: 0;
+  line-height: 1.6;
+  margin: 0 0 1rem 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1;
 }
+
+.moreLink {
+  color: #A0BF39;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  margin-top: auto;
+}
+
+.newsCard:hover .moreLink {
+  text-decoration: underline;
+}
+
+/* ===== Detail page ===== */
+
+.detailPage {
+  background: #1A1A18;
+  min-height: 60vh;
+}
+
+.detailInner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 140px 24px 80px;
+}
+
+.backLink {
+  color: #A0BF39;
+  margin-bottom: 32px;
+  display: inline-block;
+  text-decoration: none;
+  font-size: 15px;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.detailImage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.detailDate {
+  display: block;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.detailTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 24px 0;
+  line-height: 1.3;
+}
+
+.detailContent {
+  font-size: 16px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.detailContent p {
+  margin: 0 0 1em 0;
+}
+
+.detailContent strong,
+.detailContent b {
+  color: #fff;
+}
+
+.detailContent a {
+  color: #A0BF39;
+}
+
+.detailFooter {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Empty state ===== */
 
 .emptyState {
   text-align: center;
   padding: 4rem 2rem;
-  color: #666;
+  color: rgba(255, 255, 255, 0.6);
   grid-column: 1 / -1;
 }
 
 .emptyState p:first-child {
   font-size: 1.25rem;
   margin-bottom: 0.5rem;
-  color: #1A1A18;
+  color: #fff;
 }
 
 .emptySubtext {
   font-size: 0.9rem;
-  color: #888;
+  color: rgba(255, 255, 255, 0.4);
 }
