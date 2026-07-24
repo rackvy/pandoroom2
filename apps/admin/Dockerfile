@@ -3,12 +3,12 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-RUN corepack enable
-RUN corepack prepare pnpm@10.30.3 --activate
+RUN npm config set registry https://registry.npmmirror.com && npm install -g pnpm@10.30.3
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/admin/package.json apps/admin/
 
+RUN echo "registry=https://registry.npmmirror.com" > .npmrc
 RUN pnpm install --frozen-lockfile
 
 COPY apps/admin apps/admin
