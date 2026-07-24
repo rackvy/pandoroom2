@@ -284,6 +284,16 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
                 const { slots } = entry
                 // Sort quest's own slots by time
                 const sortedSlots = [...slots].sort((a, b) => a.startTime.localeCompare(b.startTime))
+
+                // When viewing today, hide quests with no remaining slots
+                const visibleSlots = viewingToday
+                  ? sortedSlots.filter(s => {
+                      const [h, m] = s.startTime.split(':').map(Number)
+                      return h > now.getHours() || (h === now.getHours() && m > now.getMinutes())
+                    })
+                  : sortedSlots
+                if (visibleSlots.length === 0) return null
+
                 const posterUrl = q.previewImage?.url || ''
                 const tCls = tagClass(q.genre)
 
@@ -322,17 +332,13 @@ export default function ScheduleClient({ quests }: ScheduleClientProps) {
                     {/* Quest's own time slots */}
                     <div className={styles.slotsCol}>
                       {sortedSlots.map((slot) => {
-                        // Filter past slots when viewing today
+                        // Hide past slots when viewing today
                         if (viewingToday) {
                           const [h, m] = slot.startTime.split(':').map(Number)
                           const nowH = now.getHours()
                           const nowM = now.getMinutes()
                           if (h < nowH || (h === nowH && m <= nowM)) {
-                            return (
-                              <div key={slot.slotId} className={styles.slotPassed}>
-                                <span className={styles.slotTime}>{slot.startTime}</span>
-                              </div>
-                            )
+                            return null
                           }
                         }
 

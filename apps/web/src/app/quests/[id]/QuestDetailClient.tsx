@@ -462,6 +462,13 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                 const daySlots = allSlots[dateKey] || []
                 const slotMap = new Map(daySlots.map(s => [s.startTime, s]))
 
+                // Skip days with no visible slots (all past or empty)
+                const hasVisibleSlots = allTimeSlots.some(time => {
+                  const slot = slotMap.get(time)
+                  return slot && !isSlotPast(dateKey, time)
+                })
+                if (!hasVisibleSlots) return null
+
                 return (
                   <div key={dateKey} className={`${styles.scheduleRow}${weekend ? ` ${styles.scheduleRowWeekend}` : ''}`}>
                     <div className={styles.scheduleDate}>
@@ -474,15 +481,16 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                         const slot = slotMap.get(time)
                         const past = isSlotPast(dateKey, time)
 
-                        if (!slot) {
-                          return <div key={time} className={styles.slotEmpty} />
+                        // Hide past and empty slots
+                        if (!slot || past) {
+                          return null
                         }
 
-                        if (past || slot.isBooked) {
+                        if (slot.isBooked) {
                           return (
                             <div key={time} className={`${styles.slotBtn} ${styles.slotBtnBooked}`}>
                               <span className={styles.slotTime}>{time}</span>
-                              <span className={styles.slotBooked}>{slot.isBooked ? 'Занято' : '—'}</span>
+                              <span className={styles.slotBooked}>Занято</span>
                             </div>
                           )
                         }
