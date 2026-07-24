@@ -6,141 +6,162 @@
   background: white;
 }
 
-/* Header Row */
-.headerRow {
-  display: flex;
-  border-bottom: 2px solid #e5e7eb;
-  background: #f3f4f6;
-  flex-shrink: 0;
+/* Single scroll area (both axes) */
+.scrollArea {
+  flex: 1;
+  overflow: auto;
+  position: relative;
 }
 
-.timeHeader {
-  width: 60px;
+.gridInner {
+  position: relative;
+  min-width: 100%;
+}
+
+/* ===== Sticky header row ===== */
+.headerRow {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #f3f4f6;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.cornerCell {
+  position: sticky;
+  left: 0;
+  z-index: 31;
+  width: 170px;
   flex-shrink: 0;
+  background: #f3f4f6;
   border-right: 1px solid #e5e7eb;
-  padding: 12px 8px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 8px;
   font-size: 11px;
   font-weight: 600;
   color: #6b7280;
-}
-
-.questHeaders {
-  display: flex;
-  flex: 1;
-  overflow-x: hidden;
-}
-
-.questHeader {
-  min-width: 180px;
-  flex: 1;
-  padding: 12px;
-  border-right: 1px solid #e5e7eb;
   text-align: center;
 }
 
-.questHeader:last-child {
-  border-right: none;
-}
-
-.questName {
-  font-weight: 600;
-  font-size: 14px;
-  color: #1A1A18;
-  margin-bottom: 4px;
-}
-
-.questDuration {
-  font-size: 12px;
-  color: #6b7280;
-}
-
-/* Grid Body */
-.gridBody {
-  display: flex;
-  flex: 1;
-  overflow: auto;
-}
-
-/* Time Axis */
-.timeAxis {
-  width: 60px;
-  flex-shrink: 0;
-  border-right: 1px solid #e5e7eb;
-  background: #f9fafb;
+.timeHeader {
   position: relative;
+  height: 44px;
+  flex-shrink: 0;
 }
 
 .timeLabel {
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 20px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
-  padding-right: 8px;
-  font-size: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding-left: 6px;
+  font-size: 11px;
   color: #6b7280;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .hourLabel {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 700;
   color: #374151;
 }
 
-.quarterLabel {
-  font-size: 9px;
+.halfLabel {
+  font-size: 10px;
   color: #9ca3af;
 }
 
-/* Quests Container */
-.questsContainer {
+/* ===== Body ===== */
+.rowsWrapper {
   display: flex;
-  flex: 1;
-  overflow: visible;
 }
 
-.questColumn {
-  min-width: 180px;
-  flex: 1;
+/* Sticky quest label column */
+.labelsColumn {
+  position: sticky;
+  left: 0;
+  z-index: 20;
+  flex-shrink: 0;
+  background: #ffffff;
   border-right: 1px solid #e5e7eb;
+}
+
+.questLabel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.questName {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1A1A18;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.questDuration {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* Timeline column */
+.timelineColumn {
   position: relative;
+  flex-shrink: 0;
 }
 
-.questColumn:last-child {
-  border-right: none;
-}
-
-/* Grid lines */
+/* Vertical grid lines (full column height) */
 .gridLine {
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: #f3f4f6;
-  border-bottom: 1px dashed #e5e7eb;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  pointer-events: none;
 }
 
-/* Slot */
+.hourLine {
+  border-left: 1px solid #e5e7eb;
+}
+
+.halfLine {
+  border-left: 1px dashed #f3f4f6;
+}
+
+/* Quest row */
+.questRow {
+  position: relative;
+  border-bottom: 1px solid #e5e7eb;
+  box-sizing: border-box;
+}
+
+/* ===== Slot ===== */
 .slot {
   position: absolute;
-  left: 4px;
-  right: 4px;
+  top: 6px;
+  bottom: 6px;
   border-radius: 6px;
-  padding: 8px;
+  padding: 4px 8px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: center;
   transition: all 0.2s;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .slot:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
   z-index: 10;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
@@ -186,7 +207,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: 2px;
+  gap: 1px;
 }
 
 .blockedTime {
@@ -200,9 +221,10 @@
   color: #d32f2f;
   text-align: center;
   line-height: 1.2;
-  max-width: 80px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* Slot Info */
@@ -211,25 +233,26 @@
 }
 
 .slotTime {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #2e7d32;
-  margin-bottom: 2px;
+  white-space: nowrap;
 }
 
 .slotPrice {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #1b5e20;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
+  white-space: nowrap;
 }
 
 .specialPriceBadge {
   color: #ff9800;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 /* Booking Info */
@@ -240,14 +263,13 @@
 .clientName {
   font-size: 12px;
   font-weight: 600;
-  margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .bookingTime {
-  font-size: 11px;
+  font-size: 10px;
   opacity: 0.9;
 }
 
