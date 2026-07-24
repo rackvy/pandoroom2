@@ -50,6 +50,18 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
+.newsCardDark .content h3 {
+  color: #fff;
+}
+
+.newsCardDark .excerpt {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.newsCardDark .date {
+  color: #A0BF39;
+}
+
 .imageWrapper {
   position: relative;
   width: 100%;

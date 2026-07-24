@@ -41,7 +41,10 @@ export default async function NewsPage() {
           <div className={newsStyles.newsGrid}>
             {news.map((item) => (
               <Link key={item.id} href={`/news/${item.id}`} className={newsStyles.newsCardLink}>
-                <article className={newsStyles.newsCard}>
+                <article
+                  className={`${newsStyles.newsCard}${item.cardBg ? ` ${newsStyles.newsCardDark}` : ''}`}
+                  style={item.cardBg ? { background: item.cardBg } : undefined}
+                >
                   {item.image ? (
                     <div className={newsStyles.imageWrapper}>
                       <Image
