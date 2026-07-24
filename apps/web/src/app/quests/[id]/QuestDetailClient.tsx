@@ -224,8 +224,9 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
         eventDate: dateKey,
         time: slotTime,
         price,
-        maxPlayers: quest.maxPlayers,
         minPlayers: quest.minPlayers,
+        maxPlayers: quest.maxPlayers,
+        maxExtraPlayers: quest.maxExtraPlayers ?? 2,
         extraPlayerPrice: quest.extraPlayerPrice ?? 0,
         allowAnimator: quest.allowAnimator ?? true,
         animatorPrice: quest.animatorPrice ?? 0,
@@ -414,7 +415,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                   </div>
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>Доп. игроки</span>
-                    <span className={styles.specValue}>до {quest.maxPlayers - quest.minPlayers}</span>
+                    <span className={styles.specValue}>до {quest.maxExtraPlayers ?? 2}</span>
                   </div>
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>Возраст</span>

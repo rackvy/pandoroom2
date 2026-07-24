@@ -185,6 +185,13 @@ export class PublicService {
       throw new NotFoundException('Квест не найден');
     }
 
+    // 2.5 Validate extra players against maxExtraPlayers
+    const maxExtra = quest.maxExtraPlayers || 0;
+    const requestedExtra = Math.max(0, data.extraPlayers || 0);
+    if (requestedExtra > maxExtra) {
+      throw new BadRequestException(`Максимум ${maxExtra} доп. участник(ов) для этого квеста`);
+    }
+
     // 3. Parse times
     const eventDate = new Date(data.eventDate);
     eventDate.setHours(0, 0, 0, 0);

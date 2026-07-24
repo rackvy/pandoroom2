@@ -38,6 +38,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     address: initialData?.address || '',
     minPlayers: initialData?.minPlayers || 2,
     maxPlayers: initialData?.maxPlayers || 6,
+    maxExtraPlayers: initialData?.maxExtraPlayers ?? 2,
     durationMinutes: initialData?.durationMinutes || 60,
     previewImageId: initialData?.previewImageId || null,
     backgroundImageId: initialData?.backgroundImageId || null,
@@ -264,6 +265,19 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
             value={formData.maxPlayers}
             onChange={(e) => handleNumberChange('maxPlayers', e.target.value)}
           />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="maxExtraPlayers">Макс. доп. участников</label>
+          <input
+            id="maxExtraPlayers"
+            type="number"
+            min={0}
+            max={10}
+            value={formData.maxExtraPlayers}
+            onChange={(e) => handleNumberChange('maxExtraPlayers', e.target.value)}
+          />
+          <span className={styles.fieldHint}>Сколько доп. игроков можно добавить сверх мин. (обычно 1-2)</span>
         </div>
 
         <div className={styles.field}>

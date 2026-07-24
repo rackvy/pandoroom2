@@ -157,6 +157,7 @@ model Quest {
   address           String
   minPlayers        Int
   maxPlayers        Int
+  maxExtraPlayers   Int       @default(2)
   durationMinutes   Int
   previewImageId    String?
   backgroundImageId String?

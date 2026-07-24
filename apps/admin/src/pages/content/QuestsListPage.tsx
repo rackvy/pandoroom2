@@ -97,6 +97,7 @@ export default function QuestsListPage() {
               <th>Филиал</th>
               <th>Сложность</th>
               <th>Игроки</th>
+              <th>Доп.</th>
               <th>Длительность</th>
               <th>Действия</th>
             </tr>
@@ -126,6 +127,7 @@ export default function QuestsListPage() {
                 <td className={styles.players}>
                   {quest.minPlayers}-{quest.maxPlayers}
                 </td>
+                <td>{quest.maxExtraPlayers ?? 2}</td>
                 <td>{quest.durationMinutes} мин</td>
                 <td>
                   <div className={styles.actions}>

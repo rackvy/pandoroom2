@@ -125,6 +125,7 @@ export interface Quest {
   address: string;
   minPlayers: number;
   maxPlayers: number;
+  maxExtraPlayers: number;
   durationMinutes: number;
   previewImageId: string | null;
   backgroundImageId: string | null;

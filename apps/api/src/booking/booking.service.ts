@@ -378,6 +378,13 @@ export class BookingService {
     const quest = await this.prisma.quest.findUnique({ where: { id: data.questId } });
     if (!quest) throw new NotFoundException('Квест не найден');
 
+    // Validate extra players
+    const maxExtra = quest.maxExtraPlayers || 0;
+    const requestedExtra = Math.max(0, data.extraPlayers || 0);
+    if (requestedExtra > maxExtra) {
+      throw new BadRequestException(`Максимум ${maxExtra} доп. участник(ов) для этого квеста`);
+    }
+
     // Parse times
     const eventDate = new Date(booking.eventDate);
     eventDate.setHours(0, 0, 0, 0);

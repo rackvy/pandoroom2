@@ -43,8 +43,9 @@ export interface BookingSlotData {
   time: string      // HH:MM
   price: number
   // Quest metadata for extras
-  maxPlayers: number
   minPlayers: number
+  maxPlayers: number
+  maxExtraPlayers: number
   extraPlayerPrice: number
   allowAnimator: boolean
   animatorPrice: number
@@ -121,8 +122,8 @@ export default function BookingModal({ open, slotData, onClose, onSuccess }: Boo
   const animatorTotal = (slotData?.allowAnimator && addAnimator) ? slotData.animatorPrice : 0
   const totalPrice = basePrice + extraPlayersTotal + animatorTotal
 
-  // Max extra players = maxPlayers - minPlayers
-  const maxExtra = slotData ? slotData.maxPlayers - slotData.minPlayers : 0
+  // Max extra players from quest settings
+  const maxExtra = slotData ? slotData.maxExtraPlayers : 0
 
   // Submit booking
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
