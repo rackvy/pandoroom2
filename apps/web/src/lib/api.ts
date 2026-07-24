@@ -24,6 +24,7 @@ export interface Quest {
   durationMinutes: number
   minPlayers: number
   maxPlayers: number
+  maxExtraPlayers: number
   address: string
   extraPlayerPrice: number
   allowAnimator: boolean

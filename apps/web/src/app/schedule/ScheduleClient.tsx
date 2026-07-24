@@ -72,7 +72,9 @@ interface QuestSchedule {
   questId: string
   questName: string
   durationMinutes: number
+  minPlayers: number
   maxPlayers: number
+  maxExtraPlayers: number
   extraPlayerPrice: number
   allowAnimator: boolean
   animatorPrice: number
