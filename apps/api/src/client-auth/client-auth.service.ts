@@ -78,15 +78,11 @@ export class ClientAuthService {
               include: { table: { include: { zone: true } } },
             },
             questReservations: {
-              include: { quest: true },
+              include: {
+                quest: { include: { previewImage: true } },
+                branch: true,
+              },
             },
-          },
-        },
-        questReservations: {
-          orderBy: { eventDate: 'desc' },
-          include: {
-            quest: true,
-            branch: true,
           },
         },
       },
@@ -96,6 +92,12 @@ export class ClientAuthService {
       throw new UnauthorizedException('Клиент не найден');
     }
 
+    // Build questReservations from bookings (QuestReservation.clientId is not populated,
+    // so we go through Booking.clientId which is always set correctly)
+    const questReservations = client.bookings
+      .flatMap(b => b.questReservations)
+      .sort((a, b) => b.eventDate.getTime() - a.eventDate.getTime());
+
     return {
       id: client.id,
       phone: client.phone,
@@ -103,7 +105,7 @@ export class ClientAuthService {
       email: client.email,
       birthday: client.birthday,
       bookings: client.bookings,
-      questReservations: client.questReservations,
+      questReservations,
     };
   }
 

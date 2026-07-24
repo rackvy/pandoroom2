@@ -267,6 +267,7 @@ export class PublicService {
         questReservations: {
           create: {
             branchId: quest.branchId,
+            clientId,
             questId: data.questId,
             eventDate,
             startTime,

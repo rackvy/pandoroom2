@@ -201,9 +201,16 @@ export class ScheduleService {
 
     await this.checkQuestOverlap(dto.questId, eventDate, startTime, endTime);
 
+    // Get booking's clientId for the reservation FK
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: dto.bookingId },
+      select: { clientId: true },
+    });
+
     const reservation = await this.prisma.questReservation.create({
       data: {
         bookingId: dto.bookingId,
+        clientId: booking?.clientId,
         questId: dto.questId,
         branchId: dto.branchId,
         eventDate,
@@ -442,6 +449,7 @@ export class ScheduleService {
     const reservation = await this.prisma.questReservation.create({
       data: {
         bookingId: booking.id,
+        clientId: clientIdForQuest,
         questId: dto.questId,
         branchId: dto.branchId,
         eventDate,

@@ -403,6 +403,7 @@ export class BookingService {
     return this.prisma.questReservation.create({
       data: {
         bookingId,
+        clientId: booking.clientId,
         branchId: quest.branchId,
         questId: data.questId,
         eventDate,
