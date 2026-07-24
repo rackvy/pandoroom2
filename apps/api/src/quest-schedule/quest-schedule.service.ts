@@ -279,10 +279,11 @@ export class QuestScheduleService {
       },
     });
 
-    // Get all quest reservations for this date
+    // Get all active (non-canceled) quest reservations for this date
     const questReservations = await this.prisma.questReservation.findMany({
       where: {
         eventDate: date,
+        status: { not: 'canceled' },
       },
       include: {
         booking: {
@@ -293,8 +294,32 @@ export class QuestScheduleService {
             status: true,
           },
         },
+        quest: {
+          select: {
+            id: true,
+            name: true,
+            durationMinutes: true,
+            minPlayers: true,
+            maxPlayers: true,
+            maxExtraPlayers: true,
+            extraPlayerPrice: true,
+            allowAnimator: true,
+            animatorPrice: true,
+            sortOrder: true,
+          },
+        },
       },
     });
+
+    // Helper: convert reservation startTime (Date with @db.Time) to HH:MM string
+    const reservationTimeStr = (r: (typeof questReservations)[0]) => {
+      const h = r.startTime.getHours().toString().padStart(2, '0');
+      const m = r.startTime.getMinutes().toString().padStart(2, '0');
+      return `${h}:${m}`;
+    };
+
+    // Track which reservations get matched to template slots
+    const matchedReservationIds = new Set<string>();
 
     // Build slots with reservation info
     const questsWithSlots = quests.map(quest => {
@@ -304,16 +329,13 @@ export class QuestScheduleService {
         const price = specialPrice ? specialPrice.specialPrice : slot.basePrice;
 
         // Find reservation for this slot (by startTime matching)
-        // r.startTime is Date, slot.startTime is string (HH:MM)
-        // Convert Date to HH:MM in local timezone
         const reservation = questReservations.find(
-          r => {
-            const rHours = r.startTime.getHours().toString().padStart(2, '0');
-            const rMinutes = r.startTime.getMinutes().toString().padStart(2, '0');
-            const rTimeStr = `${rHours}:${rMinutes}`;
-            return r.questId === quest.id && rTimeStr === slot.startTime;
-          }
+          r => r.questId === quest.id && reservationTimeStr(r) === slot.startTime,
         );
+
+        if (reservation) {
+          matchedReservationIds.add(reservation.id);
+        }
 
         return {
           slotId: slot.id,
@@ -332,6 +354,33 @@ export class QuestScheduleService {
         };
       });
 
+      // Add synthetic slots for reservations that don't match any template slot
+      const unmatchedReservations = questReservations.filter(
+        r => r.questId === quest.id && !matchedReservationIds.has(r.id),
+      );
+      for (const r of unmatchedReservations) {
+        matchedReservationIds.add(r.id);
+        const timeStr = reservationTimeStr(r);
+        slots.push({
+          slotId: `res-${r.id}`,
+          startTime: timeStr,
+          basePrice: 0,
+          finalPrice: 0,
+          hasSpecialPrice: false,
+          isAvailable: true,
+          maintenanceNote: null,
+          reservation: {
+            id: r.id,
+            bookingId: r.bookingId,
+            clientName: r.booking.clientName,
+            status: r.booking.status,
+          },
+        });
+      }
+
+      // Sort slots by startTime
+      slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
       return {
         questId: quest.id,
         questName: quest.name,
@@ -345,6 +394,54 @@ export class QuestScheduleService {
         slots,
       };
     });
+
+    // Add quests that have reservations but no template slots for this day
+    const questIdsInGrid = new Set(questsWithSlots.map(q => q.questId));
+    const orphanReservations = questReservations.filter(
+      r => !questIdsInGrid.has(r.questId) && !matchedReservationIds.has(r.id),
+    );
+
+    // Group orphan reservations by questId
+    const orphanByQuest = new Map<string, typeof orphanReservations>();
+    for (const r of orphanReservations) {
+      matchedReservationIds.add(r.id);
+      const list = orphanByQuest.get(r.questId) || [];
+      list.push(r);
+      orphanByQuest.set(r.questId, list);
+    }
+
+    for (const [questId, reservations] of orphanByQuest) {
+      const questInfo = reservations[0].quest;
+      const slots = reservations.map(r => ({
+        slotId: `res-${r.id}`,
+        startTime: reservationTimeStr(r),
+        basePrice: 0,
+        finalPrice: 0,
+        hasSpecialPrice: false,
+        isAvailable: true,
+        maintenanceNote: null,
+        reservation: {
+          id: r.id,
+          bookingId: r.bookingId,
+          clientName: r.booking.clientName,
+          status: r.booking.status,
+        },
+      }));
+      slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+      questsWithSlots.push({
+        questId,
+        questName: questInfo.name,
+        durationMinutes: questInfo.durationMinutes,
+        minPlayers: questInfo.minPlayers,
+        maxPlayers: questInfo.maxPlayers,
+        maxExtraPlayers: questInfo.maxExtraPlayers,
+        extraPlayerPrice: questInfo.extraPlayerPrice,
+        allowAnimator: questInfo.allowAnimator,
+        animatorPrice: questInfo.animatorPrice,
+        slots,
+      });
+    }
 
     // Filter out quests with no slots
     return questsWithSlots.filter(q => q.slots.length > 0);
