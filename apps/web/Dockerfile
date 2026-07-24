@@ -7,9 +7,7 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-RUN corepack enable
-ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
-RUN corepack prepare pnpm@10.30.3 --activate
+RUN npm config set registry https://registry.npmmirror.com && npm install -g pnpm@10.30.3
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/web/package.json apps/web/
@@ -25,9 +23,7 @@ RUN pnpm install --frozen-lockfile --prod=false
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-RUN corepack enable
-ENV COREPACK_NPM_REGISTRY=https://registry.npmmirror.com
-RUN corepack prepare pnpm@10.30.3 --activate
+RUN npm config set registry https://registry.npmmirror.com && npm install -g pnpm@10.30.3
 
 COPY --from=deps /app /app
 COPY . .
