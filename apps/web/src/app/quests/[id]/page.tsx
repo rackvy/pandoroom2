@@ -8,8 +8,9 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   try {
     const quest: QuestDetail = await fetchApi(`/quests/${params.id}`)
     return {
-      title: `PANDOROOM — ${quest.name}`,
-      description: quest.description.slice(0, 160),
+      title: quest.seoTitle || `PANDOROOM — ${quest.name}`,
+      description: quest.seoDescription || quest.description.slice(0, 160),
+      ...(quest.seoKeywords ? { keywords: quest.seoKeywords } : {}),
     }
   } catch {
     return { title: 'PANDOROOM — Квест не найден' }
@@ -51,5 +52,15 @@ export default async function QuestDetailPage({ params }: { params: { id: string
 
   const news = await getLatestNews()
 
-  return <QuestDetailClient quest={quest} news={news} />
+  return (
+    <>
+      <QuestDetailClient quest={quest} news={news} />
+      {quest.schemaJson && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: quest.schemaJson }}
+        />
+      )}
+    </>
+  )
 }

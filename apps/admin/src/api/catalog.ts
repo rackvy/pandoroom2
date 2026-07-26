@@ -140,6 +140,10 @@ export interface Quest {
   hasActors: boolean;
   ageRestriction: string | null;
   subtitle: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  schemaJson?: string | null;
   branch: Branch;
   previewImage?: {
     id: string;

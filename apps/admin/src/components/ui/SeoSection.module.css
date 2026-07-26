@@ -1,0 +1,133 @@
+.wrap {
+  margin-top: 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.header:hover {
+  background: #f3f4f6;
+}
+
+.headerTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1A1A18;
+}
+
+.headerMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badgeError {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #b91c1c;
+  background: #fee2e2;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.chevron {
+  display: inline-block;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.body {
+  padding: 0.25rem 1rem 1.25rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.field {
+  margin-top: 1rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.4rem;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #1A1A18;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #A0BF39;
+  box-shadow: 0 0 0 3px rgba(160, 191, 57, 0.15);
+}
+
+.textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.jsonArea {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.jsonInvalid {
+  border-color: #dc2626;
+}
+
+.jsonInvalid:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+.hint {
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-top: 0.35rem;
+}
+
+.jsonOk {
+  display: block;
+  font-size: 0.75rem;
+  color: #16a34a;
+  margin-top: 0.35rem;
+}
+
+.jsonErr {
+  display: block;
+  font-size: 0.75rem;
+  color: #dc2626;
+  margin-top: 0.35rem;
+}

@@ -6,6 +6,7 @@ import { uploadMedia, Media } from '../api/media';
 import { getMediaUrl } from '../utils/media';
 import QuestScheduleEditor, { ScheduleSlot } from './QuestScheduleEditor';
 import RichTextEditor from './ui/RichTextEditor';
+import SeoSection from './ui/SeoSection';
 import styles from './QuestForm.module.css';
 
 interface QuestFormProps {
@@ -50,6 +51,10 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     ageRestriction: initialData?.ageRestriction || '',
     subtitle: initialData?.subtitle || '',
     galleryPhotoIds: initialData?.galleryPhotos?.map(p => p.imageId) || [],
+    seoTitle: initialData?.seoTitle || '',
+    seoDescription: initialData?.seoDescription || '',
+    seoKeywords: initialData?.seoKeywords || '',
+    schemaJson: initialData?.schemaJson || '',
   });
 
   const [previewImageFile, setPreviewImageFile] = useState<File | null>(null);
@@ -489,6 +494,16 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
           onChange={setScheduleSlots}
         />
       )}
+
+      <SeoSection
+        value={{
+          seoTitle: formData.seoTitle,
+          seoDescription: formData.seoDescription,
+          seoKeywords: formData.seoKeywords,
+          schemaJson: formData.schemaJson,
+        }}
+        onChange={(fields) => setFormData(prev => ({ ...prev, ...fields }))}
+      />
 
       <div className={styles.actions}>
         <button

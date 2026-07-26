@@ -5,6 +5,7 @@ import { uploadMedia } from '../../api/media';
 import { getMediaUrl } from '../../utils/media';
 import styles from './Form.module.css';
 import RichTextEditor from '../../components/ui/RichTextEditor';
+import SeoSection from '../../components/ui/SeoSection';
 
 export default function BlogForm() {
   const navigate = useNavigate();
@@ -18,6 +19,10 @@ export default function BlogForm() {
     imageId: null,
     excerpt: '',
     cardBg: '',
+    seoTitle: '',
+    seoDescription: '',
+    seoKeywords: '',
+    schemaJson: '',
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -41,6 +46,10 @@ export default function BlogForm() {
         imageId: item.imageId,
         excerpt: item.excerpt || '',
         cardBg: item.cardBg || '',
+        seoTitle: item.seoTitle || '',
+        seoDescription: item.seoDescription || '',
+        seoKeywords: item.seoKeywords || '',
+        schemaJson: item.schemaJson || '',
       });
       setImagePreview(item.image?.url || null);
     } catch (err) {
@@ -160,6 +169,16 @@ export default function BlogForm() {
             placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
           />
         </div>
+
+        <SeoSection
+          value={{
+            seoTitle: formData.seoTitle,
+            seoDescription: formData.seoDescription,
+            seoKeywords: formData.seoKeywords,
+            schemaJson: formData.schemaJson,
+          }}
+          onChange={(fields) => setFormData(prev => ({ ...prev, ...fields }))}
+        />
 
         <div className={styles.actions}>
           <button type="button" className={styles.cancelButton} onClick={() => navigate('/content/blog')}>

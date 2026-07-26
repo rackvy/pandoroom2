@@ -12,6 +12,10 @@ export interface News {
   coverSub: string | null;
   coverVariant: string | null;
   cardBg: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  schemaJson?: string | null;
   image?: {
     id: string;
     url: string;
@@ -27,6 +31,10 @@ export interface CreateNewsData {
   coverSub?: string | null;
   coverVariant?: string | null;
   cardBg?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  schemaJson?: string | null;
 }
 
 export type UpdateNewsData = Partial<CreateNewsData>;
@@ -65,6 +73,10 @@ export interface BlogPost {
   content: string;
   excerpt: string | null;
   cardBg: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  schemaJson?: string | null;
   image?: {
     id: string;
     url: string;
@@ -78,6 +90,10 @@ export interface CreateBlogData {
   content: string;
   excerpt?: string | null;
   cardBg?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  schemaJson?: string | null;
 }
 
 export type UpdateBlogData = Partial<CreateBlogData>;

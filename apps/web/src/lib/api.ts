@@ -46,6 +46,10 @@ export interface QuestDetail extends Quest {
   extraServices: string
   galleryPhotos: QuestGalleryPhoto[]
   branch: { id: string; name: string; address?: string | null }
+  seoTitle?: string | null
+  seoDescription?: string | null
+  seoKeywords?: string | null
+  schemaJson?: string | null
 }
 
 export interface NewsItem {
@@ -58,6 +62,10 @@ export interface NewsItem {
   coverVariant?: string | null
   cardBg?: string | null
   image?: { id: string; url: string; altText?: string | null } | null
+  seoTitle?: string | null
+  seoDescription?: string | null
+  seoKeywords?: string | null
+  schemaJson?: string | null
 }
 
 export interface BlogItem {
@@ -68,6 +76,10 @@ export interface BlogItem {
   excerpt?: string | null
   cardBg?: string | null
   image?: { id: string; url: string; altText?: string | null } | null
+  seoTitle?: string | null
+  seoDescription?: string | null
+  seoKeywords?: string | null
+  schemaJson?: string | null
 }
 
 export interface ReviewItem {

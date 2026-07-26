@@ -1,20 +1,28 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import type { Metadata } from 'next'
 import { fetchApi, type NewsItem } from '@/lib/api'
 import newsStyles from '../news.module.css'
 
 export const dynamic = 'force-dynamic'
-
-export const metadata = {
-  title: 'Новость - Pandoroom',
-  description: 'Подробности новости',
-}
 
 async function getNewsItem(id: string): Promise<NewsItem | null> {
   try {
     return await fetchApi(`/news/${id}`)
   } catch {
     return null
+  }
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const item = await getNewsItem(params.id)
+  if (!item) {
+    return { title: 'Новость не найдена - Pandoroom' }
+  }
+  return {
+    title: item.seoTitle || `${item.title} - Pandoroom`,
+    description: item.seoDescription || item.title,
+    ...(item.seoKeywords ? { keywords: item.seoKeywords } : {}),
   }
 }
 
@@ -73,6 +81,13 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
             className={newsStyles.detailContent}
             dangerouslySetInnerHTML={{ __html: item.content }}
           />
+
+          {item.schemaJson && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: item.schemaJson }}
+            />
+          )}
         </article>
 
         <div className={newsStyles.detailFooter}>

@@ -29,4 +29,20 @@ export class CreateNewsDto {
   @IsOptional()
   @IsString({ message: 'CSS-градиент фона должен быть строкой' })
   cardBg?: string;
+
+  @IsOptional()
+  @IsString({ message: 'SEO-заголовок должен быть строкой' })
+  seoTitle?: string;
+
+  @IsOptional()
+  @IsString({ message: 'SEO-описание должно быть строкой' })
+  seoDescription?: string;
+
+  @IsOptional()
+  @IsString({ message: 'SEO-ключевые слова должны быть строкой' })
+  seoKeywords?: string;
+
+  @IsOptional()
+  @IsString({ message: 'Schema.org JSON должен быть строкой' })
+  schemaJson?: string;
 }
