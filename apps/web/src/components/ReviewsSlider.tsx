@@ -17,30 +17,10 @@ interface Props {
 export default function ReviewsSlider({ reviews }: Props) {
   const trackRef = useRef<HTMLDivElement>(null)
 
-  const scroll = (direction: 'prev' | 'next') => {
-    if (!trackRef.current) return
-    const card = trackRef.current.querySelector<HTMLElement>('.review-card-item')
-    const step = card ? card.offsetWidth + 18 : 338
-    trackRef.current.scrollBy({
-      left: direction === 'next' ? step : -step,
-      behavior: 'smooth',
-    })
-  }
-
   if (reviews.length === 0) return null
 
   return (
     <div className="rs-wrapper">
-      <button
-        onClick={() => scroll('prev')}
-        aria-label="Назад"
-        className="rs-arrow rs-arrow-prev"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-      </button>
-
       <div ref={trackRef} className="rs-track">
         {reviews.map((review) => (
           <article key={review.id} className="rs-card review-card-item">
@@ -54,16 +34,6 @@ export default function ReviewsSlider({ reviews }: Props) {
           </article>
         ))}
       </div>
-
-      <button
-        onClick={() => scroll('next')}
-        aria-label="Вперед"
-        className="rs-arrow rs-arrow-next"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="9 18 15 12 9 6" />
-        </svg>
-      </button>
 
       <style dangerouslySetInnerHTML={{ __html: `
         .rs-wrapper {
@@ -133,38 +103,6 @@ export default function ReviewsSlider({ reviews }: Props) {
           color: var(--color-cta-green, #b5e61d);
           letter-spacing: 1px;
           align-self: flex-start;
-        }
-        .rs-arrow {
-          display: none;
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          z-index: 10;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: rgba(20, 20, 20, 0.85);
-          color: var(--color-text, #ccc);
-          align-items: center;
-          justify-content: center;
-          transition: all 0.2s ease;
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          backdrop-filter: blur(6px);
-          cursor: pointer;
-        }
-        @media (min-width: 1024px) {
-          .rs-arrow { display: flex; width: 48px; height: 48px; }
-        }
-        .rs-arrow:hover {
-          background: var(--color-cta-green, #b5e61d);
-          color: #0a0a0a;
-          border-color: var(--color-cta-green, #b5e61d);
-        }
-        .rs-arrow-prev {
-          left: -56px;
-        }
-        .rs-arrow-next {
-          right: -56px;
         }
       `}} />
     </div>
