@@ -211,7 +211,7 @@ export default function QuestSliderClient({ title, quests }: Props) {
           color: #0a0a0a;
           border-color: var(--color-cta-green, #b5e61d);
         }
-        .qc-arrow-prev { left: max(12px, calc((100vw - 1280px) / 2 - 4px)); }
+        .qc-arrow-prev { left: 16px; }
         .qc-arrow-next { right: 16px; }
         .qc-card {
           position: relative;
