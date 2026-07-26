@@ -107,7 +107,7 @@ export default function SliderTrack({ quests, cardRender }: Props) {
           display: none;
         }
         .st-arrow {
-          display: flex;
+          display: none;
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
@@ -125,7 +125,7 @@ export default function SliderTrack({ quests, cardRender }: Props) {
           cursor: pointer;
         }
         @media (min-width: 1024px) {
-          .st-arrow { width: 56px; height: 56px; }
+          .st-arrow { display: flex; width: 56px; height: 56px; }
         }
         .st-arrow:hover {
           background: var(--color-cta-green, #b5e61d);

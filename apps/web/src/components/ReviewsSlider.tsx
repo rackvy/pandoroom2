@@ -135,7 +135,7 @@ export default function ReviewsSlider({ reviews }: Props) {
           align-self: flex-start;
         }
         .rs-arrow {
-          display: flex;
+          display: none;
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
@@ -153,7 +153,7 @@ export default function ReviewsSlider({ reviews }: Props) {
           cursor: pointer;
         }
         @media (min-width: 1024px) {
-          .rs-arrow { width: 48px; height: 48px; }
+          .rs-arrow { display: flex; width: 48px; height: 48px; }
         }
         .rs-arrow:hover {
           background: var(--color-cta-green, #b5e61d);
