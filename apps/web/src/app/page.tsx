@@ -219,6 +219,7 @@ export default async function Home() {
       coverTitle: n.coverTitle || n.title,
       coverSub: n.coverSub || undefined,
       coverVariant: n.coverVariant || undefined,
+      image: n.image?.url || null,
       date: new Date(n.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
       title: n.title,
       text: n.content.substring(0, 100) + '...',
@@ -230,6 +231,7 @@ export default async function Home() {
     .map(b => ({
       id: b.id,
       cardBg: b.cardBg || 'linear-gradient(180deg, #1a1520 0%, #07080a 100%)',
+      image: b.image?.url || null,
       date: new Date(b.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
       title: b.title,
       text: (b.excerpt || b.content.replace(/<[^>]*>/g, '')).substring(0, 100) + '...',
@@ -411,23 +413,30 @@ export default async function Home() {
                   className={styles.newsCard}
                   style={{ '--card-bg': item.cardBg } as React.CSSProperties}
                 >
-                  <div
-                    className={`${styles.newsCardCover} ${
-                      item.coverVariant === 'discount' ? styles.newsCardCoverDiscount : ''
-                    }`}
-                  >
-                    <span className={styles.newsCardCoverTitle}>
-                      {item.coverTitle.split('\n').map((line, i) => (
-                        <span key={i}>
-                          {line}
-                          {i < item.coverTitle.split('\n').length - 1 && <br />}
-                        </span>
-                      ))}
-                      {item.coverSub && (
-                        <span className={styles.newsCardCoverSub}>{item.coverSub}</span>
-                      )}
-                    </span>
-                  </div>
+                  {item.image ? (
+                    <div
+                      className={styles.newsCardImage}
+                      style={{ backgroundImage: `url('${item.image}')` }}
+                    />
+                  ) : (
+                    <div
+                      className={`${styles.newsCardCover} ${
+                        item.coverVariant === 'discount' ? styles.newsCardCoverDiscount : ''
+                      }`}
+                    >
+                      <span className={styles.newsCardCoverTitle}>
+                        {item.coverTitle.split('\n').map((line, i) => (
+                          <span key={i}>
+                            {line}
+                            {i < item.coverTitle.split('\n').length - 1 && <br />}
+                          </span>
+                        ))}
+                        {item.coverSub && (
+                          <span className={styles.newsCardCoverSub}>{item.coverSub}</span>
+                        )}
+                      </span>
+                    </div>
+                  )}
                   <div className={styles.newsCardContent}>
                     <span className={styles.newsCardDate}>{item.date}</span>
                     <h3 className={styles.newsCardTitle}>{item.title}</h3>
@@ -454,11 +463,18 @@ export default async function Home() {
                     className={styles.newsCard}
                     style={{ '--card-bg': item.cardBg } as React.CSSProperties}
                   >
-                    <div className={styles.newsCardCover}>
-                      <span className={styles.newsCardCoverTitle}>
-                        {item.title}
-                      </span>
-                    </div>
+                    {item.image ? (
+                      <div
+                        className={styles.newsCardImage}
+                        style={{ backgroundImage: `url('${item.image}')` }}
+                      />
+                    ) : (
+                      <div className={styles.newsCardCover}>
+                        <span className={styles.newsCardCoverTitle}>
+                          {item.title}
+                        </span>
+                      </div>
+                    )}
                     <div className={styles.newsCardContent}>
                       <span className={styles.newsCardDate}>{item.date}</span>
                       <h3 className={styles.newsCardTitle}>{item.title}</h3>

@@ -843,6 +843,13 @@
     color: #ffffff;
 }
 
+.newsCardImage {
+    aspect-ratio: 16 / 11;
+    background-size: cover;
+    background-position: center;
+    background-color: #0a0a0a;
+}
+
 .newsCardCoverTitle {
     font-family: var(--font-heading);
     font-size: 22px;
