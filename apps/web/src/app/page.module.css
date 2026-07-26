@@ -813,9 +813,17 @@
 /* ==================== NEWS ==================== */
 
 .newsGrid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 22px;
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+}
+
+.newsGrid::-webkit-scrollbar {
+    display: none;
 }
 
 .newsCard {
@@ -826,6 +834,8 @@
     transition: transform var(--transition-base);
     display: flex;
     flex-direction: column;
+    flex: 0 0 280px;
+    scroll-snap-align: start;
 }
 
 .newsCard:hover {
@@ -926,7 +936,12 @@
 
 @media (min-width: 640px) {
     .newsGrid {
+        display: grid;
         grid-template-columns: repeat(2, 1fr);
+        gap: 22px;
+        overflow-x: visible;
+        scroll-snap-type: none;
+        padding-bottom: 0;
     }
 }
 
