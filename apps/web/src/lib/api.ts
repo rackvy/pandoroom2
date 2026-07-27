@@ -123,3 +123,27 @@ export interface AboutFact {
   text: string
   sortOrder: number
 }
+
+export interface TablePublic {
+  id: string
+  title: string
+  capacity?: number | null
+}
+
+export interface TableZonePublic {
+  id: string
+  branchId: string
+  key: 'CAFE' | 'LOUNGE' | 'KIDS'
+  name: string
+  tables: TablePublic[]
+}
+
+export interface IikoMenuItemPublic {
+  id: string
+  name: string
+  description?: string | null
+  category: string
+  price: number | null
+  imageUrl?: string | null
+  weight?: string | null
+}
