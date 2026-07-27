@@ -330,4 +330,48 @@ export class PublicService {
       clientName: booking.clientName,
     };
   }
+
+  // ==================== HOLIDAY BOOKING DATA ====================
+
+  async findPublicTables() {
+    const zones = await this.prisma.tableZone.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      include: {
+        tables: {
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+        },
+      },
+    });
+    return zones
+      .map((zone) => ({
+        id: zone.id,
+        branchId: zone.branchId,
+        key: zone.key,
+        name: zone.name,
+        tables: zone.tables.map((table) => ({
+          id: table.id,
+          title: table.title,
+          capacity: table.capacity,
+        })),
+      }))
+      .filter((zone) => zone.tables.length > 0);
+  }
+
+  async findPublicMenu() {
+    const items = await this.prisma.iikoMenuItem.findMany({
+      where: { isActive: true },
+      orderBy: [{ category: 'asc' }, { name: 'asc' }],
+    });
+    return items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      category: item.category,
+      price: convertDecimalToNumber(item.price),
+      imageUrl: item.imageUrl,
+      weight: item.weight,
+    }));
+  }
 }

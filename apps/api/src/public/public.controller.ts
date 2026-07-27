@@ -82,6 +82,18 @@ export class PublicController {
     return this.publicService.getVRGame(id);
   }
 
+  // ==================== HOLIDAY BOOKING DATA ====================
+
+  @Get('tables')
+  findPublicTables() {
+    return this.publicService.findPublicTables();
+  }
+
+  @Get('menu')
+  findPublicMenu() {
+    return this.publicService.findPublicMenu();
+  }
+
   // ==================== PUBLIC SCHEDULE ====================
 
   @Get('schedule/grid')
