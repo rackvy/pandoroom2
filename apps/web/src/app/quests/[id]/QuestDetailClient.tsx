@@ -268,20 +268,8 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
           </nav>
 
           <div className={styles.heroContent}>
-            {quest.previewImage?.url && (
-              <div className={styles.heroPoster}>
-                <Image
-                  src={quest.previewImage.url}
-                  alt={quest.previewImage.altText || quest.name}
-                  fill
-                  sizes="120px"
-                  priority
-                  className={styles.heroPosterImg}
-                />
-              </div>
-            )}
             <div className={styles.heroTextBlock}>
-              <h1 className={styles.heroTitle}>{quest.name}</h1>
+              <h1 className={`${styles.heroTitle} title-effect`}>{quest.name}</h1>
               {quest.subtitle && (
                 <p className={styles.heroSubtitle}>{quest.subtitle}</p>
               )}
