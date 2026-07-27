@@ -3,7 +3,7 @@
 /* ---- Hero ---- */
 .hero {
   position: relative;
-  min-height: 90vh;
+  min-height: max(70vh, 560px);
   display: flex;
   align-items: flex-end;
   padding: 0 0 248px;
@@ -12,14 +12,8 @@
 
 @media (min-width: 768px) {
   .hero {
-    min-height: 100vh;
+    min-height: max(70vh, 600px);
     padding-bottom: 256px;
-  }
-}
-
-@media (max-width: 767px) {
-  .hero {
-    min-height: 90vh;
   }
 }
 
