@@ -5,7 +5,7 @@
   position: relative;
   min-height: 90vh;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   padding: 0 0 48px;
   background-color: #0a0a0a;
 }
