@@ -516,3 +516,73 @@
   font-weight: 700;
   color: #fff;
 }
+
+/* ---- Sticky totals bar ---- */
+.summarySpacer {
+  height: 84px;
+}
+
+.summaryBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background-color: rgba(18, 18, 16, 0.96);
+  border-top: 1px solid rgba(181, 230, 29, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+.summaryInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.summaryInfo {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-width: 0;
+}
+
+.summaryCount {
+  font-size: 12px;
+  color: var(--color-text-muted, #999);
+  white-space: nowrap;
+}
+
+.summaryTotal {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-cta-green, #b5e61d);
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .summaryTotal {
+    font-size: 17px;
+  }
+}
+
+.summaryBtn {
+  background-color: var(--color-cta-green, #b5e61d);
+  color: #0a0a0a;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 26px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s;
+}
+
+.summaryBtn:hover {
+  background-color: #c5f52d;
+}

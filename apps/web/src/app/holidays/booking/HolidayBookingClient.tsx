@@ -44,13 +44,13 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
   const [comment, setComment] = useState('')
   const [showNotice, setShowNotice] = useState(false)
 
-  // ---- single-choice sections ----
-  const [selectedTable, setSelectedTable] = useState<string | null>(null)
-  const [selectedQuest, setSelectedQuest] = useState<string | null>(null)
-  const [selectedCake, setSelectedCake] = useState<string | null>(null)
-  const [selectedShow, setSelectedShow] = useState<string | null>(null)
-  const [selectedDecor, setSelectedDecor] = useState<string | null>(null)
-  const [selectedPack, setSelectedPack] = useState<string | null>(null)
+  // ---- multi-choice sections ----
+  const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set())
+  const [selectedQuests, setSelectedQuests] = useState<Set<string>>(new Set())
+  const [selectedCakes, setSelectedCakes] = useState<Set<string>>(new Set())
+  const [selectedShows, setSelectedShows] = useState<Set<string>>(new Set())
+  const [selectedDecors, setSelectedDecors] = useState<Set<string>>(new Set())
+  const [selectedPacks, setSelectedPacks] = useState<Set<string>>(new Set())
 
   // ---- menu quantities ----
   const [menuQty, setMenuQty] = useState<Record<string, number>>({})
@@ -66,16 +66,29 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
   )
   const [activeFoodCat, setActiveFoodCat] = useState<string>('Кухня')
 
-  const priceOf = (id: string | null, items: IikoMenuItemPublic[]) => {
-    if (!id) return 0
-    return items.find((i) => i.id === id)?.price ?? 0
+  const sumSet = (ids: Set<string>, items: IikoMenuItemPublic[]) => {
+    let sum = 0
+    ids.forEach((id) => {
+      sum += items.find((i) => i.id === id)?.price ?? 0
+    })
+    return sum
   }
 
+  const menuItemsCount = Object.values(menuQty).reduce((a, b) => a + b, 0)
+  const positionsCount =
+    selectedTables.size +
+    selectedQuests.size +
+    selectedCakes.size +
+    selectedShows.size +
+    selectedDecors.size +
+    selectedPacks.size +
+    menuItemsCount
+
   const total =
-    priceOf(selectedCake, cakes) +
-    priceOf(selectedShow, shows) +
-    priceOf(selectedDecor, decors) +
-    priceOf(selectedPack, packs) +
+    sumSet(selectedCakes, cakes) +
+    sumSet(selectedShows, shows) +
+    sumSet(selectedDecors, decors) +
+    sumSet(selectedPacks, packs) +
     foods.reduce((sum, item) => sum + (menuQty[item.id] || 0) * (item.price ?? 0), 0)
 
   const changeQty = (id: string, delta: number) => {
@@ -88,12 +101,11 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
     })
   }
 
-  const toggle = (
-    current: string | null,
-    setter: (v: string | null) => void,
-    id: string,
-  ) => {
-    setter(current === id ? null : id)
+  const toggleInSet = (setter: (v: Set<string>) => void, current: Set<string>, id: string) => {
+    const next = new Set(current)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setter(next)
   }
 
   const submitForm = () => {
@@ -114,7 +126,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
             праздник «под ключ» и&nbsp;свяжемся с&nbsp;вами для подтверждения.
           </p>
 
-          <div className={styles.formCard}>
+          <div className={styles.formCard} id="holiday-form">
             <div className={styles.formGrid}>
               <label className={styles.field}>
                 <span className={styles.fieldLabel}>Дата праздника</span>
@@ -205,13 +217,13 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                 <h3 className={styles.zoneTitle}>{ZONE_LABELS[zone.key] || zone.name}</h3>
                 <div className={styles.row}>
                   {zone.tables.map((table) => {
-                    const active = selectedTable === table.id
+                    const active = selectedTables.has(table.id)
                     return (
                       <button
                         key={table.id}
                         type="button"
                         className={`${styles.card} ${styles.tableCard} ${active ? styles.cardActive : ''}`}
-                        onClick={() => toggle(selectedTable, setSelectedTable, table.id)}
+                        onClick={() => toggleInSet(setSelectedTables, selectedTables, table.id)}
                       >
                         <span className={styles.tableIcon}>
                           <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -242,13 +254,13 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
             <h2 className={styles.sectionTitle}>Выберите квест</h2>
             <div className={styles.row}>
               {quests.map((quest) => {
-                const active = selectedQuest === quest.id
+                const active = selectedQuests.has(quest.id)
                 return (
                   <button
                     key={quest.id}
                     type="button"
                     className={`${styles.card} ${styles.productCard} ${active ? styles.cardActive : ''}`}
-                    onClick={() => toggle(selectedQuest, setSelectedQuest, quest.id)}
+                    onClick={() => toggleInSet(setSelectedQuests, selectedQuests, quest.id)}
                   >
                     <span className={styles.cardImgWrap}>
                       {quest.previewImage?.url ? (
@@ -288,13 +300,13 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
             <h2 className={styles.sectionTitle}>Выберите торт</h2>
             <div className={styles.row}>
               {cakes.map((cake) => {
-                const active = selectedCake === cake.id
+                const active = selectedCakes.has(cake.id)
                 return (
                   <button
                     key={cake.id}
                     type="button"
                     className={`${styles.card} ${styles.productCard} ${active ? styles.cardActive : ''}`}
-                    onClick={() => toggle(selectedCake, setSelectedCake, cake.id)}
+                    onClick={() => toggleInSet(setSelectedCakes, selectedCakes, cake.id)}
                   >
                     <span className={styles.cardImgWrap}>
                       {cake.imageUrl ? (
@@ -329,13 +341,13 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
             <h2 className={styles.sectionTitle}>Выберите шоу-программу</h2>
             <div className={styles.row}>
               {shows.map((show) => {
-                const active = selectedShow === show.id
+                const active = selectedShows.has(show.id)
                 return (
                   <button
                     key={show.id}
                     type="button"
                     className={`${styles.card} ${styles.productCard} ${active ? styles.cardActive : ''}`}
-                    onClick={() => toggle(selectedShow, setSelectedShow, show.id)}
+                    onClick={() => toggleInSet(setSelectedShows, selectedShows, show.id)}
                   >
                     <span className={styles.cardImgWrap}>
                       {show.imageUrl ? (
@@ -369,13 +381,13 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
             <h2 className={styles.sectionTitle}>Оформление праздника</h2>
             <div className={styles.row}>
               {decors.map((decor) => {
-                const active = selectedDecor === decor.id
+                const active = selectedDecors.has(decor.id)
                 return (
                   <button
                     key={decor.id}
                     type="button"
                     className={`${styles.card} ${styles.productCard} ${active ? styles.cardActive : ''}`}
-                    onClick={() => toggle(selectedDecor, setSelectedDecor, decor.id)}
+                    onClick={() => toggleInSet(setSelectedDecors, selectedDecors, decor.id)}
                   >
                     <span className={styles.cardImgWrap}>
                       {decor.imageUrl ? (
@@ -409,13 +421,13 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
             <h2 className={styles.sectionTitle}>Упаковка для праздника</h2>
             <div className={styles.row}>
               {packs.map((pack) => {
-                const active = selectedPack === pack.id
+                const active = selectedPacks.has(pack.id)
                 return (
                   <button
                     key={pack.id}
                     type="button"
                     className={`${styles.card} ${styles.productCard} ${active ? styles.cardActive : ''}`}
-                    onClick={() => toggle(selectedPack, setSelectedPack, pack.id)}
+                    onClick={() => toggleInSet(setSelectedPacks, selectedPacks, pack.id)}
                   >
                     <span className={styles.cardImgWrap}>
                       {pack.imageUrl ? (
@@ -521,6 +533,39 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
             </div>
           </div>
         </section>
+      )}
+
+      {/* ==================== STICKY TOTALS BAR ==================== */}
+      {positionsCount > 0 && (
+        <>
+          <div className={styles.summarySpacer} />
+          <div className={styles.summaryBar}>
+            <div className={`container ${styles.summaryInner}`}>
+              <div className={styles.summaryInfo}>
+                <span className={styles.summaryCount}>
+                  {positionsCount}{' '}
+                  {positionsCount === 1
+                    ? 'позиция'
+                    : positionsCount >= 2 && positionsCount <= 4
+                      ? 'позиции'
+                      : 'позиций'}
+                </span>
+                <span className={styles.summaryTotal}>
+                  Итого: {formatPrice(total)}
+                </span>
+              </div>
+              <button
+                type="button"
+                className={styles.summaryBtn}
+                onClick={() =>
+                  document.getElementById('holiday-form')?.scrollIntoView({ behavior: 'smooth' })
+                }
+              >
+                К оформлению
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </main>
   )
