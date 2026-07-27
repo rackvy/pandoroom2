@@ -3,17 +3,17 @@
 /* ---- Hero ---- */
 .hero {
   position: relative;
-  min-height: max(70vh, 560px);
+  min-height: max(75vh, 560px);
   display: flex;
   align-items: flex-end;
-  padding: 0 0 248px;
+  padding: 0 0 48px;
   background-color: #0a0a0a;
 }
 
 @media (min-width: 768px) {
   .hero {
-    min-height: max(70vh, 600px);
-    padding-bottom: 256px;
+    min-height: max(75vh, 600px);
+    padding-bottom: 56px;
   }
 }
 
