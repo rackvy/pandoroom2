@@ -189,9 +189,9 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
 
   /* Hero background */
   const heroBg = quest.backgroundImage?.url
-    ? quest.backgroundImage.url
+    ? `url('${quest.backgroundImage.url}')`
     : quest.previewImage?.url
-      ? quest.previewImage.url
+      ? `url('${quest.previewImage.url}')`
       : null
 
   const diff = difficultyMap[quest.difficulty] ?? 3
@@ -246,7 +246,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
         {heroBg && (
           <div className={styles.heroBg}>
             <Image
-              src={heroBg}
+              src={quest.backgroundImage?.url || quest.previewImage?.url || ''}
               alt={quest.backgroundImage?.altText || quest.previewImage?.altText || quest.name}
               fill
               sizes="100vw"
@@ -268,8 +268,20 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
           </nav>
 
           <div className={styles.heroContent}>
+            {quest.previewImage?.url && (
+              <div className={styles.heroPoster}>
+                <Image
+                  src={quest.previewImage.url}
+                  alt={quest.previewImage.altText || quest.name}
+                  fill
+                  sizes="120px"
+                  priority
+                  className={styles.heroPosterImg}
+                />
+              </div>
+            )}
             <div className={styles.heroTextBlock}>
-              <h1 className={`${styles.heroTitle} title-effect`}>{quest.name}</h1>
+              <h1 className={styles.heroTitle}>{quest.name}</h1>
               {quest.subtitle && (
                 <p className={styles.heroSubtitle}>{quest.subtitle}</p>
               )}
