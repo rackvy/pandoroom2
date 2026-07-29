@@ -89,6 +89,7 @@ type QuestCard = {
   tag: string
   tagVariant?: 'horror' | 'detective' | 'kids'
   difficulty: number
+  icon?: string
   duration: string
   players: string
   age: string
@@ -103,6 +104,7 @@ function mapQuest(q: Quest): QuestCard {
     tag: q.genre,
     tagVariant: getTagVariant(q.genre),
     difficulty: difficultyToLevel(q.difficulty),
+    icon: q.difficultyIcon || undefined,
     duration: formatDuration(q.durationMinutes),
     players: formatPlayers(q.minPlayers, q.maxPlayers),
     age: q.ageRestriction || '12+',
@@ -117,6 +119,7 @@ function mapVRGame(g: VRGame): SliderVRGameData {
     subtitle: g.subtitle || undefined,
     tag: g.genre || undefined,
     difficulty: difficultyToLevel(g.difficulty),
+    icon: g.difficultyIcon || undefined,
     duration: g.durationMinutes ? formatDuration(g.durationMinutes) : '',
     players: formatPlayers(g.minPlayers, g.maxPlayers),
     age: g.ageRestriction || '12+',

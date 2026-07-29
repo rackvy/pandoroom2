@@ -19,6 +19,7 @@ export interface Quest {
   subtitle?: string | null
   genre: string
   difficulty?: string | null
+  difficultyIcon?: string | null
   hasActors: boolean
   ageRestriction?: string | null
   durationMinutes: number
@@ -64,6 +65,7 @@ export interface VRGame {
   subtitle?: string | null
   genre?: string | null
   difficulty?: string | null
+  difficultyIcon?: string | null
   ageRestriction?: string | null
   durationMinutes?: number | null
   minPlayers: number

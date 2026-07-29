@@ -26,12 +26,12 @@ function difficultyNumber(d?: string | null): number {
   return difficultyMap[d ?? ''] ?? 3
 }
 
-function DifficultyDots({ level }: { level: number }) {
+function DifficultyDots({ level, icon = '🔥' }: { level: number; icon?: string | null }) {
   return (
     <span className={styles.qcardDifficulty} aria-label={`Сложность ${level} из 5`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={`${styles.qcardDot}${i > level ? ` ${styles.qcardDotOff}` : ''}`}>
-          {i <= level ? '🔥' : ''}
+          {i <= level ? icon : ''}
         </span>
       ))}
     </span>
@@ -448,7 +448,7 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                       <div className={styles.qcardBody}>
                         <h3 className={styles.qcardTitle}>{q.name}</h3>
                         <div className={styles.qcardMeta}>
-                          <DifficultyDots level={diff} />
+                          <DifficultyDots level={diff} icon={q.difficultyIcon} />
                           <span className={styles.qcardInfo}>{q.durationMinutes} мин</span>
                           <span className={styles.qcardInfo}>{q.minPlayers}-{q.maxPlayers} игроков</span>
                           <span className={styles.qcardInfo}>{q.ageRestriction || '12+'}</span>

@@ -13,6 +13,7 @@ export interface SliderVRGameData {
   subtitle?: string
   tag?: string
   difficulty: number
+  icon?: string
   duration: string
   players: string
   age: string
@@ -28,12 +29,12 @@ interface Props {
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
-function DifficultyDots({ level }: { level: number }) {
+function DifficultyDots({ level, icon = '🔥' }: { level: number; icon?: string | null }) {
   return (
     <span className="vrs-difficulty" aria-label={`Сложность ${level} из 5`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={i <= level ? 'vrs-dot' : 'vrs-dot vrs-dot-off'}>
-          {i <= level ? '🔥' : ''}
+          {i <= level ? icon : ''}
         </span>
       ))}
     </span>
@@ -103,7 +104,7 @@ export default function VRSliderClient({ title, games }: Props) {
                     {game.subtitle && <span className="vrs-sub">{game.subtitle}</span>}
                   </h3>
                   <div className="vrs-meta">
-                    <DifficultyDots level={game.difficulty} />
+                    <DifficultyDots level={game.difficulty} icon={game.icon} />
                     <span className="vrs-info">{game.duration}</span>
                     <span className="vrs-info">{game.players}</span>
                     <span className="vrs-info">{game.age}</span>

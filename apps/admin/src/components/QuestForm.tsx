@@ -7,6 +7,7 @@ import { getMediaUrl } from '../utils/media';
 import QuestScheduleEditor, { ScheduleSlot } from './QuestScheduleEditor';
 import RichTextEditor from './ui/RichTextEditor';
 import SeoSection from './ui/SeoSection';
+import DifficultyIconPicker from './ui/DifficultyIconPicker';
 import styles from './QuestForm.module.css';
 
 interface QuestFormProps {
@@ -29,6 +30,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     name: initialData?.name || '',
     genre: initialData?.genre || '',
     difficulty: initialData?.difficulty || '',
+    difficultyIcon: initialData?.difficultyIcon || '',
     minPlayers: initialData?.minPlayers || 2,
     maxPlayers: initialData?.maxPlayers || 6,
     maxExtraPlayers: initialData?.maxExtraPlayers ?? 2,
@@ -256,6 +258,14 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
+        </div>
+
+        <div className={styles.field}>
+          <label>Иконка сложности</label>
+          <DifficultyIconPicker
+            value={formData.difficultyIcon || ''}
+            onChange={(val) => handleChange('difficultyIcon', val)}
+          />
         </div>
 
         <div className={styles.field}>

@@ -150,6 +150,7 @@ model Quest {
   name              String
   genre             String
   difficulty        String?
+  difficultyIcon    String?
   hasActors         Boolean   @default(false)
   ageRestriction    String?
   subtitle          String?
@@ -817,6 +818,7 @@ model VRGame {
   description       String?  @db.Text
   genre             String?
   difficulty        String?
+  difficultyIcon    String?
   ageRestriction    String?
   subtitle          String?
   minPlayers        Int      @default(1)

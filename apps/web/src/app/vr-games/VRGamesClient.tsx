@@ -22,12 +22,12 @@ function difficultyNumber(d?: string | null): number {
   return difficultyMap[d ?? ''] ?? 3
 }
 
-function DifficultyDots({ level }: { level: number }) {
+function DifficultyDots({ level, icon = '🔥' }: { level: number; icon?: string | null }) {
   return (
     <span className={styles.qcardDifficulty} aria-label={`Сложность ${level} из 5`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={`${styles.qcardDot}${i > level ? ` ${styles.qcardDotOff}` : ''}`}>
-          {i <= level ? '🔥' : ''}
+          {i <= level ? icon : ''}
         </span>
       ))}
     </span>
@@ -120,7 +120,7 @@ export default function VRGamesClient({ games }: VRGamesClientProps) {
                     <div className={styles.qcardBody}>
                       <h3 className={styles.qcardTitle}>{g.name}</h3>
                       <div className={styles.qcardMeta}>
-                        <DifficultyDots level={diff} />
+                        <DifficultyDots level={diff} icon={g.difficultyIcon} />
                         {g.durationMinutes && (
                           <span className={styles.qcardInfo}>{g.durationMinutes} мин</span>
                         )}

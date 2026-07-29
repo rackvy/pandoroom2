@@ -127,6 +127,7 @@ export interface Quest {
   name: string;
   genre: string;
   difficulty?: string | null;
+  difficultyIcon?: string | null;
   address?: string | null;
   minPlayers: number;
   maxPlayers: number;
@@ -203,6 +204,7 @@ export interface VRGame {
   description: string | null;
   genre: string | null;
   difficulty: string | null;
+  difficultyIcon: string | null;
   ageRestriction: string | null;
   subtitle: string | null;
   minPlayers: number;

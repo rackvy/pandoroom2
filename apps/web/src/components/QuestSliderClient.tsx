@@ -14,6 +14,7 @@ export interface SliderQuestData {
   tag: string
   tagVariant?: 'horror' | 'detective' | 'kids'
   difficulty: number
+  icon?: string
   duration: string
   players: string
   age: string
@@ -36,12 +37,12 @@ function tagClass(variant?: string): string {
   return 'qc-tag'
 }
 
-function DifficultyDots({ level }: { level: number }) {
+function DifficultyDots({ level, icon = '🔥' }: { level: number; icon?: string | null }) {
   return (
     <span className="qc-difficulty" aria-label={`Сложность ${level} из 5`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={i <= level ? 'qc-dot' : 'qc-dot qc-dot-off'}>
-          {i <= level ? '🔥' : ''}
+          {i <= level ? icon : ''}
         </span>
       ))}
     </span>
@@ -101,7 +102,7 @@ export default function QuestSliderClient({ title, quests }: Props) {
                     {quest.subtitle && <span className="qc-sub">{quest.subtitle}</span>}
                   </h3>
                   <div className="qc-meta">
-                    <DifficultyDots level={quest.difficulty} />
+                    <DifficultyDots level={quest.difficulty} icon={quest.icon} />
                     <span className="qc-info">{quest.duration}</span>
                     <span className="qc-info">{quest.players}</span>
                     <span className="qc-info">{quest.age}</span>

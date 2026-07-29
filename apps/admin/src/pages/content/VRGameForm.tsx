@@ -15,6 +15,7 @@ import { getMediaUrl } from '../../utils/media';
 import { toast } from '../../components/ui/Toast';
 import RichTextEditor from '../../components/ui/RichTextEditor';
 import SeoSection from '../../components/ui/SeoSection';
+import DifficultyIconPicker from '../../components/ui/DifficultyIconPicker';
 import pageStyles from './Form.module.css';
 import styles from '../../components/QuestForm.module.css';
 
@@ -37,6 +38,7 @@ export default function VRGameForm() {
     description: null,
     genre: null,
     difficulty: null,
+    difficultyIcon: null,
     ageRestriction: null,
     subtitle: null,
     minPlayers: 1,
@@ -108,6 +110,7 @@ export default function VRGameForm() {
         description: game.description,
         genre: game.genre,
         difficulty: game.difficulty,
+        difficultyIcon: game.difficultyIcon,
         ageRestriction: game.ageRestriction,
         subtitle: game.subtitle,
         minPlayers: game.minPlayers,
@@ -359,6 +362,14 @@ export default function VRGameForm() {
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
+          </div>
+
+          <div className={styles.field}>
+            <label>Иконка сложности</label>
+            <DifficultyIconPicker
+              value={formData.difficultyIcon || ''}
+              onChange={(val) => handleChange('difficultyIcon', val || null)}
+            />
           </div>
 
           <div className={styles.field}>
