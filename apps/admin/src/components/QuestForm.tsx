@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Quest, CreateQuestData, Branch } from '../api/catalog';
+import { Quest, CreateQuestData, Branch, ContentSection } from '../api/catalog';
 import { getBranches } from '../api/catalog';
 import { getAgeRestrictions } from '../api/content';
 import { uploadMedia, Media } from '../api/media';
@@ -32,17 +32,15 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     name: initialData?.name || '',
     genre: initialData?.genre || '',
     difficulty: initialData?.difficulty || 'medium',
-    address: initialData?.address || '',
     minPlayers: initialData?.minPlayers || 2,
     maxPlayers: initialData?.maxPlayers || 6,
     maxExtraPlayers: initialData?.maxExtraPlayers ?? 2,
     durationMinutes: initialData?.durationMinutes || 60,
     previewImageId: initialData?.previewImageId || null,
     backgroundImageId: initialData?.backgroundImageId || null,
-    description: initialData?.description || '',
-    rules: initialData?.rules || '',
-    safety: initialData?.safety || '',
-    extraServices: initialData?.extraServices || '',
+    contentSections: initialData?.contentSections?.length
+      ? initialData.contentSections.map(s => ({ title: s.title, text: s.text }))
+      : [{ title: '', text: '' }],
     extraPlayerPrice: initialData?.extraPlayerPrice || 0,
     allowAnimator: initialData?.allowAnimator ?? true,
     animatorPrice: initialData?.animatorPrice || 0,
@@ -93,6 +91,29 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
   const handleNumberChange = (field: keyof CreateQuestData, value: string) => {
     const num = parseInt(value) || 0;
     handleChange(field, num);
+  };
+
+  const updateSection = (index: number, patch: Partial<ContentSection>) => {
+    setFormData(prev => ({
+      ...prev,
+      contentSections: (prev.contentSections || []).map((s, i) =>
+        i === index ? { ...s, ...patch } : s
+      ),
+    }));
+  };
+
+  const addSection = () => {
+    setFormData(prev => ({
+      ...prev,
+      contentSections: [...(prev.contentSections || []), { title: '', text: '' }],
+    }));
+  };
+
+  const removeSection = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      contentSections: (prev.contentSections || []).filter((_, i) => i !== index),
+    }));
   };
 
   const handlePreviewImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,16 +378,6 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
         </div>
       </div>
 
-      <div className={styles.field}>
-        <label htmlFor="address">Адрес</label>
-        <input
-          id="address"
-          type="text"
-          value={formData.address}
-          onChange={(e) => handleChange('address', e.target.value)}
-        />
-      </div>
-
       <div className={styles.imagesSection}>
         <h3>Изображения</h3>
         
@@ -450,41 +461,41 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
       </div>
 
       <div className={styles.textareas}>
-        <div className={styles.field}>
-          <label htmlFor="description">Описание</label>
-          <RichTextEditor
-            value={formData.description || ''}
-            onChange={(val) => handleChange('description', val)}
-            minHeight={120}
-          />
+        <div className={styles.sectionsHeader}>
+          <h3>Контент (табы на странице квеста)</h3>
+          <span className={styles.sectionsHint}>Каждая секция — это отдельный таб. Название секции станет заголовком таба.</span>
         </div>
 
-        <div className={styles.field}>
-          <label htmlFor="rules">Правила</label>
-          <RichTextEditor
-            value={formData.rules || ''}
-            onChange={(val) => handleChange('rules', val)}
-            minHeight={100}
-          />
-        </div>
+        {(formData.contentSections || []).map((section, index) => (
+          <div key={index} className={styles.contentSection}>
+            <div className={styles.contentSectionTop}>
+              <input
+                type="text"
+                placeholder={`Название секции ${index + 1} (например: Описание, Правила)`}
+                value={section.title}
+                onChange={(e) => updateSection(index, { title: e.target.value })}
+                className={styles.sectionTitleInput}
+              />
+              <button
+                type="button"
+                className={styles.removeSectionButton}
+                onClick={() => removeSection(index)}
+                title="Удалить секцию"
+              >
+                ×
+              </button>
+            </div>
+            <RichTextEditor
+              value={section.text}
+              onChange={(val) => updateSection(index, { text: val })}
+              minHeight={100}
+            />
+          </div>
+        ))}
 
-        <div className={styles.field}>
-          <label htmlFor="safety">Безопасность</label>
-          <RichTextEditor
-            value={formData.safety || ''}
-            onChange={(val) => handleChange('safety', val)}
-            minHeight={100}
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="extraServices">Доп. услуги</label>
-          <RichTextEditor
-            value={formData.extraServices || ''}
-            onChange={(val) => handleChange('extraServices', val)}
-            minHeight={100}
-          />
-        </div>
+        <button type="button" className={styles.addSectionButton} onClick={addSection}>
+          + Добавить ещё
+        </button>
       </div>
 
       {/* Schedule Editor - only for new quests */}

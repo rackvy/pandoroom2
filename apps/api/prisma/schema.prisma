@@ -155,17 +155,18 @@ model Quest {
   hasActors         Boolean   @default(false)
   ageRestriction    String?
   subtitle          String?
-  address           String
+  address           String?
   minPlayers        Int
   maxPlayers        Int
   maxExtraPlayers   Int       @default(2)
   durationMinutes   Int
   previewImageId    String?
   backgroundImageId String?
-  description       String    @db.Text
-  rules             String    @db.Text
-  safety            String    @db.Text
-  extraServices     String    @db.Text
+  description       String?   @db.Text
+  rules             String?   @db.Text
+  safety            String?   @db.Text
+  extraServices     String?   @db.Text
+  contentSections   Json?
   extraPlayerPrice  Int       @default(0)
   allowAnimator      Boolean   @default(true)
   animatorPrice      Int       @default(0)

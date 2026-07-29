@@ -25,7 +25,7 @@ export interface Quest {
   minPlayers: number
   maxPlayers: number
   maxExtraPlayers: number
-  address: string
+  address?: string | null
   extraPlayerPrice: number
   allowAnimator: boolean
   animatorPrice: number
@@ -39,13 +39,19 @@ export interface QuestGalleryPhoto {
   image: { id: string; url: string; altText?: string | null }
 }
 
+export interface ContentSection {
+  title: string
+  text: string
+}
+
 export interface QuestDetail extends Quest {
-  description: string
-  rules: string
-  safety: string
-  extraServices: string
+  description?: string | null
+  rules?: string | null
+  safety?: string | null
+  extraServices?: string | null
+  contentSections?: ContentSection[] | null
   galleryPhotos: QuestGalleryPhoto[]
-  branch: { id: string; name: string; address?: string | null }
+  branch: { id: string; name: string; address?: string | null; geoLat?: number | null; geoLng?: number | null }
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null

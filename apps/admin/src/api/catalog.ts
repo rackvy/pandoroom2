@@ -116,13 +116,18 @@ export interface QuestGalleryPhoto {
   };
 }
 
+export interface ContentSection {
+  title: string;
+  text: string;
+}
+
 export interface Quest {
   id: string;
   branchId: string;
   name: string;
   genre: string;
   difficulty: 'easy' | 'medium' | 'hard';
-  address: string;
+  address?: string | null;
   minPlayers: number;
   maxPlayers: number;
   maxExtraPlayers: number;
@@ -133,6 +138,7 @@ export interface Quest {
   rules: string;
   safety: string;
   extraServices: string;
+  contentSections?: ContentSection[] | null;
   extraPlayerPrice: number;
   allowAnimator: boolean;
   animatorPrice: number;
@@ -158,8 +164,9 @@ export interface Quest {
   galleryPhotos: QuestGalleryPhoto[];
 }
 
-export type CreateQuestData = Omit<Quest, 'id' | 'branch' | 'previewImage' | 'backgroundImage' | 'galleryPhotos'> & {
+export type CreateQuestData = Omit<Quest, 'id' | 'branch' | 'previewImage' | 'backgroundImage' | 'galleryPhotos' | 'description' | 'rules' | 'safety' | 'extraServices'> & {
   galleryPhotoIds?: string[];
+  contentSections?: ContentSection[];
 };
 
 export type UpdateQuestData = Partial<CreateQuestData>;

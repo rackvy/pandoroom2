@@ -84,7 +84,7 @@ interface QuestDetailClientProps {
 }
 
 export default function QuestDetailClient({ quest, news = [] }: QuestDetailClientProps) {
-  const [activeTab, setActiveTab] = useState('description')
+  const [activeTab, setActiveTab] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [bookingOpen, setBookingOpen] = useState(false)
@@ -171,21 +171,19 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
     return h < nowH || (h === nowH && m <= nowM)
   }, [now])
 
-  /* Tabs definition */
-  const tabs = [
-    { key: 'description', label: 'Описание' },
-    { key: 'rules', label: 'Правила' },
-    { key: 'safety', label: 'Безопасность' },
-    { key: 'extras', label: 'Доп. услуги' },
-  ]
+  /* Dynamic content sections (tabs) */
+  const sections = useMemo(
+    () => (quest.contentSections || []).filter((s) => (s.title && s.title.trim()) || (s.text && s.text.trim())),
+    [quest.contentSections]
+  )
 
-  /* Tab content mapping */
-  const tabContent: Record<string, string> = {
-    description: quest.description,
-    rules: quest.rules,
-    safety: quest.safety,
-    extras: quest.extraServices,
-  }
+  /* Branch address + Yandex Maps link */
+  const branchAddress = quest.branch?.address || quest.address || ''
+  const mapsUrl = quest.branch?.geoLat != null && quest.branch?.geoLng != null
+    ? `https://yandex.ru/maps/?pt=${quest.branch.geoLng},${quest.branch.geoLat}&z=17&l=map`
+    : branchAddress
+      ? `https://yandex.ru/maps/?text=${encodeURIComponent(branchAddress)}`
+      : null
 
   /* Hero background */
   const heroBg = quest.backgroundImage?.url
@@ -197,8 +195,8 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
   const diff = difficultyMap[quest.difficulty] ?? 3
 
   /* Tab switching */
-  const handleTabClick = (tabKey: string) => {
-    setActiveTab(tabKey)
+  const handleTabClick = (index: number) => {
+    setActiveTab(index)
   }
 
   /* Lightbox */
@@ -354,29 +352,29 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
           <h2 className={styles.sectionTitle}>О квесте</h2>
 
           <div className={styles.tabs}>
-            {tabs.map((tab) => (
+            {sections.map((section, index) => (
               <button
-                key={tab.key}
-                className={`${styles.tabBtn}${activeTab === tab.key ? ` ${styles.tabBtnActive}` : ''}`}
-                onClick={() => handleTabClick(tab.key)}
+                key={index}
+                className={`${styles.tabBtn}${activeTab === index ? ` ${styles.tabBtnActive}` : ''}`}
+                onClick={() => handleTabClick(index)}
               >
-                {tab.label}
+                {section.title || `Раздел ${index + 1}`}
               </button>
             ))}
           </div>
 
           <div className={styles.content}>
             <div className={styles.contentMain}>
-              {tabs.map((tab) => (
+              {sections.map((section, index) => (
                 <div
-                  key={tab.key}
-                  className={`${styles.tabPanel}${activeTab === tab.key ? ` ${styles.tabPanelActive}` : ''}`}
+                  key={index}
+                  className={`${styles.tabPanel}${activeTab === index ? ` ${styles.tabPanelActive}` : ''}`}
                 >
-                  {tabContent[tab.key]
+                  {section.text
                     ? (
                         <div
                           className={styles.tabHtml}
-                          dangerouslySetInnerHTML={{ __html: tabContent[tab.key] }}
+                          dangerouslySetInnerHTML={{ __html: section.text }}
                         />
                       )
                     : <p className={styles.noContent}>Информация отсутствует</p>
@@ -418,14 +416,24 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                     <span className={styles.specValue}>{quest.genre}</span>
                   </div>
                   <div className={styles.spec}>
-                    <span className={styles.specLabel}>Адрес</span>
-                    <span className={styles.specValue}>{quest.address}</span>
-                  </div>
-                  <div className={styles.spec}>
                     <span className={styles.specLabel}>Доп. игрок</span>
                     <span className={styles.specValue}>{quest.extraPlayerPrice} ₽</span>
                   </div>
                 </div>
+
+                {branchAddress && mapsUrl && (
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.addressLink}
+                    title="Открыть в Яндекс.Картах и проложить маршрут"
+                  >
+                    <span className={styles.addressLinkLabel}>Адрес</span>
+                    <span className={styles.addressLinkValue}>{branchAddress}</span>
+                    <span className={styles.addressLinkIcon} aria-hidden="true">↗</span>
+                  </a>
+                )}
               </div>
             </aside>
           </div>

@@ -211,6 +211,92 @@
   gap: 16px;
 }
 
+.sectionsHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sectionsHeader h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #1A1A18;
+}
+
+.sectionsHint {
+  font-size: 12px;
+  color: #999;
+}
+
+.contentSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #F9F9F9;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.contentSectionTop {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sectionTitleInput {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #E5E5E5;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.sectionTitleInput:focus {
+  outline: none;
+  border-color: #A0BF39;
+}
+
+.removeSectionButton {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: #FF4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.2s;
+}
+
+.removeSectionButton:hover {
+  background: #CC0000;
+}
+
+.addSectionButton {
+  align-self: flex-start;
+  padding: 10px 20px;
+  border: 2px dashed #CCC;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.addSectionButton:hover {
+  border-color: #A0BF39;
+  color: #A0BF39;
+}
+
 .actions {
   display: flex;
   gap: 12px;

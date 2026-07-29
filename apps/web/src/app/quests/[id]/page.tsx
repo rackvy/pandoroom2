@@ -7,9 +7,11 @@ export const dynamic = 'force-dynamic'
 export async function generateMetadata({ params }: { params: { id: string } }) {
   try {
     const quest: QuestDetail = await fetchApi(`/quests/${params.id}`)
+    const firstSectionText = quest.contentSections?.[0]?.text?.replace(/<[^>]*>/g, '').trim() || ''
+    const fallbackDescription = firstSectionText || (quest.description || '').replace(/<[^>]*>/g, '').trim()
     return {
       title: quest.seoTitle || `PANDOROOM — ${quest.name}`,
-      description: quest.seoDescription || quest.description.slice(0, 160),
+      description: quest.seoDescription || fallbackDescription.slice(0, 160),
       ...(quest.seoKeywords ? { keywords: quest.seoKeywords } : {}),
     }
   } catch {
