@@ -546,6 +546,12 @@
   gap: 2px;
 }
 
+.scheduleDayRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
 .scheduleDay {
   font-family: var(--font-heading);
   font-size: 26px;

@@ -474,8 +474,10 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
                 return (
                   <div key={dateKey} className={`${styles.scheduleRow}${weekend ? ` ${styles.scheduleRowWeekend}` : ''}`}>
                     <div className={styles.scheduleDate}>
-                      <span className={styles.scheduleDay}>{dayNum}</span>
-                      <span className={styles.scheduleMonth}>/ {monthNum}</span>
+                      <span className={styles.scheduleDayRow}>
+                        <span className={styles.scheduleDay}>{dayNum}</span>
+                        <span className={styles.scheduleMonth}>/ {monthNum}</span>
+                      </span>
                       <span className={styles.scheduleWeekday}>{WEEKDAY_FULL[dayIdx]}</span>
                     </div>
                     <div className={styles.scheduleSlots}>
