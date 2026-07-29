@@ -17,10 +17,13 @@ const difficultyMap: Record<string, number> = {
   easy: 1,
   medium: 3,
   hard: 5,
+  'Легкий': 1,
+  'Средний': 3,
+  'Сложный': 5,
 }
 
-function difficultyNumber(d: string): number {
-  return difficultyMap[d] ?? 3
+function difficultyNumber(d?: string | null): number {
+  return difficultyMap[d ?? ''] ?? 3
 }
 
 function DifficultyDots({ level }: { level: number }) {
@@ -99,9 +102,9 @@ interface QuestSchedule {
 const difficultyFilters = ['Все квесты', 'Легкий', 'Средний', 'Сложный']
 const difficultyFilterMap: Record<string, string | null> = {
   'Все квесты': null,
-  'Легкий': 'easy',
-  'Средний': 'medium',
-  'Сложный': 'hard',
+  'Легкий': 'Легкий',
+  'Средний': 'Средний',
+  'Сложный': 'Сложный',
 }
 
 const genres = [

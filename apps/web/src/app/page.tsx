@@ -51,8 +51,11 @@ async function getHomeBlocks() {
 
 /* ==================== MAPPING HELPERS ==================== */
 
-function difficultyToLevel(d: string): number {
-  return d === 'easy' ? 1 : d === 'medium' ? 3 : 5
+function difficultyToLevel(d?: string | null): number {
+  if (d === 'easy' || d === 'Легкий') return 1
+  if (d === 'medium' || d === 'Средний') return 3
+  if (d === 'hard' || d === 'Сложный') return 5
+  return 3
 }
 
 function formatDuration(mins: number): string {

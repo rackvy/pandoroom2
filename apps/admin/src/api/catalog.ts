@@ -126,7 +126,7 @@ export interface Quest {
   branchId: string;
   name: string;
   genre: string;
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty?: string | null;
   address?: string | null;
   minPlayers: number;
   maxPlayers: number;

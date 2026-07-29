@@ -33,6 +33,7 @@ import DecorationForm from './pages/content/DecorationForm'
 import IikoMenuPage from './pages/reference/IikoMenuPage'
 import NotificationTemplatesPage from './pages/reference/NotificationTemplatesPage'
 import AgeRestrictionsPage from './pages/reference/AgeRestrictionsPage'
+import DifficultiesPage from './pages/reference/DifficultiesPage'
 import VRGamesListPage from './pages/content/VRGamesListPage'
 import VRGameForm from './pages/content/VRGameForm'
 import ReferenceLayout from './pages/reference/ReferenceLayout'
@@ -113,6 +114,7 @@ function AppRoutes() {
           <Route path="iiko-menu" element={<IikoMenuPage />} />
           <Route path="notification-templates" element={<NotificationTemplatesPage />} />
           <Route path="age-restrictions" element={<AgeRestrictionsPage />} />
+          <Route path="difficulties" element={<DifficultiesPage />} />
         </Route>
         <Route path="employees" element={<EmployeesPage />} />
         <Route path="chat" element={<ChatPage />} />

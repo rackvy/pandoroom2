@@ -9,12 +9,6 @@ datasource db {
 
 // ==================== ENUMS ====================
 
-enum Difficulty {
-  easy
-  medium
-  hard
-}
-
 enum PageKey {
   HOME
   PARTY_GUIDE
@@ -151,7 +145,7 @@ model Quest {
   branchId          String
   name              String
   genre             String
-  difficulty        Difficulty
+  difficulty        String?
   hasActors         Boolean   @default(false)
   ageRestriction    String?
   subtitle          String?
@@ -394,6 +388,14 @@ model Decoration {
 }
 
 model AgeRestriction {
+  id        String   @id @default(uuid())
+  value     String   @unique
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Difficulty {
   id        String   @id @default(uuid())
   value     String   @unique
   sortOrder Int      @default(0)

@@ -23,6 +23,9 @@ const difficultyMap: Record<string, number> = {
   easy: 1,
   medium: 3,
   hard: 5,
+  'Легкий': 1,
+  'Средний': 3,
+  'Сложный': 5,
 }
 
 function DifficultyDots({ level }: { level: number }) {
@@ -192,7 +195,7 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
       ? `url('${quest.previewImage.url}')`
       : null
 
-  const diff = difficultyMap[quest.difficulty] ?? 3
+  const diff = difficultyMap[quest.difficulty ?? ''] ?? 3
 
   /* Tab switching */
   const handleTabClick = (index: number) => {
@@ -387,10 +390,12 @@ export default function QuestDetailClient({ quest, news = [] }: QuestDetailClien
               <div className={styles.sidebarCard}>
                 <h3 className={styles.sidebarTitle}>Характеристики</h3>
                 <div className={styles.specs}>
-                  <div className={styles.spec}>
-                    <span className={styles.specLabel}>Сложность</span>
-                    <span className={styles.specValue}>{difficultyLabels[quest.difficulty] || quest.difficulty}</span>
-                  </div>
+                  {quest.difficulty && (
+                    <div className={styles.spec}>
+                      <span className={styles.specLabel}>Сложность</span>
+                      <span className={styles.specValue}>{difficultyLabels[quest.difficulty] || quest.difficulty}</span>
+                    </div>
+                  )}
                   <div className={styles.spec}>
                     <span className={styles.specLabel}>С актёрами</span>
                     <span className={styles.specValue}>{quest.hasActors ? 'Да' : 'Нет'}</span>

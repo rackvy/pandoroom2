@@ -16,6 +16,9 @@ const difficultyClasses: Record<string, string> = {
   easy: styles['difficulty-easy'],
   medium: styles['difficulty-medium'],
   hard: styles['difficulty-hard'],
+  'Легкий': styles['difficulty-easy'],
+  'Средний': styles['difficulty-medium'],
+  'Сложный': styles['difficulty-hard'],
 };
 
 export default function QuestsListPage() {
@@ -158,8 +161,8 @@ export default function QuestsListPage() {
                 </td>
                 <td>{quest.branch?.name || '-'}</td>
                 <td>
-                  <span className={`${styles.difficulty} ${difficultyClasses[quest.difficulty]}`}>
-                    {difficultyLabels[quest.difficulty]}
+                  <span className={`${styles.difficulty} ${difficultyClasses[quest.difficulty ?? ''] || ''}`}>
+                    {difficultyLabels[quest.difficulty ?? ''] || quest.difficulty || '—'}
                   </span>
                 </td>
                 <td className={styles.players}>

@@ -457,6 +457,36 @@ export async function deleteAgeRestriction(id: string): Promise<void> {
   await api.delete(`/api/admin/catalog/age-restrictions/${id}`);
 }
 
+// ==================== DIFFICULTIES ====================
+
+export interface Difficulty {
+  id: string;
+  value: string;
+  sortOrder: number;
+}
+
+export async function getDifficulties(): Promise<Difficulty[]> {
+  const response = await api.get('/api/admin/catalog/difficulties');
+  return response.data;
+}
+
+export async function createDifficulty(data: { value: string }): Promise<Difficulty> {
+  const response = await api.post('/api/admin/catalog/difficulties', data);
+  return response.data;
+}
+
+export async function updateDifficulty(
+  id: string,
+  data: { value?: string; sortOrder?: number }
+): Promise<Difficulty> {
+  const response = await api.patch(`/api/admin/catalog/difficulties/${id}`, data);
+  return response.data;
+}
+
+export async function deleteDifficulty(id: string): Promise<void> {
+  await api.delete(`/api/admin/catalog/difficulties/${id}`);
+}
+
 // ==================== PAGE BLOCKS ====================
 
 export type PageKey = 'HOME' | 'PARTY_GUIDE' | 'PARTY_GUIDE_KIDS' | 'PARTY_GUIDE_6_10' | 'PARTY_GUIDE_10_15' | 'CAFE' | 'CAFE_KAFE' | 'CAFE_LOUNGE' | 'CAFE_KIDS';

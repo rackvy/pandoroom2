@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Quest, CreateQuestData, Branch, ContentSection } from '../api/catalog';
 import { getBranches } from '../api/catalog';
-import { getAgeRestrictions } from '../api/content';
+import { getAgeRestrictions, getDifficulties } from '../api/content';
 import { uploadMedia, Media } from '../api/media';
 import { getMediaUrl } from '../utils/media';
 import QuestScheduleEditor, { ScheduleSlot } from './QuestScheduleEditor';
@@ -16,22 +16,19 @@ interface QuestFormProps {
   isSubmitting?: boolean;
 }
 
-const DIFFICULTY_OPTIONS = [
-  { value: 'easy', label: 'Легкий' },
-  { value: 'medium', label: 'Средний' },
-  { value: 'hard', label: 'Сложный' },
-];
-
 export default function QuestForm({ initialData, onSubmit, onCancel, isSubmitting }: QuestFormProps) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [ageOptions, setAgeOptions] = useState<{ value: string; label: string }[]>([
     { value: '', label: 'Без ограничений' },
   ]);
+  const [difficultyOptions, setDifficultyOptions] = useState<{ value: string; label: string }[]>([
+    { value: '', label: 'Не указана' },
+  ]);
   const [formData, setFormData] = useState<CreateQuestData>({
     branchId: initialData?.branchId || '',
     name: initialData?.name || '',
     genre: initialData?.genre || '',
-    difficulty: initialData?.difficulty || 'medium',
+    difficulty: initialData?.difficulty || '',
     minPlayers: initialData?.minPlayers || 2,
     maxPlayers: initialData?.maxPlayers || 6,
     maxExtraPlayers: initialData?.maxExtraPlayers ?? 2,
@@ -80,6 +77,19 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
           opts.push({ value: current, label: current });
         }
         setAgeOptions(opts);
+      })
+      .catch(console.error);
+    getDifficulties()
+      .then((items) => {
+        const opts = [
+          { value: '', label: 'Не указана' },
+          ...items.map((item) => ({ value: item.value, label: item.value })),
+        ];
+        const current = initialData?.difficulty || '';
+        if (current && !opts.some((o) => o.value === current)) {
+          opts.push({ value: current, label: current });
+        }
+        setDifficultyOptions(opts);
       })
       .catch(console.error);
   }, []);
@@ -239,10 +249,10 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
           <label htmlFor="difficulty">Сложность</label>
           <select
             id="difficulty"
-            value={formData.difficulty}
+            value={formData.difficulty || ''}
             onChange={(e) => handleChange('difficulty', e.target.value)}
           >
-            {DIFFICULTY_OPTIONS.map(opt => (
+            {difficultyOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>

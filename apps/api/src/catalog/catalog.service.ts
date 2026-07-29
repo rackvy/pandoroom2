@@ -371,6 +371,54 @@ export class CatalogService {
     return { message: 'Возрастное ограничение удалено' };
   }
 
+  // ==================== DIFFICULTIES ====================
+  async findAllDifficulties() {
+    return this.prisma.difficulty.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { value: 'asc' }],
+    });
+  }
+
+  async findOneDifficulty(id: string) {
+    const item = await this.prisma.difficulty.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Сложность не найдена');
+    return item;
+  }
+
+  async createDifficulty(data: any) {
+    const value = String(data.value ?? '').trim();
+    if (!value) throw new BadRequestException('Укажите значение');
+
+    const exists = await this.prisma.difficulty.findUnique({ where: { value } });
+    if (exists) throw new BadRequestException('Такое значение уже есть');
+
+    const max = await this.prisma.difficulty.aggregate({ _max: { sortOrder: true } });
+    return this.prisma.difficulty.create({
+      data: { value, sortOrder: (max._max.sortOrder ?? -1) + 1 },
+    });
+  }
+
+  async updateDifficulty(id: string, data: any) {
+    await this.findOneDifficulty(id);
+
+    const update: any = {};
+    if (data.value !== undefined) {
+      const value = String(data.value).trim();
+      if (!value) throw new BadRequestException('Укажите значение');
+      const dup = await this.prisma.difficulty.findUnique({ where: { value } });
+      if (dup && dup.id !== id) throw new BadRequestException('Такое значение уже есть');
+      update.value = value;
+    }
+    if (data.sortOrder !== undefined) update.sortOrder = data.sortOrder;
+
+    return this.prisma.difficulty.update({ where: { id }, data: update });
+  }
+
+  async removeDifficulty(id: string) {
+    await this.findOneDifficulty(id);
+    await this.prisma.difficulty.delete({ where: { id } });
+    return { message: 'Сложность удалена' };
+  }
+
   // ==================== TABLE ZONES ====================
   async findZonesByBranch(branchId: string) {
     return this.prisma.tableZone.findMany({

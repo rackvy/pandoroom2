@@ -218,6 +218,30 @@ export class CatalogController {
     return this.catalogService.removeAgeRestriction(id);
   }
 
+  // ==================== DIFFICULTIES ====================
+  @Get('difficulties')
+  findAllDifficulties() {
+    return this.catalogService.findAllDifficulties();
+  }
+
+  @Post('difficulties')
+  @Roles(EmployeeRole.ADMIN)
+  createDifficulty(@Body() data: any) {
+    return this.catalogService.createDifficulty(data);
+  }
+
+  @Patch('difficulties/:id')
+  @Roles(EmployeeRole.ADMIN)
+  updateDifficulty(@Param('id') id: string, @Body() data: any) {
+    return this.catalogService.updateDifficulty(id, data);
+  }
+
+  @Delete('difficulties/:id')
+  @Roles(EmployeeRole.ADMIN)
+  removeDifficulty(@Param('id') id: string) {
+    return this.catalogService.removeDifficulty(id);
+  }
+
   // ==================== TABLE ZONES ====================
   @Get('branches/:branchId/zones')
   findZonesByBranch(@Param('branchId') branchId: string) {

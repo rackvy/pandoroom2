@@ -16,6 +16,7 @@ const referenceEntities: EntityItem[] = [
   { id: 'iiko-menu', name: 'Меню iiko', path: '/reference/iiko-menu', icon: '🍽️' },
   { id: 'notification-templates', name: 'Шаблоны уведомлений', path: '/reference/notification-templates', icon: '📨' },
   { id: 'age-restrictions', name: 'Возрастные ограничения', path: '/reference/age-restrictions', icon: '🔞' },
+  { id: 'difficulties', name: 'Сложности', path: '/reference/difficulties', icon: '🔥' },
 ];
 
 export default function ReferenceLayout() {

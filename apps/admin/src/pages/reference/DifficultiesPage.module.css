@@ -1,0 +1,167 @@
+.page {
+  padding: 1.5rem;
+  max-width: 640px;
+}
+
+.header {
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1A1A18;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.addRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.addInput {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.addInput:focus {
+  border-color: #A0BF39;
+}
+
+.addButton {
+  padding: 0.625rem 1rem;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.addButton:hover:not(:disabled) {
+  background: #8ba832;
+}
+
+.addButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+}
+
+.orderControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.orderButton {
+  padding: 0.1rem 0.45rem;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #4b5563;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  transition: all 0.2s;
+}
+
+.orderButton:hover:not(:disabled) {
+  background: #A0BF39;
+  border-color: #A0BF39;
+  color: white;
+}
+
+.orderButton:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.valueInput {
+  flex: 1;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.valueInput:focus {
+  border-color: #A0BF39;
+}
+
+.valueInputDirty {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.saveButton {
+  padding: 0.45rem 0.75rem;
+  background: #A0BF39;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: #8ba832;
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.deleteButton {
+  padding: 0.4rem 0.5rem;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.deleteButton:hover {
+  background: #fee2e2;
+}
+
+.empty,
+.loading {
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+}

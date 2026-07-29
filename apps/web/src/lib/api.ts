@@ -18,7 +18,7 @@ export interface Quest {
   name: string
   subtitle?: string | null
   genre: string
-  difficulty: 'easy' | 'medium' | 'hard'
+  difficulty?: string | null
   hasActors: boolean
   ageRestriction?: string | null
   durationMinutes: number
