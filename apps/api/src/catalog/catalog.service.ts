@@ -472,7 +472,7 @@ export class CatalogService {
   // ==================== VR GAMES ====================
   async findAllVRGames() {
     return this.prisma.vRGame.findMany({
-      include: { previewImage: true },
+      include: { previewImage: true, backgroundImage: true, video: true, branch: true },
       orderBy: { sortOrder: 'asc' },
     });
   }
@@ -480,7 +480,7 @@ export class CatalogService {
   async findOneVRGame(id: string) {
     const game = await this.prisma.vRGame.findUnique({
       where: { id },
-      include: { previewImage: true },
+      include: { previewImage: true, backgroundImage: true, video: true, branch: true },
     });
     if (!game) throw new NotFoundException('VR Game not found');
     return game;

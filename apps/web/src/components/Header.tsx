@@ -44,6 +44,7 @@ export default function Header() {
 
           <nav className={styles.mainNav} aria-label="Основная навигация">
             <Link href="/quests" className={styles.mainLink}>Квесты</Link>
+            <Link href="/vr-games" className={styles.mainLink}>VR игры</Link>
             <Link href="/holidays" className={styles.mainLink}>Праздники</Link>
             <Link href="#cafe" className={styles.mainLink}>Кафе</Link>
             <Link href="#kids" className={styles.mainLink}>Игровая для детей</Link>
@@ -67,10 +68,6 @@ export default function Header() {
               <span className={styles.addressLabel}>Нижнепортовая, 1 / Посьетская, 27 стр. 2</span>
               <a href="tel:+74232022696" className={styles.phone}>8 423 202 26 96</a>
             </div>
-            <div className={styles.address}>
-              <span className={styles.addressLabel}>Алеутская 17а</span>
-              <a href="tel:+74232054458" className={styles.phone}>8 423 205 44 58</a>
-            </div>
           </div>
 
           <button
@@ -87,6 +84,7 @@ export default function Header() {
           <div className={styles.mobileMenu}>
             <nav className={styles.mobileNav}>
               <Link href="/quests" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Квесты</Link>
+              <Link href="/vr-games" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>VR игры</Link>
               <Link href="/holidays" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Праздники</Link>
               <Link href="#cafe" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Кафе</Link>
               <Link href="#kids" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>Игровая для детей</Link>
@@ -95,10 +93,6 @@ export default function Header() {
               <div className={styles.mobileAddress}>
                 <span className={styles.addressLabel}>Нижнепортовая, 1 / Посьетская, 27 стр. 2</span>
                 <a href="tel:+74232022696" className={styles.phone}>8 423 202 26 96</a>
-              </div>
-              <div className={styles.mobileAddress}>
-                <span className={styles.addressLabel}>Алеутская 17а</span>
-                <a href="tel:+74232054458" className={styles.phone}>8 423 205 44 58</a>
               </div>
             </div>
             <nav className={styles.mobileUtility}>

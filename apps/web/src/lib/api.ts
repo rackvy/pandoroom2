@@ -58,6 +58,31 @@ export interface QuestDetail extends Quest {
   schemaJson?: string | null
 }
 
+export interface VRGame {
+  id: string
+  name: string
+  subtitle?: string | null
+  genre?: string | null
+  difficulty?: string | null
+  ageRestriction?: string | null
+  durationMinutes?: number | null
+  minPlayers: number
+  maxPlayers: number
+  previewImage?: { id: string; url: string; altText?: string | null } | null
+  backgroundImage?: { id: string; url: string; altText?: string | null } | null
+  video?: { id: string; url: string; mimeType?: string | null } | null
+  branch?: { id: string; name: string; address?: string | null; geoLat?: number | null; geoLng?: number | null } | null
+}
+
+export interface VRGameDetail extends VRGame {
+  description?: string | null
+  contentSections?: ContentSection[] | null
+  seoTitle?: string | null
+  seoDescription?: string | null
+  seoKeywords?: string | null
+  schemaJson?: string | null
+}
+
 export interface NewsItem {
   id: string
   title: string

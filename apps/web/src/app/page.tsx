@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import styles from './page.module.css'
-import { fetchApi, type Quest, type NewsItem, type BlogItem, type ReviewItem, type PageBlock } from '@/lib/api'
+import { fetchApi, type Quest, type VRGame, type NewsItem, type BlogItem, type ReviewItem, type PageBlock } from '@/lib/api'
 import ReviewsSlider from '@/components/ReviewsSlider'
 import QuestSliderClient from '@/components/QuestSliderClient'
+import VRSliderClient, { type SliderVRGameData } from '@/components/VRSliderClient'
 
 // Force dynamic rendering — fetch data at request time, not build time
 export const dynamic = 'force-dynamic'
@@ -12,6 +13,14 @@ export const dynamic = 'force-dynamic'
 async function getQuests() {
   try {
     return await fetchApi('/quests') as Quest[]
+  } catch {
+    return []
+  }
+}
+
+async function getVRGames() {
+  try {
+    return await fetchApi('/vr-games') as VRGame[]
   } catch {
     return []
   }
@@ -98,6 +107,20 @@ function mapQuest(q: Quest): QuestCard {
     players: formatPlayers(q.minPlayers, q.maxPlayers),
     age: q.ageRestriction || '12+',
     poster: q.previewImage?.url || '',
+  }
+}
+
+function mapVRGame(g: VRGame): SliderVRGameData {
+  return {
+    id: g.id,
+    title: g.name,
+    subtitle: g.subtitle || undefined,
+    tag: g.genre || undefined,
+    difficulty: difficultyToLevel(g.difficulty),
+    duration: g.durationMinutes ? formatDuration(g.durationMinutes) : '',
+    players: formatPlayers(g.minPlayers, g.maxPlayers),
+    age: g.ageRestriction || '12+',
+    poster: g.previewImage?.url || '',
   }
 }
 
@@ -193,8 +216,9 @@ function QuestSlider({ title, quests }: { title: string; quests: QuestCard[] }) 
 /* ==================== PAGE ==================== */
 
 export default async function Home() {
-  const [allQuests, newsData, blogData, reviewsData, homeBlocks] = await Promise.all([
+  const [allQuests, vrGamesData, newsData, blogData, reviewsData, homeBlocks] = await Promise.all([
     getQuests(),
+    getVRGames(),
     getNews(),
     getBlog(),
     getReviews(),
@@ -212,6 +236,8 @@ export default async function Home() {
   const kidsQuests = allQuests
     .filter(q => q.ageRestriction === '0+')
     .map(mapQuest)
+
+  const vrGames = vrGamesData.map(mapVRGame)
 
   const newsItems = newsData
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -344,6 +370,11 @@ export default async function Home() {
 
       {/* ==================== KIDS QUESTS ==================== */}
       <QuestSlider title="Квесты для детей во Владивостоке" quests={kidsQuests} />
+
+      {/* ==================== VR GAMES ==================== */}
+      {vrGames.length > 0 && (
+        <VRSliderClient title="VR игры во Владивостоке" games={vrGames} />
+      )}
 
       {/* ==================== KIDS HOLIDAYS ==================== */}
       <section className={`${styles.section} ${styles.sectionHolidays}`}>

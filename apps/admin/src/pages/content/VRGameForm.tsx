@@ -1,37 +1,96 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getVRGame, createVRGame, updateVRGame, type CreateVRGameData } from '../../api/catalog';
+import {
+  getVRGame,
+  createVRGame,
+  updateVRGame,
+  getBranches,
+  type CreateVRGameData,
+  type Branch,
+  type ContentSection,
+} from '../../api/catalog';
+import { getAgeRestrictions, getDifficulties } from '../../api/content';
 import { uploadMedia } from '../../api/media';
 import { getMediaUrl } from '../../utils/media';
 import { toast } from '../../components/ui/Toast';
 import RichTextEditor from '../../components/ui/RichTextEditor';
-import styles from './Form.module.css';
+import SeoSection from '../../components/ui/SeoSection';
+import pageStyles from './Form.module.css';
+import styles from '../../components/QuestForm.module.css';
 
 export default function VRGameForm() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = id && id !== 'new';
 
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [ageOptions, setAgeOptions] = useState<{ value: string; label: string }[]>([
+    { value: '', label: 'Без ограничений' },
+  ]);
+  const [difficultyOptions, setDifficultyOptions] = useState<{ value: string; label: string }[]>([
+    { value: '', label: 'Не указана' },
+  ]);
+
   const [formData, setFormData] = useState<CreateVRGameData>({
+    branchId: null,
     name: '',
     description: null,
     genre: null,
+    difficulty: null,
+    ageRestriction: null,
+    subtitle: null,
     minPlayers: 1,
-    maxPlayers: 4,
+    maxPlayers: 20,
     durationMinutes: null,
     previewImageId: null,
+    backgroundImageId: null,
+    videoId: null,
+    contentSections: [{ title: '', text: '' }],
+    seoTitle: null,
+    seoDescription: null,
+    seoKeywords: null,
+    schemaJson: null,
     isActive: true,
     sortOrder: 0,
   });
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [previewAltText, setPreviewAltText] = useState('');
+  const [backgroundAltText, setBackgroundAltText] = useState('');
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    getBranches().then(setBranches).catch(console.error);
+    getAgeRestrictions()
+      .then((items) => {
+        const opts = [
+          { value: '', label: 'Без ограничений' },
+          ...items.map((item) => ({ value: item.value, label: item.value })),
+        ];
+        setAgeOptions(opts);
+      })
+      .catch(console.error);
+    getDifficulties()
+      .then((items) => {
+        const opts = [
+          { value: '', label: 'Не указана' },
+          ...items.map((item) => ({ value: item.value, label: item.value })),
+        ];
+        setDifficultyOptions(opts);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
     if (isEdit) {
       loadGame();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEdit, id]);
 
   const loadGame = async () => {
@@ -39,17 +98,50 @@ export default function VRGameForm() {
       setLoading(true);
       const game = await getVRGame(id!);
       setFormData({
+        branchId: game.branchId,
         name: game.name,
         description: game.description,
         genre: game.genre,
+        difficulty: game.difficulty,
+        ageRestriction: game.ageRestriction,
+        subtitle: game.subtitle,
         minPlayers: game.minPlayers,
         maxPlayers: game.maxPlayers,
         durationMinutes: game.durationMinutes,
         previewImageId: game.previewImageId,
+        backgroundImageId: game.backgroundImageId,
+        videoId: game.videoId,
+        contentSections: game.contentSections?.length
+          ? game.contentSections.map((s) => ({ title: s.title, text: s.text }))
+          : [{ title: '', text: '' }],
+        seoTitle: game.seoTitle,
+        seoDescription: game.seoDescription,
+        seoKeywords: game.seoKeywords,
+        schemaJson: game.schemaJson,
         isActive: game.isActive,
         sortOrder: game.sortOrder,
       });
-      setImagePreview(game.previewImage?.url || null);
+      setPreviewUrl(game.previewImage?.url || null);
+      setBackgroundUrl(game.backgroundImage?.url || null);
+      setVideoUrl(game.video?.url || null);
+      setPreviewAltText(game.previewImage?.altText || '');
+      setBackgroundAltText(game.backgroundImage?.altText || '');
+
+      // add current dictionary values if they are missing from the lists
+      if (game.ageRestriction) {
+        setAgeOptions((prev) =>
+          prev.some((o) => o.value === game.ageRestriction)
+            ? prev
+            : [...prev, { value: game.ageRestriction!, label: game.ageRestriction! }]
+        );
+      }
+      if (game.difficulty) {
+        setDifficultyOptions((prev) =>
+          prev.some((o) => o.value === game.difficulty)
+            ? prev
+            : [...prev, { value: game.difficulty!, label: game.difficulty! }]
+        );
+      }
     } catch (err) {
       setError('Ошибка загрузки VR игры');
     } finally {
@@ -57,29 +149,102 @@ export default function VRGameForm() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (field: keyof CreateVRGameData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleNumberChange = (field: keyof CreateVRGameData, value: string) => {
+    const num = parseInt(value) || 0;
+    handleChange(field, num);
+  };
+
+  const updateSection = (index: number, patch: Partial<ContentSection>) => {
+    setFormData((prev) => ({
+      ...prev,
+      contentSections: (prev.contentSections || []).map((s, i) =>
+        i === index ? { ...s, ...patch } : s
+      ),
+    }));
+  };
+
+  const addSection = () => {
+    setFormData((prev) => ({
+      ...prev,
+      contentSections: [...(prev.contentSections || []), { title: '', text: '' }],
+    }));
+  };
+
+  const removeSection = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      contentSections: (prev.contentSections || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const handlePreviewImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
-      const media = await uploadMedia(file);
-      setFormData(prev => ({ ...prev, previewImageId: media.id }));
-      setImagePreview(media.url);
-      toast.success('Изображение загружено');
+      const media = await uploadMedia(file, previewAltText || undefined);
+      handleChange('previewImageId', media.id);
+      setPreviewUrl(media.url);
+      toast.success('Превью загружено');
     } catch (err) {
-      toast.error('Ошибка загрузки изображения');
+      toast.error('Ошибка загрузки превью');
     }
+  };
+
+  const handleBackgroundImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const media = await uploadMedia(file, backgroundAltText || undefined);
+      handleChange('backgroundImageId', media.id);
+      setBackgroundUrl(media.url);
+      toast.success('Фоновое изображение загружено');
+    } catch (err) {
+      toast.error('Ошибка загрузки фонового изображения');
+    }
+  };
+
+  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingVideo(true);
+      toast.success('Загружаю видео, подождите...');
+      const media = await uploadMedia(file);
+      handleChange('videoId', media.id);
+      setVideoUrl(media.url);
+      toast.success('Видео загружено');
+    } catch (err) {
+      toast.error('Ошибка загрузки видео');
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
+  const removeVideo = () => {
+    handleChange('videoId', null);
+    setVideoUrl(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setSaving(true);
+      // filter out empty sections
+      const submitData: CreateVRGameData = {
+        ...formData,
+        contentSections: (formData.contentSections || []).filter(
+          (s) => s.title.trim() || s.text.trim()
+        ),
+      };
       if (isEdit) {
-        await updateVRGame(id!, formData);
+        await updateVRGame(id!, submitData);
         toast.success('VR игра обновлена');
       } else {
-        await createVRGame(formData);
+        await createVRGame(submitData);
         toast.success('VR игра создана');
       }
       navigate('/content/vr-games');
@@ -92,132 +257,296 @@ export default function VRGameForm() {
   };
 
   if (loading) {
-    return <div className={styles.loading}>Загрузка...</div>;
+    return <div className={pageStyles.loading}>Загрузка...</div>;
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>{isEdit ? 'Редактировать VR игру' : 'Новая VR игра'}</h1>
+    <div className={pageStyles.page}>
+      <div className={pageStyles.header}>
+        <h1 className={pageStyles.title}>{isEdit ? 'Редактировать VR игру' : 'Новая VR игра'}</h1>
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
+      {error && <div className={pageStyles.error}>{error}</div>}
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Название *</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            className={styles.input}
-            required
-          />
-        </div>
-
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Описание</label>
-          <RichTextEditor
-            value={formData.description || ''}
-            onChange={(val) => setFormData(prev => ({ ...prev, description: val }))}
-            minHeight={200}
-          />
-        </div>
-
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Жанр</label>
+        <div className={styles.grid}>
+          <div className={styles.field}>
+            <label htmlFor="name">Название *</label>
             <input
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              required
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="branchId">Филиал</label>
+            <select
+              id="branchId"
+              value={formData.branchId || ''}
+              onChange={(e) => handleChange('branchId', e.target.value || null)}
+            >
+              <option value="">Без филиала</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="genre">Жанр</label>
+            <input
+              id="genre"
               type="text"
               value={formData.genre || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, genre: e.target.value || null }))}
-              className={styles.input}
+              onChange={(e) => handleChange('genre', e.target.value || null)}
+              placeholder="Например: Шутер, Приключение"
             />
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Длительность (мин)</label>
+          <div className={styles.field}>
+            <label htmlFor="difficulty">Сложность</label>
+            <select
+              id="difficulty"
+              value={formData.difficulty || ''}
+              onChange={(e) => handleChange('difficulty', e.target.value || null)}
+            >
+              {difficultyOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="subtitle">Подзаголовок</label>
             <input
-              type="number"
-              min="0"
-              value={formData.durationMinutes ?? ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, durationMinutes: e.target.value ? Number(e.target.value) : null }))}
-              className={styles.input}
+              id="subtitle"
+              type="text"
+              value={formData.subtitle || ''}
+              onChange={(e) => handleChange('subtitle', e.target.value || null)}
+              placeholder="Краткий подзаголовок игры"
             />
           </div>
-        </div>
 
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Мин. игроков *</label>
+          <div className={styles.field}>
+            <label htmlFor="ageRestriction">Возрастное ограничение</label>
+            <select
+              id="ageRestriction"
+              value={formData.ageRestriction || ''}
+              onChange={(e) => handleChange('ageRestriction', e.target.value || null)}
+            >
+              {ageOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="minPlayers">Мин. игроков</label>
             <input
+              id="minPlayers"
               type="number"
-              min="1"
+              min={1}
+              max={20}
               value={formData.minPlayers}
-              onChange={(e) => setFormData(prev => ({ ...prev, minPlayers: Number(e.target.value) }))}
-              className={styles.input}
-              required
+              onChange={(e) => handleNumberChange('minPlayers', e.target.value)}
             />
           </div>
 
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Макс. игроков *</label>
+          <div className={styles.field}>
+            <label htmlFor="maxPlayers">Макс. игроков</label>
             <input
+              id="maxPlayers"
               type="number"
-              min="1"
+              min={1}
+              max={20}
               value={formData.maxPlayers}
-              onChange={(e) => setFormData(prev => ({ ...prev, maxPlayers: Number(e.target.value) }))}
-              className={styles.input}
-              required
+              onChange={(e) => handleNumberChange('maxPlayers', e.target.value)}
             />
+            <span className={styles.fieldHint}>Максимум 20 игроков на одной арене</span>
           </div>
-        </div>
 
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Изображение</label>
-          <div className={styles.imageUpload}>
-            {imagePreview && (
-              <img src={getMediaUrl(imagePreview)} alt="Preview" className={styles.imagePreview} />
-            )}
+          <div className={styles.field}>
+            <label htmlFor="durationMinutes">Длительность (мин)</label>
             <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className={styles.fileInput}
+              id="durationMinutes"
+              type="number"
+              min={5}
+              step={5}
+              value={formData.durationMinutes ?? ''}
+              onChange={(e) =>
+                handleChange('durationMinutes', e.target.value ? Number(e.target.value) : null)
+              }
             />
           </div>
-        </div>
 
-        <div className={styles.formRow}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>
+          <div className={styles.field}>
+            <label htmlFor="sortOrder">Порядок отображения</label>
+            <input
+              id="sortOrder"
+              type="number"
+              min={0}
+              value={formData.sortOrder}
+              onChange={(e) => handleNumberChange('sortOrder', e.target.value)}
+            />
+            <span className={styles.fieldHint}>Чем меньше число, тем выше игра в списке</span>
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.checkboxLabel}>
               <input
                 type="checkbox"
                 checked={formData.isActive}
-                onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                onChange={(e) => handleChange('isActive', e.target.checked)}
               />
-              {' '}Активна
+              Активна
             </label>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Порядок сортировки</label>
-            <input
-              type="number"
-              min="0"
-              value={formData.sortOrder}
-              onChange={(e) => setFormData(prev => ({ ...prev, sortOrder: Number(e.target.value) }))}
-              className={styles.input}
-            />
           </div>
         </div>
 
+        <div className={styles.imagesSection}>
+          <h3>Медиа</h3>
+
+          <div className={styles.imageUploads}>
+            <div className={styles.imageField}>
+              <label>Превью изображение</label>
+              <div className={styles.imagePreview}>
+                {previewUrl && (
+                  <img src={getMediaUrl(previewUrl)} alt="Preview" />
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePreviewImageChange}
+              />
+              <input
+                type="text"
+                placeholder="Alt-текст (описание для SEO)"
+                value={previewAltText}
+                onChange={(e) => setPreviewAltText(e.target.value)}
+                className={styles.altTextInput}
+              />
+            </div>
+
+            <div className={styles.imageField}>
+              <label>Фоновое изображение</label>
+              <div className={styles.imagePreview}>
+                {backgroundUrl && (
+                  <img src={getMediaUrl(backgroundUrl)} alt="Background" />
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBackgroundImageChange}
+              />
+              <input
+                type="text"
+                placeholder="Alt-текст (описание для SEO)"
+                value={backgroundAltText}
+                onChange={(e) => setBackgroundAltText(e.target.value)}
+                className={styles.altTextInput}
+              />
+            </div>
+          </div>
+
+          <div className={styles.imageField}>
+            <label>Видео (MP4)</label>
+            {videoUrl ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <video
+                  src={getMediaUrl(videoUrl)}
+                  controls
+                  style={{ width: '100%', maxHeight: 320, borderRadius: 6, background: '#000' }}
+                />
+                <button
+                  type="button"
+                  className={styles.addSectionButton}
+                  onClick={removeVideo}
+                >
+                  Удалить видео
+                </button>
+              </div>
+            ) : (
+              <input
+                type="file"
+                accept="video/mp4,video/*"
+                onChange={handleVideoChange}
+                disabled={uploadingVideo}
+              />
+            )}
+            <span className={styles.fieldHint}>
+              {uploadingVideo ? 'Идёт загрузка видео...' : 'Ролик об игре, будет показан на странице игры'}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.textareas}>
+          <div className={styles.sectionsHeader}>
+            <h3>Контент (табы на странице игры)</h3>
+            <span className={styles.sectionsHint}>Каждая секция — это отдельный таб. Название секции станет заголовком таба.</span>
+          </div>
+
+          {(formData.contentSections || []).map((section, index) => (
+            <div key={index} className={styles.contentSection}>
+              <div className={styles.contentSectionTop}>
+                <input
+                  type="text"
+                  placeholder={`Название секции ${index + 1} (например: Описание, Правила)`}
+                  value={section.title}
+                  onChange={(e) => updateSection(index, { title: e.target.value })}
+                  className={styles.sectionTitleInput}
+                />
+                <button
+                  type="button"
+                  className={styles.removeSectionButton}
+                  onClick={() => removeSection(index)}
+                  title="Удалить секцию"
+                >
+                  ×
+                </button>
+              </div>
+              <RichTextEditor
+                value={section.text}
+                onChange={(val) => updateSection(index, { text: val })}
+                minHeight={100}
+              />
+            </div>
+          ))}
+
+          <button type="button" className={styles.addSectionButton} onClick={addSection}>
+            + Добавить ещё
+          </button>
+        </div>
+
+        <SeoSection
+          value={{
+            seoTitle: formData.seoTitle,
+            seoDescription: formData.seoDescription,
+            seoKeywords: formData.seoKeywords,
+            schemaJson: formData.schemaJson,
+          }}
+          onChange={(fields) => setFormData((prev) => ({ ...prev, ...fields }))}
+        />
+
         <div className={styles.actions}>
-          <button type="button" className={styles.cancelButton} onClick={() => navigate('/content/vr-games')}>
+          <button
+            type="button"
+            className={styles.cancelButton}
+            onClick={() => navigate('/content/vr-games')}
+            disabled={saving}
+          >
             Отмена
           </button>
-          <button type="submit" className={styles.saveButton} disabled={saving}>
-            {saving ? 'Сохранение...' : 'Сохранить'}
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={saving || uploadingVideo}
+          >
+            {saving ? 'Сохранение...' : isEdit ? 'Сохранить' : 'Создать'}
           </button>
         </div>
       </form>

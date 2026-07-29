@@ -198,19 +198,33 @@ export async function deleteQuest(id: string): Promise<void> {
 // VR Games
 export interface VRGame {
   id: string;
+  branchId: string | null;
   name: string;
   description: string | null;
   genre: string | null;
+  difficulty: string | null;
+  ageRestriction: string | null;
+  subtitle: string | null;
   minPlayers: number;
   maxPlayers: number;
   durationMinutes: number | null;
   previewImageId: string | null;
+  backgroundImageId: string | null;
+  videoId: string | null;
+  contentSections?: ContentSection[] | null;
+  seoTitle: string | null;
+  seoDescription: string | null;
+  seoKeywords: string | null;
+  schemaJson: string | null;
   isActive: boolean;
   sortOrder: number;
-  previewImage?: { id: string; url: string } | null;
+  previewImage?: { id: string; url: string; altText?: string | null } | null;
+  backgroundImage?: { id: string; url: string; altText?: string | null } | null;
+  video?: { id: string; url: string } | null;
+  branch?: { id: string; name: string; address?: string | null } | null;
 }
 
-export type CreateVRGameData = Omit<VRGame, 'id' | 'previewImage'>;
+export type CreateVRGameData = Omit<VRGame, 'id' | 'previewImage' | 'backgroundImage' | 'video' | 'branch'>;
 export type UpdateVRGameData = Partial<CreateVRGameData>;
 
 export async function getVRGames(): Promise<VRGame[]> {

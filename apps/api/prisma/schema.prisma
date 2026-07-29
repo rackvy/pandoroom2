@@ -112,6 +112,7 @@ model Branch {
   questReservations QuestReservation[]
   employees         BranchEmployee[]
   vrHalls           VRHall[]
+  vrGames           VRGame[]
 }
 
 model Media {
@@ -138,6 +139,8 @@ model Media {
   showProgramImages ShowProgram[]
   decorationImages  Decoration[]
   vrGameImages      VRGame[] @relation("VRGamePreview")
+  vrGameBackgrounds VRGame[] @relation("VRGameBackground")
+  vrGameVideos      VRGame[] @relation("VRGameVideo")
 }
 
 model Quest {
@@ -807,20 +810,34 @@ model VRReservation {
 }
 
 model VRGame {
-  id              String   @id @default(uuid())
-  name            String
-  description     String?  @db.Text
-  genre           String?
-  minPlayers      Int      @default(1)
-  maxPlayers      Int      @default(20)
-  durationMinutes Int?
-  previewImageId  String?
-  isActive        Boolean  @default(true)
-  sortOrder       Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                String   @id @default(uuid())
+  branchId          String?
+  name              String
+  description       String?  @db.Text
+  genre             String?
+  difficulty        String?
+  ageRestriction    String?
+  subtitle          String?
+  minPlayers        Int      @default(1)
+  maxPlayers        Int      @default(20)
+  durationMinutes   Int?
+  previewImageId    String?
+  backgroundImageId String?
+  videoId           String?
+  contentSections   Json?
+  seoTitle          String?
+  seoDescription    String?
+  seoKeywords       String?
+  schemaJson        String?  @db.Text
+  isActive          Boolean  @default(true)
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
+  branch          Branch?  @relation(fields: [branchId], references: [id], onDelete: SetNull)
   previewImage    Media?   @relation("VRGamePreview", fields: [previewImageId], references: [id], onDelete: SetNull)
+  backgroundImage Media?   @relation("VRGameBackground", fields: [backgroundImageId], references: [id], onDelete: SetNull)
+  video           Media?   @relation("VRGameVideo", fields: [videoId], references: [id], onDelete: SetNull)
   vrReservations  VRReservation[]
 }
 
