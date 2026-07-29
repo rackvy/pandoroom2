@@ -2,6 +2,57 @@
   width: 100%;
 }
 
+.modeBar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.modeButton {
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  color: #6b7280;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.modeButton:hover {
+  border-color: #A0BF39;
+  color: #A0BF39;
+}
+
+.modeButtonActive,
+.modeButtonActive:hover {
+  background: #A0BF39;
+  border-color: #A0BF39;
+  color: white;
+}
+
+.htmlTextarea {
+  width: 100%;
+  min-height: var(--editor-min-height, 150px);
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #1f2937;
+  background: #fafafa;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.htmlTextarea:focus {
+  border-color: #A0BF39;
+  background: #fff;
+}
+
 .wrapper :global(.ql-toolbar) {
   border-radius: 6px 6px 0 0;
   border-color: #d1d5db;
