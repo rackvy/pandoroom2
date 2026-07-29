@@ -37,12 +37,13 @@ function tagClass(variant?: string): string {
   return 'qc-tag'
 }
 
-function DifficultyDots({ level, icon = '🔥' }: { level: number; icon?: string | null }) {
+function DifficultyDots({ level, icon }: { level: number; icon?: string | null }) {
+  const emoji = icon || '🔥'
   return (
     <span className="qc-difficulty" aria-label={`Сложность ${level} из 5`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={i <= level ? 'qc-dot' : 'qc-dot qc-dot-off'}>
-          {i <= level ? icon : ''}
+          {i <= level ? emoji : ''}
         </span>
       ))}
     </span>

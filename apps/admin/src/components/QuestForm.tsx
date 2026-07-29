@@ -264,7 +264,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
           <label>Иконка сложности</label>
           <DifficultyIconPicker
             value={formData.difficultyIcon || ''}
-            onChange={(val) => handleChange('difficultyIcon', val)}
+            onChange={(val) => handleChange('difficultyIcon', val || null)}
           />
         </div>
 

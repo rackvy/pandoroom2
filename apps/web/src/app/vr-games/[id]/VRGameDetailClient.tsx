@@ -26,12 +26,13 @@ const difficultyLabels: Record<string, string> = {
   hard: 'Сложный',
 }
 
-function DifficultyDots({ level, icon = '🔥' }: { level: number; icon?: string | null }) {
+function DifficultyDots({ level, icon }: { level: number; icon?: string | null }) {
+  const emoji = icon || '🔥'
   return (
     <span className={styles.difficulty} aria-label={`Сложность ${level} из 5`}>
       {[1, 2, 3, 4, 5].map((i) => (
         <span key={i} className={`${styles.dot}${i > level ? ` ${styles.dotOff}` : ''}`}>
-          {i <= level ? icon : ''}
+          {i <= level ? emoji : ''}
         </span>
       ))}
     </span>
