@@ -60,6 +60,11 @@ export default function VRGameForm() {
   const [previewAltText, setPreviewAltText] = useState('');
   const [backgroundAltText, setBackgroundAltText] = useState('');
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  // Gallery: existing photos have id, newly added ones have file (uploaded on submit)
+  const [galleryItems, setGalleryItems] = useState<
+    { id?: string; url: string; file?: File }[]
+  >([]);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +131,12 @@ export default function VRGameForm() {
       setVideoUrl(game.video?.url || null);
       setPreviewAltText(game.previewImage?.altText || '');
       setBackgroundAltText(game.backgroundImage?.altText || '');
+      setGalleryItems(
+        (game.galleryPhotos || []).map((p) => ({
+          id: p.imageId,
+          url: getMediaUrl(p.image.url),
+        }))
+      );
 
       // add current dictionary values if they are missing from the lists
       if (game.ageRestriction) {
@@ -229,16 +240,46 @@ export default function VRGameForm() {
     setVideoUrl(null);
   };
 
+  const handleGalleryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setGalleryItems((prev) => [
+        ...prev,
+        ...files.map((file) => ({ url: URL.createObjectURL(file), file })),
+      ]);
+    }
+    e.target.value = '';
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGalleryItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setSaving(true);
+
+      // Upload new gallery photos first
+      setUploadingGallery(true);
+      const galleryPhotoIds: string[] = [];
+      for (const item of galleryItems) {
+        if (item.id) {
+          galleryPhotoIds.push(item.id);
+        } else if (item.file) {
+          const media = await uploadMedia(item.file);
+          galleryPhotoIds.push(media.id);
+        }
+      }
+      setUploadingGallery(false);
+
       // filter out empty sections
       const submitData: CreateVRGameData = {
         ...formData,
         contentSections: (formData.contentSections || []).filter(
           (s) => s.title.trim() || s.text.trim()
         ),
+        galleryPhotoIds,
       };
       if (isEdit) {
         await updateVRGame(id!, submitData);
@@ -252,6 +293,7 @@ export default function VRGameForm() {
       setError('Ошибка сохранения VR игры');
       toast.error('Ошибка сохранения VR игры');
     } finally {
+      setUploadingGallery(false);
       setSaving(false);
     }
   };
@@ -482,6 +524,38 @@ export default function VRGameForm() {
               {uploadingVideo ? 'Идёт загрузка видео...' : 'Ролик об игре, будет показан на странице игры'}
             </span>
           </div>
+
+          <div className={styles.gallerySection}>
+            <label>Галерея фотографий</label>
+            <div className={styles.galleryGrid}>
+              {galleryItems.map((item, index) => (
+                <div key={index} className={styles.galleryItem}>
+                  <img src={item.url} alt={`Фото ${index + 1}`} />
+                  <button
+                    type="button"
+                    className={styles.removeButton}
+                    onClick={() => removeGalleryImage(index)}
+                    title="Удалить фото"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <label className={styles.addGalleryItem}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryImagesChange}
+                  hidden
+                />
+                <span>+ Добавить</span>
+              </label>
+            </div>
+            <span className={styles.fieldHint}>
+              Дополнительные фотографии игры. Можно выбрать сразу несколько файлов.
+            </span>
+          </div>
         </div>
 
         <div className={styles.textareas}>
@@ -544,9 +618,15 @@ export default function VRGameForm() {
           <button
             type="submit"
             className={styles.submitButton}
-            disabled={saving || uploadingVideo}
+            disabled={saving || uploadingVideo || uploadingGallery}
           >
-            {saving ? 'Сохранение...' : isEdit ? 'Сохранить' : 'Создать'}
+            {uploadingGallery
+              ? 'Загрузка фото...'
+              : saving
+                ? 'Сохранение...'
+                : isEdit
+                  ? 'Сохранить'
+                  : 'Создать'}
           </button>
         </div>
       </form>

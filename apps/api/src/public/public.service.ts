@@ -160,7 +160,13 @@ export class PublicService {
   async getVRGames() {
     return this.prisma.vRGame.findMany({
       where: { isActive: true },
-      include: { previewImage: true, backgroundImage: true, video: true, branch: true },
+      include: {
+        previewImage: true,
+        backgroundImage: true,
+        video: true,
+        branch: true,
+        galleryPhotos: { include: { image: true }, orderBy: { sortOrder: 'asc' } },
+      },
       orderBy: { sortOrder: 'asc' },
     });
   }
@@ -168,7 +174,13 @@ export class PublicService {
   async getVRGame(id: string) {
     const game = await this.prisma.vRGame.findUnique({
       where: { id },
-      include: { previewImage: true, backgroundImage: true, video: true, branch: true },
+      include: {
+        previewImage: true,
+        backgroundImage: true,
+        video: true,
+        branch: true,
+        galleryPhotos: { include: { image: true }, orderBy: { sortOrder: 'asc' } },
+      },
     });
     if (!game) throw new NotFoundException('VR Game not found');
     return game;

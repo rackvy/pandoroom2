@@ -141,6 +141,7 @@ model Media {
   vrGameImages      VRGame[] @relation("VRGamePreview")
   vrGameBackgrounds VRGame[] @relation("VRGameBackground")
   vrGameVideos      VRGame[] @relation("VRGameVideo")
+  vrGameGallery     VRGameGalleryPhoto[] @relation("VRGameGallery")
 }
 
 model Quest {
@@ -838,7 +839,22 @@ model VRGame {
   previewImage    Media?   @relation("VRGamePreview", fields: [previewImageId], references: [id], onDelete: SetNull)
   backgroundImage Media?   @relation("VRGameBackground", fields: [backgroundImageId], references: [id], onDelete: SetNull)
   video           Media?   @relation("VRGameVideo", fields: [videoId], references: [id], onDelete: SetNull)
+  galleryPhotos   VRGameGalleryPhoto[]
   vrReservations  VRReservation[]
+}
+
+model VRGameGalleryPhoto {
+  id        String   @id @default(uuid())
+  vrGameId  String
+  imageId   String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  vrGame    VRGame   @relation(fields: [vrGameId], references: [id], onDelete: Cascade)
+  image     Media    @relation("VRGameGallery", fields: [imageId], references: [id], onDelete: Cascade)
+
+  @@index([vrGameId])
+  @@index([sortOrder])
 }
 
 // ==================== IIKO ====================

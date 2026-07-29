@@ -472,7 +472,13 @@ export class CatalogService {
   // ==================== VR GAMES ====================
   async findAllVRGames() {
     return this.prisma.vRGame.findMany({
-      include: { previewImage: true, backgroundImage: true, video: true, branch: true },
+      include: {
+        previewImage: true,
+        backgroundImage: true,
+        video: true,
+        branch: true,
+        galleryPhotos: { include: { image: true }, orderBy: { sortOrder: 'asc' } },
+      },
       orderBy: { sortOrder: 'asc' },
     });
   }
@@ -480,19 +486,75 @@ export class CatalogService {
   async findOneVRGame(id: string) {
     const game = await this.prisma.vRGame.findUnique({
       where: { id },
-      include: { previewImage: true, backgroundImage: true, video: true, branch: true },
+      include: {
+        previewImage: true,
+        backgroundImage: true,
+        video: true,
+        branch: true,
+        galleryPhotos: { include: { image: true }, orderBy: { sortOrder: 'asc' } },
+      },
     });
     if (!game) throw new NotFoundException('VR Game not found');
     return game;
   }
 
   async createVRGame(data: any) {
-    return this.prisma.vRGame.create({ data });
+    const { galleryPhotoIds, ...gameData } = data;
+
+    return this.prisma.vRGame.create({
+      data: {
+        ...gameData,
+        galleryPhotos: galleryPhotoIds?.length
+          ? {
+              create: galleryPhotoIds.map((imageId: string, index: number) => ({
+                imageId,
+                sortOrder: index,
+              })),
+            }
+          : undefined,
+      },
+      include: {
+        previewImage: true,
+        backgroundImage: true,
+        video: true,
+        branch: true,
+        galleryPhotos: { include: { image: true }, orderBy: { sortOrder: 'asc' } },
+      },
+    });
   }
 
   async updateVRGame(id: string, data: any) {
     await this.findOneVRGame(id);
-    return this.prisma.vRGame.update({ where: { id }, data });
+    const { galleryPhotoIds, ...gameData } = data;
+
+    // If galleryPhotoIds is provided, replace all gallery photos
+    if (galleryPhotoIds !== undefined) {
+      await this.prisma.vRGameGalleryPhoto.deleteMany({
+        where: { vrGameId: id },
+      });
+
+      if (galleryPhotoIds.length > 0) {
+        await this.prisma.vRGameGalleryPhoto.createMany({
+          data: galleryPhotoIds.map((imageId: string, index: number) => ({
+            vrGameId: id,
+            imageId,
+            sortOrder: index,
+          })),
+        });
+      }
+    }
+
+    return this.prisma.vRGame.update({
+      where: { id },
+      data: gameData,
+      include: {
+        previewImage: true,
+        backgroundImage: true,
+        video: true,
+        branch: true,
+        galleryPhotos: { include: { image: true }, orderBy: { sortOrder: 'asc' } },
+      },
+    });
   }
 
   async removeVRGame(id: string) {

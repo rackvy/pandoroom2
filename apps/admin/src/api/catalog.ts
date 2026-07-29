@@ -222,9 +222,24 @@ export interface VRGame {
   backgroundImage?: { id: string; url: string; altText?: string | null } | null;
   video?: { id: string; url: string } | null;
   branch?: { id: string; name: string; address?: string | null } | null;
+  galleryPhotos?: VRGameGalleryPhoto[];
 }
 
-export type CreateVRGameData = Omit<VRGame, 'id' | 'previewImage' | 'backgroundImage' | 'video' | 'branch'>;
+export interface VRGameGalleryPhoto {
+  id: string;
+  vrGameId: string;
+  imageId: string;
+  sortOrder: number;
+  image: {
+    id: string;
+    url: string;
+    altText?: string | null;
+  };
+}
+
+export type CreateVRGameData = Omit<VRGame, 'id' | 'previewImage' | 'backgroundImage' | 'video' | 'branch' | 'galleryPhotos'> & {
+  galleryPhotoIds?: string[];
+};
 export type UpdateVRGameData = Partial<CreateVRGameData>;
 
 export async function getVRGames(): Promise<VRGame[]> {

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import styles from '../../quests/[id]/quest-detail.module.css'
+import Lightbox from '@/components/Lightbox'
 import type { VRGameDetail, NewsItem } from '@/lib/api'
 
 /* ------------------------------------------------------------------ */
@@ -48,6 +49,27 @@ interface VRGameDetailClientProps {
 
 export default function VRGameDetailClient({ game, news = [] }: VRGameDetailClientProps) {
   const [activeTab, setActiveTab] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+
+  /* Gallery images */
+  const galleryImages: string[] = (game.galleryPhotos || []).length > 0
+    ? game.galleryPhotos.map((gp) => gp.image.url)
+    : game.previewImage?.url
+      ? [game.previewImage.url]
+      : []
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
+  const closeLightbox = () => setLightboxOpen(false)
+  const showPrev = useCallback(() => {
+    setLightboxIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length)
+  }, [galleryImages.length])
+  const showNext = useCallback(() => {
+    setLightboxIndex((prev) => (prev + 1) % galleryImages.length)
+  }, [galleryImages.length])
 
   /* Dynamic content sections (tabs) */
   const sections = useMemo(
@@ -144,6 +166,37 @@ export default function VRGameDetailClient({ game, news = [] }: VRGameDetailClie
           </div>
         </div>
       </section>
+
+      {/* ==================== GALLERY ==================== */}
+      {galleryImages.length > 0 && (
+        <section className={styles.gallery}>
+          <div className="container">
+            <h2 className={styles.sectionTitle}>Фотографии</h2>
+            <div className={styles.galleryGrid}>
+              {galleryImages.slice(0, 5).map((src, idx) => (
+                <button
+                  key={idx}
+                  className={`${styles.galleryItem}${idx === 0 ? ` ${styles.galleryItemMain}` : ''}`}
+                  onClick={() => openLightbox(idx)}
+                >
+                  <Image
+                    src={src}
+                    alt={`Фото игры ${idx + 1}`}
+                    fill
+                    sizes={idx === 0 ? '(max-width: 768px) 100vw, 60vw' : '(max-width: 768px) 50vw, 20vw'}
+                    className={styles.galleryImg}
+                  />
+                  {idx === 4 && galleryImages.length > 5 && (
+                    <div className={styles.galleryMore}>
+                      +{galleryImages.length - 5}
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ==================== VIDEO ==================== */}
       {game.video?.url && (
@@ -313,6 +366,16 @@ export default function VRGameDetailClient({ game, news = [] }: VRGameDetailClie
           &larr; Назад к VR играм
         </Link>
       </div>
+
+      {/* Lightbox */}
+      <Lightbox
+        open={lightboxOpen}
+        images={galleryImages}
+        currentIndex={lightboxIndex}
+        onClose={closeLightbox}
+        onPrev={showPrev}
+        onNext={showNext}
+      />
     </main>
   )
 }

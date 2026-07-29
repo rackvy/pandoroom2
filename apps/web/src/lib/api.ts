@@ -77,6 +77,7 @@ export interface VRGame {
 export interface VRGameDetail extends VRGame {
   description?: string | null
   contentSections?: ContentSection[] | null
+  galleryPhotos: QuestGalleryPhoto[]
   seoTitle?: string | null
   seoDescription?: string | null
   seoKeywords?: string | null
