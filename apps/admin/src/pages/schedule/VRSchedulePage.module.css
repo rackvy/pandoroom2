@@ -125,7 +125,7 @@
 
 .scheduleTable th:first-child {
   text-align: left;
-  min-width: 70px;
+  width: 64px;
   position: sticky;
   left: 0;
   background: #f9fafb;
@@ -141,6 +141,7 @@
 }
 
 .scheduleTable td:first-child {
+  width: 64px;
   padding: 0.25rem 0.5rem;
   text-align: center;
   font-weight: 500;
@@ -151,6 +152,7 @@
   left: 0;
   z-index: 5;
   border-right: 2px solid #e5e7eb;
+  white-space: nowrap;
 }
 
 /* Time column half-hour indicator */
