@@ -10,12 +10,13 @@ import {
   type ContentSection,
 } from '../../api/catalog';
 import { getAgeRestrictions, getDifficulties } from '../../api/content';
-import { uploadMedia } from '../../api/media';
+import { uploadMedia, updateMedia, type Media } from '../../api/media';
 import { getMediaUrl } from '../../utils/media';
 import { toast } from '../../components/ui/Toast';
 import RichTextEditor from '../../components/ui/RichTextEditor';
 import SeoSection from '../../components/ui/SeoSection';
 import DifficultyIconPicker from '../../components/ui/DifficultyIconPicker';
+import MediaPicker from '../../components/ui/MediaPicker';
 import pageStyles from './Form.module.css';
 import styles from '../../components/QuestForm.module.css';
 
@@ -62,6 +63,8 @@ export default function VRGameForm() {
   const [previewAltText, setPreviewAltText] = useState('');
   const [backgroundAltText, setBackgroundAltText] = useState('');
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<'preview' | 'background' | 'video' | 'gallery' | null>(null);
+  const [pickedMedia, setPickedMedia] = useState<{ preview?: Media; background?: Media }>({});
   // Gallery: existing photos have id, newly added ones have file (uploaded on submit)
   const [galleryItems, setGalleryItems] = useState<
     { id?: string; url: string; file?: File }[]
@@ -202,6 +205,7 @@ export default function VRGameForm() {
       const media = await uploadMedia(file, previewAltText || undefined);
       handleChange('previewImageId', media.id);
       setPreviewUrl(media.url);
+      setPickedMedia((prev) => ({ ...prev, preview: undefined }));
       toast.success('Превью загружено');
     } catch (err) {
       toast.error('Ошибка загрузки превью');
@@ -215,6 +219,7 @@ export default function VRGameForm() {
       const media = await uploadMedia(file, backgroundAltText || undefined);
       handleChange('backgroundImageId', media.id);
       setBackgroundUrl(media.url);
+      setPickedMedia((prev) => ({ ...prev, background: undefined }));
       toast.success('Фоновое изображение загружено');
     } catch (err) {
       toast.error('Ошибка загрузки фонового изображения');
@@ -243,6 +248,29 @@ export default function VRGameForm() {
     setVideoUrl(null);
   };
 
+  const handlePickFromLibrary = (media: Media) => {
+    if (pickerTarget === 'preview') {
+      handleChange('previewImageId', media.id);
+      setPreviewUrl(media.url);
+      setPreviewAltText(media.altText || '');
+      setPickedMedia((prev) => ({ ...prev, preview: media }));
+    } else if (pickerTarget === 'background') {
+      handleChange('backgroundImageId', media.id);
+      setBackgroundUrl(media.url);
+      setBackgroundAltText(media.altText || '');
+      setPickedMedia((prev) => ({ ...prev, background: media }));
+    } else if (pickerTarget === 'video') {
+      handleChange('videoId', media.id);
+      setVideoUrl(media.url);
+      toast.success('Видео выбрано из медиатеки');
+    } else if (pickerTarget === 'gallery') {
+      setGalleryItems((prev) => {
+        if (prev.some((item) => item.id === media.id)) return prev; // no duplicates
+        return [...prev, { id: media.id, url: getMediaUrl(media.url) }];
+      });
+    }
+  };
+
   const handleGalleryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
@@ -262,6 +290,22 @@ export default function VRGameForm() {
     e.preventDefault();
     try {
       setSaving(true);
+
+      // Sync alt-text edits for library-picked images
+      if (pickedMedia.preview && previewAltText.trim() !== (pickedMedia.preview.altText || '')) {
+        try {
+          await updateMedia(pickedMedia.preview.id, { altText: previewAltText.trim() });
+        } catch (err) {
+          console.error('Failed to update preview alt text:', err);
+        }
+      }
+      if (pickedMedia.background && backgroundAltText.trim() !== (pickedMedia.background.altText || '')) {
+        try {
+          await updateMedia(pickedMedia.background.id, { altText: backgroundAltText.trim() });
+        } catch (err) {
+          console.error('Failed to update background alt text:', err);
+        }
+      }
 
       // Upload new gallery photos first
       setUploadingGallery(true);
@@ -475,6 +519,13 @@ export default function VRGameForm() {
                 accept="image/*"
                 onChange={handlePreviewImageChange}
               />
+              <button
+                type="button"
+                className={styles.addSectionButton}
+                onClick={() => setPickerTarget('preview')}
+              >
+                📚 Выбрать из медиатеки
+              </button>
               <input
                 type="text"
                 placeholder="Alt-текст (описание для SEO)"
@@ -496,6 +547,13 @@ export default function VRGameForm() {
                 accept="image/*"
                 onChange={handleBackgroundImageChange}
               />
+              <button
+                type="button"
+                className={styles.addSectionButton}
+                onClick={() => setPickerTarget('background')}
+              >
+                📚 Выбрать из медиатеки
+              </button>
               <input
                 type="text"
                 placeholder="Alt-текст (описание для SEO)"
@@ -524,12 +582,22 @@ export default function VRGameForm() {
                 </button>
               </div>
             ) : (
-              <input
-                type="file"
-                accept="video/mp4,video/*"
-                onChange={handleVideoChange}
-                disabled={uploadingVideo}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <input
+                  type="file"
+                  accept="video/mp4,video/*"
+                  onChange={handleVideoChange}
+                  disabled={uploadingVideo}
+                />
+                <button
+                  type="button"
+                  className={styles.addSectionButton}
+                  onClick={() => setPickerTarget('video')}
+                  disabled={uploadingVideo}
+                >
+                  📚 Выбрать из медиатеки
+                </button>
+              </div>
             )}
             <span className={styles.fieldHint}>
               {uploadingVideo ? 'Идёт загрузка видео...' : 'Ролик об игре, будет показан на странице игры'}
@@ -562,6 +630,13 @@ export default function VRGameForm() {
                 />
                 <span>+ Добавить</span>
               </label>
+              <button
+                type="button"
+                className={styles.addGalleryItem}
+                onClick={() => setPickerTarget('gallery')}
+              >
+                <span>📚 Из медиатеки</span>
+              </button>
             </div>
             <span className={styles.fieldHint}>
               Дополнительные фотографии игры. Можно выбрать сразу несколько файлов.
@@ -615,6 +690,13 @@ export default function VRGameForm() {
             schemaJson: formData.schemaJson,
           }}
           onChange={(fields) => setFormData((prev) => ({ ...prev, ...fields }))}
+        />
+
+        <MediaPicker
+          open={pickerTarget !== null}
+          accept={pickerTarget === 'video' ? 'video' : 'image'}
+          onSelect={handlePickFromLibrary}
+          onClose={() => setPickerTarget(null)}
         />
 
         <div className={styles.actions}>

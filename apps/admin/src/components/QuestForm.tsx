@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { Quest, CreateQuestData, Branch, ContentSection } from '../api/catalog';
 import { getBranches } from '../api/catalog';
 import { getAgeRestrictions, getDifficulties } from '../api/content';
-import { uploadMedia, Media } from '../api/media';
+import { uploadMedia, updateMedia, Media } from '../api/media';
 import { getMediaUrl } from '../utils/media';
 import QuestScheduleEditor, { ScheduleSlot } from './QuestScheduleEditor';
 import RichTextEditor from './ui/RichTextEditor';
 import SeoSection from './ui/SeoSection';
 import DifficultyIconPicker from './ui/DifficultyIconPicker';
+import MediaPicker from './ui/MediaPicker';
 import styles from './QuestForm.module.css';
 
 interface QuestFormProps {
@@ -56,9 +57,12 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
 
   const [previewImageFile, setPreviewImageFile] = useState<File | null>(null);
   const [backgroundImageFile, setBackgroundImageFile] = useState<File | null>(null);
-  const [galleryImageFiles, setGalleryImageFiles] = useState<File[]>([]);
-  const [galleryPreviews, setGalleryPreviews] = useState<string[]>(
-    initialData?.galleryPhotos?.map(p => getMediaUrl(p.image.url)) || []
+  const [previewMedia, setPreviewMedia] = useState<Media | null>(null);
+  const [backgroundMedia, setBackgroundMedia] = useState<Media | null>(null);
+  const [pickerTarget, setPickerTarget] = useState<'preview' | 'background' | 'gallery' | null>(null);
+  // Gallery: items with id are existing/library photos, items with file are uploaded on submit
+  const [galleryItems, setGalleryItems] = useState<{ id?: string; url: string; file?: File }[]>(
+    initialData?.galleryPhotos?.map(p => ({ id: p.imageId, url: getMediaUrl(p.image.url) })) || []
   );
   const [previewAltText, setPreviewAltText] = useState(initialData?.previewImage?.altText || '');
   const [backgroundAltText, setBackgroundAltText] = useState(initialData?.backgroundImage?.altText || '');
@@ -132,6 +136,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     const file = e.target.files?.[0];
     if (file) {
       setPreviewImageFile(file);
+      setPreviewMedia(null);
     }
   };
 
@@ -139,25 +144,42 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     const file = e.target.files?.[0];
     if (file) {
       setBackgroundImageFile(file);
+      setBackgroundMedia(null);
     }
   };
 
   const handleGalleryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
-      setGalleryImageFiles(prev => [...prev, ...files]);
-      const newPreviews = files.map(file => URL.createObjectURL(file));
-      setGalleryPreviews(prev => [...prev, ...newPreviews]);
+      setGalleryItems(prev => [
+        ...prev,
+        ...files.map(file => ({ url: URL.createObjectURL(file), file })),
+      ]);
     }
+    e.target.value = '';
   };
 
   const removeGalleryImage = (index: number) => {
-    setGalleryImageFiles(prev => prev.filter((_, i) => i !== index));
-    setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
-    setFormData(prev => ({
-      ...prev,
-      galleryPhotoIds: prev.galleryPhotoIds?.filter((_, i) => i !== index) || []
-    }));
+    setGalleryItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handlePickFromLibrary = (media: Media) => {
+    if (pickerTarget === 'preview') {
+      setPreviewMedia(media);
+      setPreviewImageFile(null);
+      setPreviewAltText(media.altText || '');
+      handleChange('previewImageId', media.id);
+    } else if (pickerTarget === 'background') {
+      setBackgroundMedia(media);
+      setBackgroundImageFile(null);
+      setBackgroundAltText(media.altText || '');
+      handleChange('backgroundImageId', media.id);
+    } else if (pickerTarget === 'gallery') {
+      setGalleryItems(prev => {
+        if (prev.some(item => item.id === media.id)) return prev; // no duplicates
+        return [...prev, { id: media.id, url: getMediaUrl(media.url) }];
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,7 +187,7 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
     
     const submitData = { ...formData };
 
-    // Upload preview image if changed
+    // Preview image: new file upload > library pick > unchanged
     if (previewImageFile) {
       try {
         const media = await uploadMedia(previewImageFile, previewAltText || undefined);
@@ -175,9 +197,18 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
         alert('Ошибка загрузки превью изображения');
         return;
       }
+    } else if (previewMedia) {
+      submitData.previewImageId = previewMedia.id;
+      if (previewAltText.trim() !== (previewMedia.altText || '')) {
+        try {
+          await updateMedia(previewMedia.id, { altText: previewAltText.trim() });
+        } catch (error) {
+          console.error('Failed to update preview alt text:', error);
+        }
+      }
     }
 
-    // Upload background image if changed
+    // Background image: new file upload > library pick > unchanged
     if (backgroundImageFile) {
       try {
         const media = await uploadMedia(backgroundImageFile, backgroundAltText || undefined);
@@ -187,20 +218,33 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
         alert('Ошибка загрузки фонового изображения');
         return;
       }
+    } else if (backgroundMedia) {
+      submitData.backgroundImageId = backgroundMedia.id;
+      if (backgroundAltText.trim() !== (backgroundMedia.altText || '')) {
+        try {
+          await updateMedia(backgroundMedia.id, { altText: backgroundAltText.trim() });
+        } catch (error) {
+          console.error('Failed to update background alt text:', error);
+        }
+      }
     }
 
-    // Upload new gallery images
-    if (galleryImageFiles.length > 0) {
-      try {
-        const uploadedIds = await Promise.all(
-          galleryImageFiles.map(file => uploadMedia(file).then((media: Media) => media.id))
-        );
-        submitData.galleryPhotoIds = [...(submitData.galleryPhotoIds || []), ...uploadedIds];
-      } catch (error) {
-        console.error('Failed to upload gallery images:', error);
-        alert('Ошибка загрузки галереи');
-        return;
+    // Gallery: full ordered list — existing/library ids kept, new files uploaded
+    try {
+      const galleryPhotoIds: string[] = [];
+      for (const item of galleryItems) {
+        if (item.id) {
+          galleryPhotoIds.push(item.id);
+        } else if (item.file) {
+          const media = await uploadMedia(item.file);
+          galleryPhotoIds.push(media.id);
+        }
       }
+      submitData.galleryPhotoIds = galleryPhotoIds;
+    } catch (error) {
+      console.error('Failed to upload gallery images:', error);
+      alert('Ошибка загрузки галереи');
+      return;
     }
 
     // Pass schedule slots only for new quests
@@ -405,9 +449,15 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
           <div className={styles.imageField}>
             <label>Превью изображение</label>
             <div className={styles.imagePreview}>
-              {(previewImageFile || initialData?.previewImage) && (
+              {(previewImageFile || previewMedia || initialData?.previewImage) && (
                 <img 
-                  src={previewImageFile ? URL.createObjectURL(previewImageFile) : getMediaUrl(initialData?.previewImage?.url)} 
+                  src={
+                    previewImageFile
+                      ? URL.createObjectURL(previewImageFile)
+                      : previewMedia
+                        ? getMediaUrl(previewMedia.url)
+                        : getMediaUrl(initialData?.previewImage?.url)
+                  }
                   alt="Preview" 
                 />
               )}
@@ -417,6 +467,13 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
               accept="image/*"
               onChange={handlePreviewImageChange}
             />
+            <button
+              type="button"
+              className={styles.addSectionButton}
+              onClick={() => setPickerTarget('preview')}
+            >
+              📚 Выбрать из медиатеки
+            </button>
             <input
               type="text"
               placeholder="Alt-текст (описание для SEO)"
@@ -429,9 +486,15 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
           <div className={styles.imageField}>
             <label>Фоновое изображение</label>
             <div className={styles.imagePreview}>
-              {(backgroundImageFile || initialData?.backgroundImage) && (
+              {(backgroundImageFile || backgroundMedia || initialData?.backgroundImage) && (
                 <img 
-                  src={backgroundImageFile ? URL.createObjectURL(backgroundImageFile) : getMediaUrl(initialData?.backgroundImage?.url)} 
+                  src={
+                    backgroundImageFile
+                      ? URL.createObjectURL(backgroundImageFile)
+                      : backgroundMedia
+                        ? getMediaUrl(backgroundMedia.url)
+                        : getMediaUrl(initialData?.backgroundImage?.url)
+                  }
                   alt="Background" 
                 />
               )}
@@ -441,6 +504,13 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
               accept="image/*"
               onChange={handleBackgroundImageChange}
             />
+            <button
+              type="button"
+              className={styles.addSectionButton}
+              onClick={() => setPickerTarget('background')}
+            >
+              📚 Выбрать из медиатеки
+            </button>
             <input
               type="text"
               placeholder="Alt-текст (описание для SEO)"
@@ -454,9 +524,9 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
         <div className={styles.gallerySection}>
           <label>Галерея фотографий</label>
           <div className={styles.galleryGrid}>
-            {galleryPreviews.map((url, index) => (
+            {galleryItems.map((item, index) => (
               <div key={index} className={styles.galleryItem}>
-                <img src={url} alt={`Gallery ${index + 1}`} />
+                <img src={item.url} alt={`Gallery ${index + 1}`} />
                 <button
                   type="button"
                   className={styles.removeButton}
@@ -476,6 +546,13 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
               />
               <span>+ Добавить</span>
             </label>
+            <button
+              type="button"
+              className={styles.addGalleryItem}
+              onClick={() => setPickerTarget('gallery')}
+            >
+              <span>📚 Из медиатеки</span>
+            </button>
           </div>
         </div>
       </div>
@@ -534,6 +611,13 @@ export default function QuestForm({ initialData, onSubmit, onCancel, isSubmittin
           schemaJson: formData.schemaJson,
         }}
         onChange={(fields) => setFormData(prev => ({ ...prev, ...fields }))}
+      />
+
+      <MediaPicker
+        open={pickerTarget !== null}
+        accept="image"
+        onSelect={handlePickFromLibrary}
+        onClose={() => setPickerTarget(null)}
       />
 
       <div className={styles.actions}>
