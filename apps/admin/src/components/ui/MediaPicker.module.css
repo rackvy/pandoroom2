@@ -126,6 +126,9 @@
 }
 
 .card {
+  height: 100px;
+  display: flex;
+  flex-direction: column;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
@@ -143,7 +146,8 @@
 }
 
 .thumb {
-  height: 104px;
+  flex: 1;
+  min-height: 0;
   background: #f9fafb;
   display: flex;
   align-items: center;
@@ -176,6 +180,7 @@
 }
 
 .cardName {
+  flex-shrink: 0;
   padding: 0.5rem 0.625rem;
   font-size: 0.75rem;
   color: #374151;
