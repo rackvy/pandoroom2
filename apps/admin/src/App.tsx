@@ -36,6 +36,7 @@ import AgeRestrictionsPage from './pages/reference/AgeRestrictionsPage'
 import DifficultiesPage from './pages/reference/DifficultiesPage'
 import VRGamesListPage from './pages/content/VRGamesListPage'
 import VRGameForm from './pages/content/VRGameForm'
+import MediaLibraryPage from './pages/content/MediaLibraryPage'
 import ReferenceLayout from './pages/reference/ReferenceLayout'
 import EmployeesPage from './pages/EmployeesPage'
 import SettingsPage from './pages/SettingsPage'
@@ -93,6 +94,7 @@ function AppRoutes() {
           <Route path="vr-games" element={<VRGamesListPage />} />
           <Route path="vr-games/new" element={<VRGameForm />} />
           <Route path="vr-games/:id/edit" element={<VRGameForm />} />
+          <Route path="media" element={<MediaLibraryPage />} />
         </Route>
         <Route path="clients" element={<ClientsPage />} />
         <Route path="clients/new" element={<ClientCreatePage />} />

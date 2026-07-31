@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from './s3.service';
 import * as path from 'path';
@@ -103,6 +103,74 @@ export class MediaService {
     return { ...updated, sizeBytes: Number(updated.sizeBytes) };
   }
 
+  async getUsage(id: string) {
+    const media = await this.prisma.media.findUnique({ where: { id } });
+    if (!media) throw new NotFoundException('Media not found');
+
+    const [
+      questPreviews,
+      questBackgrounds,
+      questGallery,
+      news,
+      blog,
+      aboutFacts,
+      reviewSources,
+      pageBlockFiles,
+      pageBlockImages,
+      cakes,
+      showPrograms,
+      decorations,
+      vrPreviews,
+      vrBackgrounds,
+      vrVideos,
+      vrGallery,
+    ] = await Promise.all([
+      this.prisma.quest.count({ where: { previewImageId: id } }),
+      this.prisma.quest.count({ where: { backgroundImageId: id } }),
+      this.prisma.questGalleryPhoto.count({ where: { imageId: id } }),
+      this.prisma.news.count({ where: { imageId: id } }),
+      this.prisma.blogPost.count({ where: { imageId: id } }),
+      this.prisma.aboutFact.count({ where: { iconId: id } }),
+      this.prisma.reviewSource.count({ where: { iconId: id } }),
+      this.prisma.pageBlock.count({ where: { fileId: id } }),
+      this.prisma.pageBlock.count({ where: { imageId: id } }),
+      this.prisma.cake.count({ where: { imageId: id } }),
+      this.prisma.showProgram.count({ where: { imageId: id } }),
+      this.prisma.decoration.count({ where: { imageId: id } }),
+      this.prisma.vRGame.count({ where: { previewImageId: id } }),
+      this.prisma.vRGame.count({ where: { backgroundImageId: id } }),
+      this.prisma.vRGame.count({ where: { videoId: id } }),
+      this.prisma.vRGameGalleryPhoto.count({ where: { imageId: id } }),
+    ]);
+
+    const labels: [string, number][] = [
+      ['Квесты (превью)', questPreviews],
+      ['Квесты (фон)', questBackgrounds],
+      ['Квесты (галерея)', questGallery],
+      ['Новости', news],
+      ['Блог', blog],
+      ['О нас (факты)', aboutFacts],
+      ['Источники отзывов', reviewSources],
+      ['Страницы (файлы)', pageBlockFiles],
+      ['Страницы (изображения)', pageBlockImages],
+      ['Торты', cakes],
+      ['Шоу-программы', showPrograms],
+      ['Оформление', decorations],
+      ['VR игры (превью)', vrPreviews],
+      ['VR игры (фон)', vrBackgrounds],
+      ['VR игры (видео)', vrVideos],
+      ['VR игры (галерея)', vrGallery],
+    ];
+
+    const usages = labels
+      .filter(([, count]) => count > 0)
+      .map(([label, count]) => ({ label, count }));
+
+    const total = labels.reduce((sum, [, count]) => sum + count, 0);
+
+    return { usages, total };
+  }
+
   async remove(id: string) {
     const media = await this.prisma.media.findUnique({
       where: { id },
@@ -110,6 +178,15 @@ export class MediaService {
 
     if (!media) {
       throw new NotFoundException('Media not found');
+    }
+
+    // Block deletion if the file is referenced anywhere
+    const { usages, total } = await this.getUsage(id);
+    if (total > 0) {
+      const where = usages.map((u) => `${u.label}: ${u.count}`).join(', ');
+      throw new BadRequestException(
+        `Файл используется (${where}). Сначала уберите его из этих разделов.`,
+      );
     }
 
     if (this.useS3) {

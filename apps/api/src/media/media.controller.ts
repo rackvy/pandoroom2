@@ -37,6 +37,11 @@ export class MediaController {
     return this.mediaService.upload(file, altText);
   }
 
+  @Get(':id/usage')
+  getUsage(@Param('id') id: string) {
+    return this.mediaService.getUsage(id);
+  }
+
   @Patch(':id')
   updateMedia(
     @Param('id') id: string,

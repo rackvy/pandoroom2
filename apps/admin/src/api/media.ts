@@ -2,12 +2,18 @@ import api from '../lib/axios';
 
 export interface Media {
   id: string;
+  type: 'image' | 'file';
   url: string;
   originalName: string;
   mimeType: string;
-  size: number;
+  sizeBytes: number;
   altText?: string | null;
   createdAt: string;
+}
+
+export interface MediaUsage {
+  usages: { label: string; count: number }[];
+  total: number;
 }
 
 export async function uploadMedia(file: File, altText?: string): Promise<Media> {
@@ -35,4 +41,9 @@ export async function updateMedia(id: string, data: { altText?: string }): Promi
 
 export async function deleteMedia(id: string): Promise<void> {
   await api.delete(`/api/admin/media/${id}`);
+}
+
+export async function getMediaUsage(id: string): Promise<MediaUsage> {
+  const response = await api.get(`/api/admin/media/${id}/usage`);
+  return response.data;
 }
