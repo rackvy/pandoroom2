@@ -331,9 +331,11 @@ export class ScheduleService {
     }
 
     // Create booking
-    // Get or create client by phone
+    // Link client: explicit clientId wins, otherwise get-or-create by phone
     let clientIdForTable: string | null = null;
-    if (dto.clientPhone && dto.clientName) {
+    if (dto.clientId) {
+      clientIdForTable = dto.clientId;
+    } else if (dto.clientPhone && dto.clientName) {
       const client = await this.clientsService.getOrCreate(dto.clientPhone, dto.clientName);
       clientIdForTable = client.id;
     }
@@ -425,9 +427,11 @@ export class ScheduleService {
     }
 
     // Create booking
-    // Get or create client by phone
+    // Link client: explicit clientId wins, otherwise get-or-create by phone
     let clientIdForQuest: string | null = null;
-    if (dto.clientPhone && dto.clientName) {
+    if (dto.clientId) {
+      clientIdForQuest = dto.clientId;
+    } else if (dto.clientPhone && dto.clientName) {
       const client = await this.clientsService.getOrCreate(dto.clientPhone, dto.clientName);
       clientIdForQuest = client.id;
     }

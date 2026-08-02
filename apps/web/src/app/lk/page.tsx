@@ -88,6 +88,7 @@ export default function DashboardPage() {
 
   const bookings = profile?.bookings || []
   const questReservations = profile?.questReservations || []
+  const vrReservations = profile?.vrReservations || []
   const lastMessage = chatMessages.length > 0 ? chatMessages[chatMessages.length - 1] : null
 
   const startEditName = () => {
@@ -154,7 +155,7 @@ export default function DashboardPage() {
         {activeTab === 'bookings' && (
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Мои брони</h2>
-            {bookings.length === 0 ? (
+            {bookings.length === 0 && vrReservations.length === 0 ? (
               <div className={styles.empty}>
                 <div className={styles.emptyIcon}>🎉</div>
                 <p className={styles.emptyText}>У вас пока нет бронирований</p>
@@ -190,6 +191,26 @@ export default function DashboardPage() {
                       >
                         💬 Чат
                       </button>
+                    </div>
+                  )
+                })}
+
+                {vrReservations.filter(vr => vr.type !== 'blocked').map(vr => {
+                  const status = STATUS_LABELS[vr.status] || STATUS_LABELS.draft
+                  return (
+                    <div key={vr.id} className={styles.card}>
+                      <h3 className={styles.cardTitle}>
+                        {vr.type === 'full_hall' ? `Выкуп зала — ${vr.hall.name}` : vr.game?.name || `VR — ${vr.hall.name}`}
+                      </h3>
+                      <p className={styles.cardMeta}>
+                        {formatDate(vr.date)} &middot; {formatTime(vr.startTime)} — {formatTime(vr.endTime)}
+                      </p>
+                      <p className={styles.cardMeta}>
+                        {vr.hall.name} &middot; {vr.guestsCount} чел.
+                      </p>
+                      <span className={`${styles.cardStatus} ${status.className}`}>
+                        {status.label}
+                      </span>
                     </div>
                   )
                 })}

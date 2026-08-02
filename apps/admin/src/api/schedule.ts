@@ -89,6 +89,7 @@ export interface QuickTableBookingRequest {
   durationMinutes?: number;
   clientName?: string;
   clientPhone?: string;
+  clientId?: string;
 }
 
 export interface QuickQuestBookingRequest {
@@ -99,6 +100,7 @@ export interface QuickQuestBookingRequest {
   durationMinutes?: number;
   clientName?: string;
   clientPhone?: string;
+  clientId?: string;
 }
 
 export interface QuickBookingResponse {

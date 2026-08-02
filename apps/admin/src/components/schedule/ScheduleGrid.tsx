@@ -332,7 +332,7 @@ export default function ScheduleGrid({
     };
   }, [selectionState.isSelecting, selectionState.columnId, selectionState.startMinutes, checkOverlap]);
 
-  const handleSubmitQuickBook = useCallback(async (data: { clientName: string; clientPhone: string; durationMinutes: number }) => {
+  const handleSubmitQuickBook = useCallback(async (data: { clientName: string; clientPhone: string; clientId: string | null; durationMinutes: number }) => {
     if (!quickBookState) return;
 
     try {
@@ -349,6 +349,7 @@ export default function ScheduleGrid({
           durationMinutes: data.durationMinutes,
           clientName: data.clientName,
           clientPhone: data.clientPhone,
+          clientId: data.clientId || undefined,
         });
       } else {
         response = await quickBookQuest({
@@ -359,6 +360,7 @@ export default function ScheduleGrid({
           durationMinutes: data.durationMinutes,
           clientName: data.clientName,
           clientPhone: data.clientPhone,
+          clientId: data.clientId || undefined,
         });
       }
 

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { ClientsService } from '../clients/clients.service';
 import { VRHall } from '@prisma/client';
 
 const SLOT_STEP = 30; // minutes
@@ -33,7 +34,10 @@ function dateToMinutes(d: Date): number {
 
 @Injectable()
 export class VRScheduleService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private clientsService: ClientsService,
+  ) {}
 
   /* ==================== HALLS ==================== */
 
@@ -206,7 +210,7 @@ export class VRScheduleService {
       include: {
         reservations: {
           where: { date: new Date(date) },
-          include: { game: true, booking: { include: { client: true } } },
+          include: { game: true, client: true, booking: { include: { client: true } } },
         },
         priceRules: { orderBy: { sortOrder: 'asc' } },
       },
@@ -342,6 +346,18 @@ export class VRScheduleService {
     const date = new Date(data.date);
     await this.assertCapacity(hall, date, startMin, endMin, guests);
 
+    // Link to a client: explicit clientId wins, otherwise get-or-create by phone
+    let clientId: string | null = null;
+    if (data.clientId) {
+      clientId = data.clientId;
+    } else if (data.clientPhone && String(data.clientPhone).trim()) {
+      const client = await this.clientsService.getOrCreate(
+        String(data.clientPhone).trim(),
+        (data.clientName || '').trim() || 'Гость',
+      );
+      clientId = client.id;
+    }
+
     return this.prisma.vRReservation.create({
       data: {
         hallId: hall.id,
@@ -354,12 +370,13 @@ export class VRScheduleService {
         gameId: data.gameId || null,
         clientName: data.clientName || null,
         clientPhone: data.clientPhone || null,
+        clientId,
         guestsCount: guests,
         maxGuests: data.maxGuests != null ? Number(data.maxGuests) : null,
         bookingId: data.bookingId || null,
         status,
       },
-      include: { game: true, hall: true },
+      include: { game: true, hall: true, client: true },
     });
   }
 

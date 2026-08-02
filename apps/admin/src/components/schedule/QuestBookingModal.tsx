@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { quickBookQuest, QuickQuestBookingRequest } from '../../api/schedule';
+import ClientPicker, { type ClientPickerValue } from '../booking/ClientPicker';
 import styles from './QuestBookingModal.module.css';
 
 interface QuestBookingModalProps {
@@ -27,8 +28,7 @@ export default function QuestBookingModal({
   durationMinutes,
   price,
 }: QuestBookingModalProps) {
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
+  const [client, setClient] = useState<ClientPickerValue>({ clientId: null, clientName: '', clientPhone: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,15 +46,15 @@ export default function QuestBookingModal({
         eventDate,
         startTime,
         durationMinutes,
-        clientName: clientName.trim() || undefined,
-        clientPhone: clientPhone.trim() || undefined,
+        clientName: client.clientName.trim() || undefined,
+        clientPhone: client.clientPhone.trim() || undefined,
+        clientId: client.clientId || undefined,
       };
 
       await quickBookQuest(data);
       
       // Reset form
-      setClientName('');
-      setClientPhone('');
+      setClient({ clientId: null, clientName: '', clientPhone: '' });
       
       onSuccess();
     } catch (err: any) {
@@ -109,27 +109,8 @@ export default function QuestBookingModal({
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
-            <label className={styles.label}>Имя клиента</label>
-            <input
-              type="text"
-              className={styles.input}
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="Введите имя клиента"
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Телефон</label>
-            <input
-              type="tel"
-              className={styles.input}
-              value={clientPhone}
-              onChange={(e) => setClientPhone(e.target.value)}
-              placeholder="Введите телефон"
-              disabled={isLoading}
-            />
+            <label className={styles.label}>Клиент</label>
+            <ClientPicker value={client} onChange={setClient} disabled={isLoading} />
           </div>
 
           <div className={styles.actions}>

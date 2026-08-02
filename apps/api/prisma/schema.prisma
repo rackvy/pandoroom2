@@ -461,6 +461,7 @@ model Client {
 
   bookings          Booking[]
   questReservations QuestReservation[]
+  vrReservations    VRReservation[]
   chatMessages      ChatMessage[]
 
   @@index([phone])
@@ -808,6 +809,7 @@ model VRReservation {
   id           String          @id @default(uuid())
   hallId       String
   bookingId    String?
+  clientId     String?
   date         DateTime        @db.Date
   startTime    DateTime        @db.Time
   endTime      DateTime        @db.Time
@@ -825,10 +827,12 @@ model VRReservation {
 
   hall         VRHall          @relation(fields: [hallId], references: [id], onDelete: Cascade)
   booking      Booking?        @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  client       Client?         @relation(fields: [clientId], references: [id], onDelete: SetNull)
   game         VRGame?         @relation(fields: [gameId], references: [id], onDelete: SetNull)
 
   @@index([hallId, date])
   @@index([bookingId])
+  @@index([clientId])
 }
 
 model VRGame {

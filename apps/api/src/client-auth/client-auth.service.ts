@@ -85,6 +85,13 @@ export class ClientAuthService {
             },
           },
         },
+        vrReservations: {
+          orderBy: { date: 'desc' },
+          include: {
+            hall: true,
+            game: { include: { previewImage: true } },
+          },
+        },
       },
     });
 
@@ -106,6 +113,7 @@ export class ClientAuthService {
       birthday: client.birthday,
       bookings: client.bookings,
       questReservations,
+      vrReservations: client.vrReservations,
     };
   }
 

@@ -26,6 +26,7 @@ export interface VRReservation {
   id: string;
   hallId: string;
   bookingId: string | null;
+  clientId: string | null;
   date: string;
   startTime: string;
   endTime: string;
@@ -40,6 +41,7 @@ export interface VRReservation {
   status: string;
   game?: { id: string; name: string } | null;
   hall?: { id: string; name: string };
+  client?: { id: string; name: string; phone: string } | null;
 }
 
 export interface VRHallWithSchedule extends VRHall {

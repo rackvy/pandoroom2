@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createVRReservation, getVRSchedule, getVRPrice, type VRHall, type VRReservation } from '../../api/vrSchedule';
 import { toast } from '../ui/Toast';
+import ClientPicker, { type ClientPickerValue } from '../booking/ClientPicker';
 import styles from './VRBookingModal.module.css';
 
 type BookingType = 'open_slot' | 'full_hall' | 'blocked';
@@ -45,8 +46,7 @@ export default function VRBookingModal({
   const [date, setDate] = useState(defaultDate);
   const [startTime, setStartTime] = useState(defaultStartTime || '10:00');
   const [endTime, setEndTime] = useState(defaultStartTime ? minToHHMM(timeToMinutes(defaultStartTime) + 60) : '11:00');
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
+  const [client, setClient] = useState<ClientPickerValue>({ clientId: null, clientName: '', clientPhone: '' });
   const [guestsCount, setGuestsCount] = useState('1');
   const [blockReason, setBlockReason] = useState('');
   const [description, setDescription] = useState('');
@@ -75,6 +75,10 @@ export default function VRBookingModal({
     if (isOpen) {
       setError(null);
       setBuyoutTotal(null);
+      setClient({ clientId: null, clientName: '', clientPhone: '' });
+      setGuestsCount('1');
+      setDescription('');
+      setBlockReason('');
     }
   }, [isOpen]);
 
@@ -160,8 +164,9 @@ export default function VRBookingModal({
       if (type === 'blocked') {
         data.title = blockReason.trim() || undefined;
       } else {
-        data.clientName = clientName.trim() || undefined;
-        data.clientPhone = clientPhone.trim() || undefined;
+        data.clientName = client.clientName.trim() || undefined;
+        data.clientPhone = client.clientPhone.trim() || undefined;
+        data.clientId = client.clientId || undefined;
         if (type === 'open_slot') {
           data.guestsCount = Math.max(1, parseInt(guestsCount) || 1);
           data.description = description.trim() || undefined;
@@ -302,26 +307,8 @@ export default function VRBookingModal({
           {type === 'open_slot' && (
             <>
               <div className={styles.formGroup}>
-                <label className={styles.label}>Имя клиента</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  placeholder="Введите имя"
-                  disabled={isLoading}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Телефон</label>
-                <input
-                  type="tel"
-                  className={styles.input}
-                  value={clientPhone}
-                  onChange={(e) => setClientPhone(e.target.value)}
-                  placeholder="Введите телефон"
-                  disabled={isLoading}
-                />
+                <label className={styles.label}>Клиент</label>
+                <ClientPicker value={client} onChange={setClient} disabled={isLoading} />
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.label}>
@@ -361,26 +348,8 @@ export default function VRBookingModal({
           {type === 'full_hall' && (
             <>
               <div className={styles.formGroup}>
-                <label className={styles.label}>Имя клиента</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  placeholder="Введите имя"
-                  disabled={isLoading}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>Телефон</label>
-                <input
-                  type="tel"
-                  className={styles.input}
-                  value={clientPhone}
-                  onChange={(e) => setClientPhone(e.target.value)}
-                  placeholder="Введите телефон"
-                  disabled={isLoading}
-                />
+                <label className={styles.label}>Клиент</label>
+                <ClientPicker value={client} onChange={setClient} disabled={isLoading} />
               </div>
               <div className={styles.priceBox}>
                 <span>Выкуп зала ({selectedHall?.maxCapacity || 20} мест):</span>

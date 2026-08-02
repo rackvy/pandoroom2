@@ -4,6 +4,7 @@ import api from '../lib/axios';
 import TableSelectorModal from './schedule/TableSelectorModal';
 import QuestSelectorModal from './schedule/QuestSelectorModal';
 import ItemSelectorModal, { SelectableItem } from './schedule/ItemSelectorModal';
+import ClientPicker, { type ClientPickerValue } from './booking/ClientPicker';
 import { toast } from './ui/Toast';
 import styles from './NewOrderModal.module.css';
 
@@ -69,8 +70,7 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
   const [showQuestSelector, setShowQuestSelector] = useState(false);
   
   // Client info
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
+  const [client, setClient] = useState<ClientPickerValue>({ clientId: null, clientName: '', clientPhone: '' });
   const [birthdayPersonName, setBirthdayPersonName] = useState('');
   const [birthdayPersonAge, setBirthdayPersonAge] = useState('');
   const [guestsKids, setGuestsKids] = useState('');
@@ -292,7 +292,7 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
   };
 
   const handleSubmit = async () => {
-    if (!selectedBranch || !eventDate || !clientName) {
+    if (!selectedBranch || !eventDate || !client.clientName) {
       toast.error('Заполните обязательные поля: филиал, дата, имя клиента');
       return;
     }
@@ -308,8 +308,9 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
       const bookingRes = await api.post('/api/admin/bookings', {
         branchId: selectedBranch,
         eventDate,
-        clientName,
-        clientPhone,
+        clientName: client.clientName,
+        clientPhone: client.clientPhone,
+        clientId: client.clientId || undefined,
         birthdayPersonName: birthdayPersonName || null,
         birthdayPersonAge: birthdayPersonAge ? parseInt(birthdayPersonAge) : null,
         guestsKids: guestsKids ? parseInt(guestsKids) : null,
@@ -392,8 +393,7 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
     setStep(1);
     setSelectedBranch('');
     setEventDate('');
-    setClientName('');
-    setClientPhone('');
+    setClient({ clientId: null, clientName: '', clientPhone: '' });
     setBirthdayPersonName('');
     setBirthdayPersonAge('');
     setGuestsKids('');
@@ -464,25 +464,9 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
                 </div>
               </div>
               
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label>Имя клиента *</label>
-                  <input 
-                    type="text"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Анжелика"
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>Телефон</label>
-                  <input 
-                    type="text"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.target.value)}
-                    placeholder="+7 984 123 45 67"
-                  />
-                </div>
+              <div className={styles.formGroup}>
+                <label>Клиент *</label>
+                <ClientPicker value={client} onChange={setClient} />
               </div>
               
               <div className={styles.formRow}>
@@ -538,7 +522,7 @@ export default function NewOrderModal({ isOpen, onClose, onSuccess }: NewOrderMo
                 <button 
                   className={styles.nextButton}
                   onClick={() => setStep(2)}
-                  disabled={!selectedBranch || !eventDate || !clientName}
+                  disabled={!selectedBranch || !eventDate || !client.clientName}
                 >
                   Далее →
                 </button>

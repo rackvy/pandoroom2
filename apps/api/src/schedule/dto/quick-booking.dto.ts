@@ -29,6 +29,10 @@ export class QuickTableBookingDto {
   @IsOptional()
   @IsString()
   clientPhone?: string = '';
+
+  @IsOptional()
+  @IsString()
+  clientId?: string;
 }
 
 export class QuickQuestBookingDto {
@@ -57,6 +61,10 @@ export class QuickQuestBookingDto {
   @IsOptional()
   @IsString()
   clientPhone?: string = '';
+
+  @IsOptional()
+  @IsString()
+  clientId?: string;
 }
 
 export interface QuickBookingResponse {

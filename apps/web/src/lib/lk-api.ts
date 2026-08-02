@@ -78,6 +78,19 @@ export interface ClientQuestReservation {
   branch: { name: string }
 }
 
+export interface ClientVRReservation {
+  id: string
+  date: string
+  startTime: string
+  endTime: string
+  type: 'full_hall' | 'open_slot' | 'blocked'
+  guestsCount: number
+  status: string
+  clientName: string | null
+  hall: { id: string; name: string }
+  game?: { id: string; name: string; previewImage?: { url: string } | null } | null
+}
+
 export interface ClientProfile {
   id: string
   phone: string
@@ -86,4 +99,5 @@ export interface ClientProfile {
   birthday: string | null
   bookings: ClientBooking[]
   questReservations: ClientQuestReservation[]
+  vrReservations: ClientVRReservation[]
 }

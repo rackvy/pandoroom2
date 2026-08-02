@@ -113,9 +113,11 @@ export class BookingService {
   }
 
   async create(data: any) {
-    // Get or create client by phone
+    // Link client: explicit clientId wins, otherwise get-or-create by phone
     let clientId: string | null = null;
-    if (data.clientPhone && data.clientName) {
+    if (data.clientId) {
+      clientId = data.clientId;
+    } else if (data.clientPhone && data.clientName) {
       const client = await this.clientsService.getOrCreate(
         data.clientPhone,
         data.clientName,

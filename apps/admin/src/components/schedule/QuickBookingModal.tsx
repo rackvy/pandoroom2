@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import ClientPicker, { type ClientPickerValue } from '../booking/ClientPicker';
 import styles from './ScheduleGrid.module.css';
 
 interface QuickBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { clientName: string; clientPhone: string; durationMinutes: number }) => void;
+  onSubmit: (data: { clientName: string; clientPhone: string; clientId: string | null; durationMinutes: number }) => void;
   defaultDuration: number;
   title: string;
 }
@@ -18,8 +19,7 @@ export default function QuickBookingModal({
   defaultDuration,
   title,
 }: QuickBookingModalProps) {
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
+  const [client, setClient] = useState<ClientPickerValue>({ clientId: null, clientName: '', clientPhone: '' });
   const [durationMinutes, setDurationMinutes] = useState(defaultDuration);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -30,13 +30,13 @@ export default function QuickBookingModal({
     setIsLoading(true);
     try {
       await onSubmit({
-        clientName: clientName.trim(),
-        clientPhone: clientPhone.trim(),
+        clientName: client.clientName.trim(),
+        clientPhone: client.clientPhone.trim(),
+        clientId: client.clientId,
         durationMinutes,
       });
       // Reset form
-      setClientName('');
-      setClientPhone('');
+      setClient({ clientId: null, clientName: '', clientPhone: '' });
       setDurationMinutes(defaultDuration);
     } finally {
       setIsLoading(false);
@@ -62,27 +62,8 @@ export default function QuickBookingModal({
 
         <form onSubmit={handleSubmit} className={styles.modalForm}>
           <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Имя клиента</label>
-            <input
-              type="text"
-              className={styles.formInput}
-              value={clientName}
-              onChange={(e) => setClientName(e.target.value)}
-              placeholder="Необязательно"
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.formLabel}>Телефон</label>
-            <input
-              type="tel"
-              className={styles.formInput}
-              value={clientPhone}
-              onChange={(e) => setClientPhone(e.target.value)}
-              placeholder="Необязательно"
-              disabled={isLoading}
-            />
+            <label className={styles.formLabel}>Клиент</label>
+            <ClientPicker value={client} onChange={setClient} disabled={isLoading} />
           </div>
 
           <div className={styles.formGroup}>
