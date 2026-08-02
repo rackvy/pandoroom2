@@ -1,7 +1,9 @@
 import { Controller, Get, Post, Query, Body, BadRequestException } from '@nestjs/common';
+import { Public } from '../common/decorators/public.decorator';
 import { VRScheduleService } from './vr-schedule.service';
 
 @Controller('api/public/vr-schedule')
+@Public()
 export class VRSchedulePublicController {
   constructor(private readonly vrScheduleService: VRScheduleService) {}
 
