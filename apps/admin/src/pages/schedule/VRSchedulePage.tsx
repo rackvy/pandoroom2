@@ -207,21 +207,6 @@ export default function VRSchedulePage() {
     return { free: Math.max(0, hall.maxCapacity - taken), blocked: false };
   };
 
-  // Check if a reservation starts at this slot (for rendering the block)
-  const reservationStartsAtSlot = (reservation: VRReservation, slotTime: string): boolean => {
-    const rStart = timeToMinutes(formatApiTime(reservation.startTime));
-    const slotMinutes = timeToMinutes(slotTime);
-    return rStart >= slotMinutes && rStart < slotMinutes + 30;
-  };
-
-  // Calculate how many slots a reservation spans
-  const getReservationSpan = (reservation: VRReservation): number => {
-    const rStart = timeToMinutes(formatApiTime(reservation.startTime));
-    const rEnd = timeToMinutes(formatApiTime(reservation.endTime));
-    const durationMinutes = rEnd - rStart;
-    return Math.max(1, Math.ceil(durationMinutes / 30));
-  };
-
   const selectedBranch = branches.find(b => b.id === branchId);
   const popoverHall = popoverReservation ? halls.find(h => h.id === popoverReservation.hallId) : null;
 
@@ -311,74 +296,74 @@ export default function VRSchedulePage() {
                   <td className={slot.endsWith(':30') ? styles.timeSlotHalf : ''}>{slot}</td>
                   {halls.map((hall) => {
                     const slotReservations = getReservationsForSlot(hall, slot);
-                    const startingHere = slotReservations.filter(r => reservationStartsAtSlot(r, slot));
+                    const active = slotReservations.filter(r => r.status !== 'canceled');
+                    const { free, blocked } = getFreeForSlot(hall, slot);
 
-                    if (startingHere.length > 0) {
-                      const r = startingHere[0];
-                      const span = getReservationSpan(r);
-                      const isBlocked = r.type === 'blocked';
-                      const isCanceled = r.status === 'canceled';
-                      const blockClass = isCanceled
-                        ? styles.canceled
-                        : isBlocked
-                          ? styles.blockedSlot
-                          : r.type === 'full_hall'
-                            ? styles.fullHall
-                            : styles.openSlot;
-
-                      const displayName = isBlocked
-                        ? (r.title ? `🔒 ${r.title}` : '🔒 Заблокировано')
-                        : r.type === 'full_hall'
-                          ? (r.clientName || 'Выкуп зала')
-                          : (r.clientName || r.title || r.game?.name || 'Бронь');
-
+                    // Empty cell — click anywhere to add a booking
+                    if (active.length === 0) {
                       return (
-                        <td
-                          key={hall.id}
-                          rowSpan={span}
-                          style={{ padding: '2px' }}
-                        >
+                        <td key={hall.id}>
                           <div
-                            className={`${styles.reservationBlock} ${blockClass}`}
-                            style={{ height: `${span * 40 - 4}px` }}
-                            onClick={(e) => handleReservationClick(e, r)}
+                            className={styles.emptyCell}
+                            onClick={() => handleCellClick(hall.id, slot)}
+                            title={`Свободно ${free} из ${hall.maxCapacity} мест`}
                           >
-                            <span className={styles.reservationTitle}>{displayName}</span>
-                            <span className={styles.reservationTime}>
-                              {formatApiTime(r.startTime)} - {formatApiTime(r.endTime)}
-                              {!isBlocked && !isCanceled && ` · ${r.guestsCount}/${hall.maxCapacity}`}
+                            <span className={free === 0 ? `${styles.freeCount} ${styles.freeCountZero}` : styles.freeCount}>
+                              {free}
                             </span>
+                            <button
+                              type="button"
+                              className={styles.lockBtn}
+                              title="Заблокировать 30 минут"
+                              onClick={(e) => handleQuickBlock(e, hall, slot)}
+                            >
+                              🔒
+                            </button>
                           </div>
                         </td>
                       );
                     }
 
-                    // Check if this cell is covered by a reservation that started in an earlier slot
-                    const coveredByEarlier = slotReservations.some(r => !reservationStartsAtSlot(r, slot));
-                    if (coveredByEarlier) {
-                      return null; // This cell is covered by a rowSpan from an earlier slot
-                    }
-
-                    const { free } = getFreeForSlot(hall, slot);
-
+                    // Cell with reservations — show all as chips + add button while seats remain
                     return (
                       <td key={hall.id}>
-                        <div
-                          className={styles.emptyCell}
-                          onClick={() => handleCellClick(hall.id, slot)}
-                          title={`Свободно ${free} из ${hall.maxCapacity} мест`}
-                        >
-                          <span className={free === 0 ? `${styles.freeCount} ${styles.freeCountZero}` : styles.freeCount}>
-                            {free}
-                          </span>
-                          <button
-                            type="button"
-                            className={styles.lockBtn}
-                            title="Заблокировать 30 минут"
-                            onClick={(e) => handleQuickBlock(e, hall, slot)}
-                          >
-                            🔒
-                          </button>
+                        <div className={styles.cellContent}>
+                          {active.map(r => {
+                            const isBlocked = r.type === 'blocked';
+                            const chipClass = isBlocked
+                              ? styles.blockedSlot
+                              : r.type === 'full_hall'
+                                ? styles.fullHall
+                                : styles.openSlot;
+                            const displayName = isBlocked
+                              ? (r.title ? `🔒 ${r.title}` : '🔒 Блок')
+                              : r.type === 'full_hall'
+                                ? (r.clientName || 'Выкуп зала')
+                                : (r.clientName || r.title || r.game?.name || 'Бронь');
+                            return (
+                              <div
+                                key={r.id}
+                                className={`${styles.reservationChip} ${chipClass}`}
+                                onClick={(e) => handleReservationClick(e, r)}
+                                title={`${formatApiTime(r.startTime)}–${formatApiTime(r.endTime)} · ${r.guestsCount}/${hall.maxCapacity} · ${getStatusLabel(r.status)}`}
+                              >
+                                <span className={styles.chipName}>{displayName}</span>
+                                {!isBlocked && (
+                                  <span className={styles.chipGuests}>{r.guestsCount}/{hall.maxCapacity}</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {!blocked && free > 0 && (
+                            <button
+                              type="button"
+                              className={styles.addSlotBtn}
+                              title={`Добавить бронь (свободно ${free} из ${hall.maxCapacity})`}
+                              onClick={() => handleCellClick(hall.id, slot)}
+                            >
+                              + {free}
+                            </button>
+                          )}
                         </div>
                       </td>
                     );

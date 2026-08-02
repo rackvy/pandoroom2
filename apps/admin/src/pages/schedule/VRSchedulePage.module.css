@@ -135,7 +135,7 @@
 .scheduleTable td {
   padding: 0;
   border: 1px solid #f3f4f6;
-  height: 40px;
+  min-height: 40px;
   vertical-align: top;
   position: relative;
 }
@@ -213,24 +213,63 @@
   background: rgba(0, 0, 0, 0.08);
 }
 
-/* Reservation Block */
-.reservationBlock {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  min-height: 32px;
+/* Cell with reservations */
+.cellContent {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  transition: opacity 0.15s;
+  gap: 2px;
+  padding: 2px;
+  min-height: 40px;
 }
 
-.reservationBlock:hover {
-  opacity: 0.85;
+.reservationChip {
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  transition: opacity 0.15s;
+  line-height: 1.3;
+}
+
+.reservationChip:hover {
+  opacity: 0.8;
+}
+
+.chipName {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.chipGuests {
+  font-size: 0.65rem;
+  opacity: 0.75;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.addSlotBtn {
+  border: 1px dashed #16a34a;
+  background: rgba(22, 163, 74, 0.06);
+  color: #16a34a;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: center;
+}
+
+.addSlotBtn:hover {
+  background: rgba(22, 163, 74, 0.15);
 }
 
 .fullHall {
@@ -262,17 +301,6 @@
   );
   color: #6b7280;
   border-left: 3px solid #6b7280;
-}
-
-.reservationTitle {
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.reservationTime {
-  font-size: 0.7rem;
-  opacity: 0.8;
 }
 
 /* Popover */
