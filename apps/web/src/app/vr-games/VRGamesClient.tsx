@@ -58,6 +58,11 @@ export default function VRGamesClient({ games }: VRGamesClientProps) {
           </nav>
           <div className={styles.catalogHeader}>
             <h1 className={styles.catalogTitle}>VR игры во Владивостоке</h1>
+            {games.length > 0 && (
+              <Link href={`/vr-games/${games[0].id}#vr-booking`} className={styles.scheduleBtn}>
+                Забронировать
+              </Link>
+            )}
           </div>
           <p style={{ color: 'var(--color-text-muted)', maxWidth: 720, lineHeight: 1.6, margin: 0 }}>
             Командные VR-баталии на арене до 20 игроков. Выберите игру, посмотрите видео

@@ -73,6 +73,7 @@ enum ServeMode {
 enum VRBookingType {
   full_hall
   open_slot
+  blocked
 }
 
 // ==================== MODELS ====================
@@ -769,19 +770,38 @@ model NotificationTemplate {
 // ==================== VR ====================
 
 model VRHall {
-  id           String   @id @default(uuid())
-  branchId     String
-  name         String
-  maxCapacity  Int      @default(20)
-  sortOrder    Int      @default(0)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid())
+  branchId         String
+  name             String
+  maxCapacity      Int      @default(20)
+  basePricePerHour Int      @default(1000)
+  sortOrder        Int      @default(0)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   branch       Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
   reservations VRReservation[]
+  priceRules   VRPriceRule[]
 
   @@index([branchId])
+}
+
+model VRPriceRule {
+  id           String   @id @default(uuid())
+  hallId       String
+  name         String?
+  days         Int[]
+  fromMinutes  Int
+  toMinutes    Int
+  pricePerHour Int
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  hall VRHall @relation(fields: [hallId], references: [id], onDelete: Cascade)
+
+  @@index([hallId])
 }
 
 model VRReservation {

@@ -31,7 +31,7 @@ export class VRScheduleController {
   }
 
   @Post('halls')
-  createHall(@Body() body: { branchId: string; name: string; maxCapacity?: number }) {
+  createHall(@Body() body: { branchId: string; name: string; maxCapacity?: number; basePricePerHour?: number }) {
     return this.vrScheduleService.createHall(body);
   }
 
@@ -45,6 +45,31 @@ export class VRScheduleController {
     return this.vrScheduleService.deleteHall(id);
   }
 
+  @Post('halls/:id/price-rules')
+  createPriceRule(@Param('id') id: string, @Body() body: any) {
+    return this.vrScheduleService.createPriceRule(id, body);
+  }
+
+  @Patch('price-rules/:ruleId')
+  updatePriceRule(@Param('ruleId') ruleId: string, @Body() body: any) {
+    return this.vrScheduleService.updatePriceRule(ruleId, body);
+  }
+
+  @Delete('price-rules/:ruleId')
+  deletePriceRule(@Param('ruleId') ruleId: string) {
+    return this.vrScheduleService.deletePriceRule(ruleId);
+  }
+
+  @Get('price')
+  getPrice(
+    @Query('hallId') hallId: string,
+    @Query('date') date: string,
+    @Query('startTime') startTime: string,
+    @Query('endTime') endTime: string,
+  ) {
+    return this.vrScheduleService.getPrice(hallId, date, startTime, endTime);
+  }
+
   @Get('schedule')
   getSchedule(@Query('branchId') branchId: string, @Query('date') date: string) {
     return this.vrScheduleService.getSchedule(branchId, date);
@@ -53,13 +78,18 @@ export class VRScheduleController {
   @Post('reservations')
   @UsePipes(new ValidationPipe({ transform: true }))
   createReservation(@Body() dto: CreateVRReservationDto) {
-    return this.vrScheduleService.createReservation(dto);
+    return this.vrScheduleService.createReservation(dto, 'confirmed');
   }
 
   @Patch('reservations/:id/move')
   @UsePipes(new ValidationPipe({ transform: true }))
   moveReservation(@Param('id') id: string, @Body() dto: MoveVRReservationDto) {
     return this.vrScheduleService.moveReservation(id, dto);
+  }
+
+  @Patch('reservations/:id/confirm')
+  confirmReservation(@Param('id') id: string) {
+    return this.vrScheduleService.confirmReservation(id);
   }
 
   @Patch('reservations/:id/cancel')

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getBranches, getTableZones, getTables, createBranch, updateBranch, deleteBranch, createTableZone, updateTableZone, deleteTableZone, createTable, updateTable, deleteTable, type Branch, type TableZone, type Table } from '../api/catalog';
-import { getVRHalls, createVRHall, updateVRHall, deleteVRHall, type VRHall } from '../api/vrSchedule';
+import { getVRHalls, createVRHall, updateVRHall, deleteVRHall, createVRPriceRule, updateVRPriceRule, deleteVRPriceRule, type VRHall, type VRPriceRule } from '../api/vrSchedule';
 import { toast } from '../components/ui/Toast';
 import YandexMapPicker from '../components/YandexMapPicker';
 import styles from './SettingsPage.module.css';
@@ -57,8 +57,11 @@ export default function SettingsPage() {
 
   // VR Halls
   const [vrHalls, setVrHalls] = useState<VRHall[]>([]);
-  const [vrHallForm, setVrHallForm] = useState({ name: '', maxCapacity: '' });
+  const [vrHallForm, setVrHallForm] = useState({ name: '', maxCapacity: '', basePrice: '' });
   const [vrEditingId, setVrEditingId] = useState<string | null>(null);
+  const [priceEditorHallId, setPriceEditorHallId] = useState<string | null>(null);
+  const [priceRuleForm, setPriceRuleForm] = useState({ name: '', days: [] as number[], from: '10:00', to: '18:00', price: '' });
+  const [priceRuleEditingId, setPriceRuleEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadBranches();
@@ -210,6 +213,7 @@ export default function SettingsPage() {
         branchId: selectedBranch.id,
         name: vrHallForm.name,
         maxCapacity: vrHallForm.maxCapacity ? parseInt(vrHallForm.maxCapacity) : undefined,
+        basePricePerHour: vrHallForm.basePrice ? parseInt(vrHallForm.basePrice) : undefined,
       };
       if (vrEditingId) {
         await updateVRHall(vrEditingId, data);
@@ -218,7 +222,7 @@ export default function SettingsPage() {
         await createVRHall(data);
         toast.success('VR зал создан');
       }
-      setVrHallForm({ name: '', maxCapacity: '' });
+      setVrHallForm({ name: '', maxCapacity: '', basePrice: '' });
       setVrEditingId(null);
       await loadVRHalls(selectedBranch.id);
     } catch {
@@ -233,9 +237,67 @@ export default function SettingsPage() {
     try {
       await deleteVRHall(id);
       toast.success('VR зал удален');
+      if (priceEditorHallId === id) setPriceEditorHallId(null);
       if (selectedBranch) await loadVRHalls(selectedBranch.id);
     } catch {
       toast.error('Ошибка удаления');
+    }
+  }
+
+  // VR Price rule handlers
+  function timeToMin(t: string): number {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function minToTime(min: number): string {
+    return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+  }
+
+  function toggleRuleDay(day: number) {
+    setPriceRuleForm((f) => ({
+      ...f,
+      days: f.days.includes(day) ? f.days.filter((d) => d !== day) : [...f.days, day],
+    }));
+  }
+
+  async function handleSavePriceRule(e: React.FormEvent) {
+    e.preventDefault();
+    if (!priceEditorHallId) return;
+    setIsLoading(true);
+    try {
+      const data = {
+        name: priceRuleForm.name.trim() || undefined,
+        days: priceRuleForm.days,
+        fromMinutes: timeToMin(priceRuleForm.from),
+        toMinutes: timeToMin(priceRuleForm.to),
+        pricePerHour: parseInt(priceRuleForm.price),
+      };
+      if (priceRuleEditingId) {
+        await updateVRPriceRule(priceRuleEditingId, data);
+        toast.success('Правило обновлено');
+      } else {
+        await createVRPriceRule(priceEditorHallId, data);
+        toast.success('Правило добавлено');
+      }
+      setPriceRuleForm({ name: '', days: [], from: '10:00', to: '18:00', price: '' });
+      setPriceRuleEditingId(null);
+      if (selectedBranch) await loadVRHalls(selectedBranch.id);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Ошибка сохранения правила');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleDeletePriceRule(id: string) {
+    if (!confirm('Удалить ценовое правило?')) return;
+    try {
+      await deleteVRPriceRule(id);
+      toast.success('Правило удалено');
+      if (selectedBranch) await loadVRHalls(selectedBranch.id);
+    } catch {
+      toast.error('Ошибка удаления правила');
     }
   }
 
@@ -471,28 +533,109 @@ export default function SettingsPage() {
               <form onSubmit={handleSaveVRHall} className={styles.form}>
                 <input placeholder="Название VR зала" value={vrHallForm.name} onChange={e => setVrHallForm({...vrHallForm, name: e.target.value})} required />
                 <input type="number" placeholder="Макс. вместимость" value={vrHallForm.maxCapacity} onChange={e => setVrHallForm({...vrHallForm, maxCapacity: e.target.value})} />
+                <input type="number" placeholder="Базовая цена часа/чел, ₽" value={vrHallForm.basePrice} onChange={e => setVrHallForm({...vrHallForm, basePrice: e.target.value})} />
                 <button type="submit" disabled={isLoading}>{vrEditingId ? '💾 Обновить' : '➕ Добавить VR зал'}</button>
-                {vrEditingId && <button type="button" onClick={() => { setVrEditingId(null); setVrHallForm({ name: '', maxCapacity: '' }); }}>❌ Отмена</button>}
+                {vrEditingId && <button type="button" onClick={() => { setVrEditingId(null); setVrHallForm({ name: '', maxCapacity: '', basePrice: '' }); }}>❌ Отмена</button>}
               </form>
 
               <table className={styles.table}>
                 <thead>
-                  <tr><th>Название</th><th>Вместимость</th><th>Порядок</th><th>Действия</th></tr>
+                  <tr><th>Название</th><th>Вместимость</th><th>Базовая цена</th><th>Правила цен</th><th>Действия</th></tr>
                 </thead>
                 <tbody>
                   {vrHalls.map(h => (
                     <tr key={h.id}>
                       <td><strong>{h.name}</strong></td>
                       <td>{h.maxCapacity ? `${h.maxCapacity} чел.` : '-'}</td>
-                      <td>{h.sortOrder}</td>
+                      <td>{h.basePricePerHour ? `${h.basePricePerHour} ₽/час` : '-'}</td>
+                      <td>{h.priceRules?.length || 0}</td>
                       <td>
-                        <button onClick={() => { setVrEditingId(h.id); setVrHallForm({ name: h.name, maxCapacity: h.maxCapacity?.toString() || '' }); }}>✏️ Изменить</button>
+                        <button onClick={() => {
+                          setPriceEditorHallId(priceEditorHallId === h.id ? null : h.id);
+                          setPriceRuleEditingId(null);
+                          setPriceRuleForm({ name: '', days: [], from: '10:00', to: '18:00', price: '' });
+                        }}>💰 Цены</button>
+                        <button onClick={() => { setVrEditingId(h.id); setVrHallForm({ name: h.name, maxCapacity: h.maxCapacity?.toString() || '', basePrice: h.basePricePerHour?.toString() || '' }); }}>✏️ Изменить</button>
                         <button onClick={() => handleDeleteVRHall(h.id)}>🗑️ Удалить</button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+
+              {priceEditorHallId && (() => {
+                const hall = vrHalls.find(h => h.id === priceEditorHallId);
+                if (!hall) return null;
+                const DAY_LABELS = [
+                  { day: 1, label: 'Пн' }, { day: 2, label: 'Вт' }, { day: 3, label: 'Ср' },
+                  { day: 4, label: 'Чт' }, { day: 5, label: 'Пт' }, { day: 6, label: 'Сб' }, { day: 0, label: 'Вс' },
+                ];
+                const formatDays = (days: number[]) => DAY_LABELS.filter(d => days.includes(d.day)).map(d => d.label).join(', ');
+                return (
+                  <div className={styles.subsection}>
+                    <h4>💰 Цены зала «{hall.name}» (₽ за час с человека)</h4>
+                    <p className={styles.hintText}>
+                      Базовая цена <strong>{hall.basePricePerHour} ₽/час</strong> действует там, где не подходит ни одно правило.
+                      Выкуп зала = цена часа × {hall.maxCapacity} чел × количество часов.
+                    </p>
+
+                    <form onSubmit={handleSavePriceRule} className={styles.form}>
+                      <input placeholder="Название (например: Будни день)" value={priceRuleForm.name} onChange={e => setPriceRuleForm({...priceRuleForm, name: e.target.value})} />
+                      <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+                        {DAY_LABELS.map(({ day, label }) => (
+                          <button
+                            key={day}
+                            type="button"
+                            onClick={() => toggleRuleDay(day)}
+                            style={{
+                              padding: '6px 10px',
+                              borderRadius: 6,
+                              border: '1px solid ' + (priceRuleForm.days.includes(day) ? '#A0BF39' : '#d1d5db'),
+                              background: priceRuleForm.days.includes(day) ? 'rgba(160,191,57,0.15)' : 'white',
+                              cursor: 'pointer',
+                              fontWeight: priceRuleForm.days.includes(day) ? 600 : 400,
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <input type="time" value={priceRuleForm.from} onChange={e => setPriceRuleForm({...priceRuleForm, from: e.target.value})} required />
+                      <input type="time" value={priceRuleForm.to} onChange={e => setPriceRuleForm({...priceRuleForm, to: e.target.value})} required />
+                      <input type="number" placeholder="Цена, ₽/час" value={priceRuleForm.price} onChange={e => setPriceRuleForm({...priceRuleForm, price: e.target.value})} required min={1} />
+                      <button type="submit" disabled={isLoading || priceRuleForm.days.length === 0}>{priceRuleEditingId ? '💾 Обновить' : '➕ Добавить правило'}</button>
+                      {priceRuleEditingId && <button type="button" onClick={() => { setPriceRuleEditingId(null); setPriceRuleForm({ name: '', days: [], from: '10:00', to: '18:00', price: '' }); }}>❌ Отмена</button>}
+                    </form>
+
+                    {(hall.priceRules && hall.priceRules.length > 0) ? (
+                      <table className={styles.table}>
+                        <thead>
+                          <tr><th>Название</th><th>Дни</th><th>Время</th><th>Цена</th><th>Действия</th></tr>
+                        </thead>
+                        <tbody>
+                          {hall.priceRules.map((r: VRPriceRule) => (
+                            <tr key={r.id}>
+                              <td>{r.name || '—'}</td>
+                              <td>{formatDays(r.days)}</td>
+                              <td>{minToTime(r.fromMinutes)} – {minToTime(r.toMinutes)}</td>
+                              <td><strong>{r.pricePerHour} ₽</strong></td>
+                              <td>
+                                <button onClick={() => {
+                                  setPriceRuleEditingId(r.id);
+                                  setPriceRuleForm({ name: r.name || '', days: r.days, from: minToTime(r.fromMinutes), to: minToTime(r.toMinutes), price: r.pricePerHour.toString() });
+                                }}>✏️</button>
+                                <button onClick={() => handleDeletePriceRule(r.id)}>🗑️</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <p className={styles.hintText}>Правил пока нет — везде действует базовая цена.</p>
+                    )}
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>

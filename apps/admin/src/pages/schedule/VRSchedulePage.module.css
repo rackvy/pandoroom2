@@ -167,10 +167,50 @@
   transition: background 0.15s;
   height: 100%;
   min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .emptyCell:hover {
   background: rgba(160, 191, 57, 0.1);
+}
+
+.hallCapacity {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.freeCount {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.freeCountZero {
+  color: #dc2626;
+}
+
+.lockBtn {
+  opacity: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.emptyCell:hover .lockBtn {
+  opacity: 1;
+}
+
+.lockBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 
 /* Reservation Block */
@@ -210,6 +250,18 @@
   color: #9ca3af;
   border-left: 3px solid #9ca3af;
   text-decoration: line-through;
+}
+
+.blockedSlot {
+  background: repeating-linear-gradient(
+    45deg,
+    #f3f4f6,
+    #f3f4f6 6px,
+    #e5e7eb 6px,
+    #e5e7eb 12px
+  );
+  color: #6b7280;
+  border-left: 3px solid #6b7280;
 }
 
 .reservationTitle {
@@ -302,6 +354,15 @@
 
 .deleteBtn:hover {
   background: #fecaca;
+}
+
+.confirmBtn {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.confirmBtn:hover {
+  background: #bbf7d0;
 }
 
 /* Status badges */

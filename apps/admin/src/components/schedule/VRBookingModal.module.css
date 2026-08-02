@@ -221,3 +221,36 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.hint {
+  margin: -4px 0 16px;
+  padding: 10px 12px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #166534;
+}
+
+.hintBad {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.priceBox {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: rgba(160, 191, 57, 0.1);
+  border: 1px solid rgba(160, 191, 57, 0.35);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+.priceBox strong {
+  font-size: 16px;
+  color: #5c7320;
+}

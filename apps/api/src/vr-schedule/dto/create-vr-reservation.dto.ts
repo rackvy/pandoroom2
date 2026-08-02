@@ -17,7 +17,7 @@ export class CreateVRReservationDto {
   endTime: string;
 
   @IsString()
-  @IsIn(['full_hall', 'open_slot'])
+  @IsIn(['full_hall', 'open_slot', 'blocked'])
   type: string;
 
   @IsOptional()

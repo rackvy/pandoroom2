@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useBranchSelection } from '../../hooks/useBranchSelection';
-import { getVRSchedule, cancelVRReservation, deleteVRReservation, type VRHallWithSchedule, type VRReservation } from '../../api/vrSchedule';
+import { getVRSchedule, createVRReservation, confirmVRReservation, cancelVRReservation, deleteVRReservation, type VRHallWithSchedule, type VRReservation } from '../../api/vrSchedule';
 import { formatDateForApi, addDays } from '../../components/schedule/timeUtils';
 import { toast } from '../../components/ui/Toast';
+import { confirm } from '../../components/ui/ConfirmDialog';
 import VRBookingModal from '../../components/schedule/VRBookingModal';
 import styles from './VRSchedulePage.module.css';
 
@@ -21,6 +22,11 @@ const TIME_SLOTS = generateTimeSlots();
 function timeToMinutes(t: string): number {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
+}
+
+function add30Min(t: string): string {
+  const total = timeToMinutes(t) + 30;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
 function formatApiTime(value: string): string {
@@ -43,7 +49,7 @@ function getStatusLabel(status: string): string {
   switch (status) {
     case 'confirmed': return 'Подтверждена';
     case 'canceled': return 'Отменена';
-    case 'draft': return 'Черновик';
+    case 'draft': return 'Ждёт подтверждения';
     case 'done': return 'Завершена';
     default: return status;
   }
@@ -95,6 +101,30 @@ export default function VRSchedulePage() {
     setShowBookingModal(true);
   };
 
+  const handleQuickBlock = async (e: React.MouseEvent, hall: VRHallWithSchedule, slot: string) => {
+    e.stopPropagation();
+    const ok = await confirm({
+      title: 'Заблокировать 30 минут',
+      message: `Заблокировать зал «${hall.name}» в ${slot}? На это время нельзя будет оформить бронь (например, чтобы протереть шлемы после большой компании).`,
+      confirmText: 'Заблокировать',
+      type: 'warning',
+    });
+    if (!ok) return;
+    try {
+      await createVRReservation({
+        hallId: hall.id,
+        date: formatDateForApi(date),
+        startTime: slot,
+        endTime: add30Min(slot),
+        type: 'blocked',
+      });
+      toast.success('Время заблокировано');
+      loadSchedule();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Не удалось заблокировать время');
+    }
+  };
+
   const handleReservationClick = (e: React.MouseEvent, reservation: VRReservation) => {
     e.stopPropagation();
     const rect = (e.target as HTMLElement).getBoundingClientRect();
@@ -105,11 +135,31 @@ export default function VRSchedulePage() {
     setPopoverReservation(reservation);
   };
 
+  const handleConfirmReservation = async (id: string) => {
+    try {
+      await confirmVRReservation(id);
+      toast.success('Бронь подтверждена');
+      setPopoverReservation(null);
+      loadSchedule();
+    } catch {
+      toast.error('Ошибка подтверждения брони');
+    }
+  };
+
   const handleCancelReservation = async (id: string) => {
-    if (!confirm('Отменить эту бронь?')) return;
+    const isBlocked = popoverReservation?.type === 'blocked';
+    const ok = await confirm({
+      title: isBlocked ? 'Снять блокировку' : 'Отменить бронь',
+      message: isBlocked
+        ? 'Снять блокировку с этого времени? Слот снова станет доступным для бронирования.'
+        : 'Отменить эту бронь? Время станет доступным для других гостей.',
+      confirmText: isBlocked ? 'Снять блокировку' : 'Отменить бронь',
+      type: 'warning',
+    });
+    if (!ok) return;
     try {
       await cancelVRReservation(id);
-      toast.success('Бронь отменена');
+      toast.success(isBlocked ? 'Блокировка снята' : 'Бронь отменена');
       setPopoverReservation(null);
       loadSchedule();
     } catch {
@@ -118,7 +168,13 @@ export default function VRSchedulePage() {
   };
 
   const handleDeleteReservation = async (id: string) => {
-    if (!confirm('Удалить эту бронь?')) return;
+    const ok = await confirm({
+      title: 'Удалить бронь',
+      message: 'Удалить эту бронь безвозвратно?',
+      confirmText: 'Удалить',
+      type: 'danger',
+    });
+    if (!ok) return;
     try {
       await deleteVRReservation(id);
       toast.success('Бронь удалена');
@@ -141,6 +197,16 @@ export default function VRSchedulePage() {
     });
   };
 
+  // Free seats in a slot considering shared capacity and blocks
+  const getFreeForSlot = (hall: VRHallWithSchedule, slotTime: string): { free: number; blocked: boolean } => {
+    const active = getReservationsForSlot(hall, slotTime).filter((r) => r.status !== 'canceled');
+    if (active.some((r) => r.type === 'blocked')) {
+      return { free: 0, blocked: true };
+    }
+    const taken = active.reduce((sum, r) => sum + r.guestsCount, 0);
+    return { free: Math.max(0, hall.maxCapacity - taken), blocked: false };
+  };
+
   // Check if a reservation starts at this slot (for rendering the block)
   const reservationStartsAtSlot = (reservation: VRReservation, slotTime: string): boolean => {
     const rStart = timeToMinutes(formatApiTime(reservation.startTime));
@@ -157,6 +223,7 @@ export default function VRSchedulePage() {
   };
 
   const selectedBranch = branches.find(b => b.id === branchId);
+  const popoverHall = popoverReservation ? halls.find(h => h.id === popoverReservation.hallId) : null;
 
   const dateButtons = [
     { label: 'Сегодня', date: new Date() },
@@ -234,7 +301,7 @@ export default function VRSchedulePage() {
               <tr>
                 <th>Время</th>
                 {halls.map(hall => (
-                  <th key={hall.id}>{hall.name}</th>
+                  <th key={hall.id}>{hall.name}<span className={styles.hallCapacity}> / {hall.maxCapacity} мест</span></th>
                 ))}
               </tr>
             </thead>
@@ -249,16 +316,21 @@ export default function VRSchedulePage() {
                     if (startingHere.length > 0) {
                       const r = startingHere[0];
                       const span = getReservationSpan(r);
+                      const isBlocked = r.type === 'blocked';
                       const isCanceled = r.status === 'canceled';
                       const blockClass = isCanceled
                         ? styles.canceled
-                        : r.type === 'full_hall'
-                          ? styles.fullHall
-                          : styles.openSlot;
+                        : isBlocked
+                          ? styles.blockedSlot
+                          : r.type === 'full_hall'
+                            ? styles.fullHall
+                            : styles.openSlot;
 
-                      const displayName = r.type === 'full_hall'
-                        ? (r.clientName || 'Выкуп зала')
-                        : (r.title || r.game?.name || 'Свободный слот');
+                      const displayName = isBlocked
+                        ? (r.title ? `🔒 ${r.title}` : '🔒 Заблокировано')
+                        : r.type === 'full_hall'
+                          ? (r.clientName || 'Выкуп зала')
+                          : (r.clientName || r.title || r.game?.name || 'Бронь');
 
                       return (
                         <td
@@ -274,6 +346,7 @@ export default function VRSchedulePage() {
                             <span className={styles.reservationTitle}>{displayName}</span>
                             <span className={styles.reservationTime}>
                               {formatApiTime(r.startTime)} - {formatApiTime(r.endTime)}
+                              {!isBlocked && !isCanceled && ` · ${r.guestsCount}/${hall.maxCapacity}`}
                             </span>
                           </div>
                         </td>
@@ -286,12 +359,27 @@ export default function VRSchedulePage() {
                       return null; // This cell is covered by a rowSpan from an earlier slot
                     }
 
+                    const { free } = getFreeForSlot(hall, slot);
+
                     return (
                       <td key={hall.id}>
                         <div
                           className={styles.emptyCell}
                           onClick={() => handleCellClick(hall.id, slot)}
-                        />
+                          title={`Свободно ${free} из ${hall.maxCapacity} мест`}
+                        >
+                          <span className={free === 0 ? `${styles.freeCount} ${styles.freeCountZero}` : styles.freeCount}>
+                            {free}
+                          </span>
+                          <button
+                            type="button"
+                            className={styles.lockBtn}
+                            title="Заблокировать 30 минут"
+                            onClick={(e) => handleQuickBlock(e, hall, slot)}
+                          >
+                            🔒
+                          </button>
+                        </div>
                       </td>
                     );
                   })}
@@ -322,15 +410,21 @@ export default function VRSchedulePage() {
             style={{ top: popoverPos.top, left: popoverPos.left }}
           >
             <h4 className={styles.popoverTitle}>
-              {popoverReservation.type === 'full_hall'
-                ? (popoverReservation.clientName || 'Выкуп зала')
-                : (popoverReservation.title || popoverReservation.game?.name || 'Свободный слот')}
+              {popoverReservation.type === 'blocked'
+                ? (popoverReservation.title ? `🔒 ${popoverReservation.title}` : '🔒 Время заблокировано')
+                : popoverReservation.type === 'full_hall'
+                  ? (popoverReservation.clientName || 'Выкуп зала')
+                  : (popoverReservation.clientName || popoverReservation.title || popoverReservation.game?.name || 'Бронь')}
             </h4>
 
             <div className={styles.popoverRow}>
               <span className={styles.popoverLabel}>Тип:</span>
               <span className={styles.popoverValue}>
-                {popoverReservation.type === 'full_hall' ? 'Выкуп зала' : 'Свободный слот'}
+                {popoverReservation.type === 'blocked'
+                  ? 'Блокировка (30 мин)'
+                  : popoverReservation.type === 'full_hall'
+                    ? 'Выкуп зала'
+                    : 'Бронирование мест'}
               </span>
             </div>
 
@@ -348,6 +442,15 @@ export default function VRSchedulePage() {
               </span>
             </div>
 
+            {popoverReservation.type !== 'blocked' && popoverHall && (
+              <div className={styles.popoverRow}>
+                <span className={styles.popoverLabel}>Гостей:</span>
+                <span className={styles.popoverValue}>
+                  {popoverReservation.guestsCount} из {popoverHall.maxCapacity}
+                </span>
+              </div>
+            )}
+
             {popoverReservation.clientName && (
               <div className={styles.popoverRow}>
                 <span className={styles.popoverLabel}>Клиент:</span>
@@ -362,16 +465,9 @@ export default function VRSchedulePage() {
               </div>
             )}
 
-            {popoverReservation.guestsCount > 0 && (
-              <div className={styles.popoverRow}>
-                <span className={styles.popoverLabel}>Гостей:</span>
-                <span className={styles.popoverValue}>{popoverReservation.guestsCount}</span>
-              </div>
-            )}
-
             {popoverReservation.game && (
               <div className={styles.popoverRow}>
-                <span className={styles.popoverLabel}>Игра:</span>
+                <span className={styles.popoverLabel}>Игра (со страницы):</span>
                 <span className={styles.popoverValue}>{popoverReservation.game.name}</span>
               </div>
             )}
@@ -384,12 +480,20 @@ export default function VRSchedulePage() {
             )}
 
             <div className={styles.popoverActions}>
+              {popoverReservation.status === 'draft' && (
+                <button
+                  className={`${styles.popoverBtn} ${styles.confirmBtn}`}
+                  onClick={() => handleConfirmReservation(popoverReservation.id)}
+                >
+                  Подтвердить
+                </button>
+              )}
               {popoverReservation.status !== 'canceled' && (
                 <button
                   className={`${styles.popoverBtn} ${styles.cancelBtn}`}
                   onClick={() => handleCancelReservation(popoverReservation.id)}
                 >
-                  Отменить
+                  {popoverReservation.type === 'blocked' ? 'Снять' : 'Отменить'}
                 </button>
               )}
               <button

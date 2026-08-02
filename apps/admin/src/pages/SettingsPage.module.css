@@ -314,6 +314,27 @@
   animation: spin 1s linear infinite;
 }
 
+/* Price rules editor */
+.subsection {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.subsection h4 {
+  margin: 0 0 0.5rem;
+  color: #1A1A18;
+}
+
+.hintText {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

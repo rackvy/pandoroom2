@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import styles from '../../quests/[id]/quest-detail.module.css'
 import Lightbox from '@/components/Lightbox'
+import VRBookingSection from './VRBookingSection'
 import type { VRGameDetail, NewsItem } from '@/lib/api'
 
 /* ------------------------------------------------------------------ */
@@ -310,6 +311,9 @@ export default function VRGameDetailClient({ game, news = [] }: VRGameDetailClie
           </div>
         </section>
       )}
+
+      {/* ==================== BOOKING ==================== */}
+      <VRBookingSection branchId={game.branch?.id} gameId={game.id} />
 
       {/* ==================== NEWS ==================== */}
       {news.length > 0 && (
