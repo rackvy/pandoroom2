@@ -2,7 +2,32 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { BASE_API_URL } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 import styles from './vr-booking.module.css'
+
+/* ------------------------------------------------------------------ */
+/*  Phone mask: +7 (9XX) XXX-XX-XX                                    */
+/* ------------------------------------------------------------------ */
+
+function formatPhone(raw: string): string {
+  let digits = raw.replace(/\D/g, '')
+  if (!digits) return ''
+  if (digits.startsWith('8')) digits = '7' + digits.slice(1)
+  if (!digits.startsWith('7')) digits = '7' + digits
+  digits = digits.slice(0, 11)
+
+  const d = digits.slice(1)
+  let out = '+7'
+  if (d.length > 0) out += ' (' + d.slice(0, 3)
+  if (d.length >= 3) out += ') ' + d.slice(3, 6)
+  if (d.length >= 6) out += '-' + d.slice(6, 8)
+  if (d.length >= 8) out += '-' + d.slice(8, 10)
+  return out
+}
+
+function phoneToDigits(formatted: string): string {
+  return formatted.replace(/\D/g, '')
+}
 
 /* ------------------------------------------------------------------ */
 /*  Types & helpers                                                   */
@@ -74,6 +99,7 @@ interface VRBookingSectionProps {
 }
 
 export default function VRBookingSection({ branchId, gameId }: VRBookingSectionProps) {
+  const { client } = useAuth()
   const [resolvedBranchId, setResolvedBranchId] = useState<string | null>(branchId || null)
   const [date, setDate] = useState<string>(formatDateLocal(new Date()))
   const [halls, setHalls] = useState<HallAvailability[]>([])
@@ -96,6 +122,13 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
 
   const dateOptions = useMemo(() => buildDateOptions(7), [])
   const selectedHall = halls.find((h) => h.id === hallId) || null
+
+  /* Prefill name/phone for logged-in clients (don't overwrite user edits) */
+  useEffect(() => {
+    if (!client) return
+    setName((prev) => (prev.trim() ? prev : client.name || ''))
+    setPhone((prev) => (prev.trim() ? prev : client.phone ? formatPhone(client.phone) : ''))
+  }, [client])
 
   /* Resolve branch: from the game, or the first VR-enabled branch */
   useEffect(() => {
@@ -205,7 +238,7 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
     !windowInfo.overflow &&
     (buyout || (guests >= 1 && guests <= windowInfo.minFree)) &&
     name.trim().length > 0 &&
-    phone.trim().length >= 6 &&
+    phoneToDigits(phone).length === 11 &&
     !submitting
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -225,7 +258,7 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
           guestsCount: buyout ? selectedHall.maxCapacity : guests,
           buyout,
           clientName: name.trim(),
-          clientPhone: phone.trim(),
+          clientPhone: phoneToDigits(phone),
           gameId,
         }),
       })
@@ -274,7 +307,14 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
             </p>
             <button
               className={styles.againBtn}
-              onClick={() => { setSubmitted(false); setStartTime(null); setName(''); setPhone(''); setBuyout(false); setGuests(1); }}
+              onClick={() => {
+                setSubmitted(false)
+                setStartTime(null)
+                setName(client?.name || '')
+                setPhone(client?.phone ? formatPhone(client.phone) : '')
+                setBuyout(false)
+                setGuests(1)
+              }}
             >
               Оформить ещё одну бронь
             </button>
@@ -444,8 +484,9 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
                     className={styles.input}
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(formatPhone(e.target.value))}
                     placeholder="+7 ___ ___-__-__"
+                    inputMode="numeric"
                     required
                   />
                 </div>
