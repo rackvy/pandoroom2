@@ -50,5 +50,10 @@ export class CreateVRReservationDto {
 
   @IsOptional()
   @IsString()
+  @IsIn(['A', 'B'])
+  halfSide?: string;
+
+  @IsOptional()
+  @IsString()
   bookingId?: string;
 }

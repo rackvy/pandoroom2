@@ -99,6 +99,11 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.chipDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Slot grid */
 .slots {
   display: grid;
@@ -156,6 +161,26 @@
 
 .slotBlocked .slotFree {
   color: var(--color-text-muted);
+}
+
+/* Слот в окне сплита — пунктирная рамка, доступно только ползала */
+.slotSplit {
+  border-style: dashed;
+  border-color: rgba(181, 230, 29, 0.55);
+}
+
+.splitNotice {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: rgba(181, 230, 29, 0.08);
+  border: 1px solid rgba(181, 230, 29, 0.35);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
 }
 
 /* State boxes */

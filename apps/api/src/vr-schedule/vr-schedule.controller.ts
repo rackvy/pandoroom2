@@ -108,4 +108,16 @@ export class VRScheduleController {
   deleteReservation(@Param('id') id: string) {
     return this.vrScheduleService.deleteReservation(id);
   }
+
+  @Post('splits')
+  @Roles(EmployeeRole.ADMIN)
+  createSplit(@Body() body: { hallId: string; date: string; startTime: string; endTime: string }) {
+    return this.vrScheduleService.createSplit(body);
+  }
+
+  @Delete('splits/:id')
+  @Roles(EmployeeRole.ADMIN)
+  deleteSplit(@Param('id') id: string) {
+    return this.vrScheduleService.deleteSplit(id);
+  }
 }

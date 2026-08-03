@@ -38,14 +38,24 @@ export interface VRReservation {
   clientPhone: string | null;
   guestsCount: number;
   maxGuests: number | null;
+  halfSide: 'A' | 'B' | null;
   status: string;
   game?: { id: string; name: string } | null;
   hall?: { id: string; name: string };
   client?: { id: string; name: string; phone: string } | null;
 }
 
+export interface VRHallSplit {
+  id: string;
+  hallId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface VRHallWithSchedule extends VRHall {
   reservations: VRReservation[];
+  splits?: VRHallSplit[];
 }
 
 export interface VRPriceQuote {
@@ -124,4 +134,13 @@ export const cancelVRReservation = async (id: string): Promise<void> => {
 
 export const deleteVRReservation = async (id: string): Promise<void> => {
   await api.delete(`/api/admin/vr-schedule/reservations/${id}`);
+};
+
+export const createVRSplit = async (data: { hallId: string; date: string; startTime: string; endTime: string }): Promise<VRHallSplit> => {
+  const response = await api.post('/api/admin/vr-schedule/splits', data);
+  return response.data;
+};
+
+export const deleteVRSplit = async (id: string): Promise<void> => {
+  await api.delete(`/api/admin/vr-schedule/splits/${id}`);
 };

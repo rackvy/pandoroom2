@@ -76,6 +76,11 @@ enum VRBookingType {
   blocked
 }
 
+enum VRSplitSide {
+  A
+  B
+}
+
 // ==================== MODELS ====================
 
 model Branch {
@@ -784,6 +789,7 @@ model VRHall {
   branch       Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
   reservations VRReservation[]
   priceRules   VRPriceRule[]
+  splits       VRHallSplit[]
 
   @@index([branchId])
 }
@@ -821,6 +827,7 @@ model VRReservation {
   clientPhone  String?
   guestsCount  Int             @default(0)
   maxGuests    Int?
+  halfSide     VRSplitSide?
   status       ReservationStatus @default(draft)
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
@@ -833,6 +840,21 @@ model VRReservation {
   @@index([hallId, date])
   @@index([bookingId])
   @@index([clientId])
+}
+
+// Окно сплита зала: в указанный период зал делится на две половины
+// (каждая максимум на SPLIT_HALF_CAPACITY гостей, разные игры на половинах)
+model VRHallSplit {
+  id        String   @id @default(uuid())
+  hallId    String
+  date      DateTime @db.Date
+  startTime DateTime @db.Time
+  endTime   DateTime @db.Time
+  createdAt DateTime @default(now())
+
+  hall      VRHall   @relation(fields: [hallId], references: [id], onDelete: Cascade)
+
+  @@index([hallId, date])
 }
 
 model VRGame {

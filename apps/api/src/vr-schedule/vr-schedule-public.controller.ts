@@ -44,6 +44,7 @@ export class VRSchedulePublicController {
       clientName: string;
       clientPhone: string;
       gameId?: string;
+      halfSide?: string;
     },
   ) {
     if (!body.hallId || !body.date || !body.startTime || !body.endTime) {
@@ -54,6 +55,9 @@ export class VRSchedulePublicController {
     }
     if (!body.clientPhone || !body.clientPhone.trim()) {
       throw new BadRequestException('Укажите телефон');
+    }
+    if (body.halfSide !== undefined && body.halfSide !== 'A' && body.halfSide !== 'B') {
+      throw new BadRequestException('Некорректная половина зала');
     }
 
     return this.vrScheduleService.createReservation(
@@ -67,6 +71,7 @@ export class VRSchedulePublicController {
         clientName: body.clientName.trim(),
         clientPhone: body.clientPhone.trim(),
         gameId: body.gameId || undefined,
+        halfSide: body.halfSide || undefined,
       },
       'draft',
     );

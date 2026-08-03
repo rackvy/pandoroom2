@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { useBranchSelection } from '../../hooks/useBranchSelection';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   getVRSchedule,
   createVRReservation,
@@ -7,6 +8,8 @@ import {
   confirmVRReservation,
   cancelVRReservation,
   deleteVRReservation,
+  createVRSplit,
+  deleteVRSplit,
   type VRHallWithSchedule,
   type VRReservation,
 } from '../../api/vrSchedule';
@@ -23,6 +26,8 @@ import styles from './VRSchedulePage.module.css';
 const DAY_START_HOUR = 10;
 const DAY_END_HOUR = 24;
 const SLOT_STEP = 30;
+const SPLIT_HALF_CAPACITY = 8; // максимум гостей на каждой половине сплита
+const SPLIT_GAP_SEGMENTS = 4; // прозрачных сегментов-разделителей в полосе сплита
 
 function generateTimeSlots(): string[] {
   const slots: string[] = [];
@@ -85,11 +90,22 @@ function getTypeLabel(type: string): string {
   }
 }
 
+interface SplitSlotInfo {
+  id: string;
+  startTime: string;
+  endTime: string;
+  occupiedA: number;
+  occupiedB: number;
+  freeA: number;
+  freeB: number;
+}
+
 interface SlotState {
   occupied: number;
   free: number;
   blocked: boolean;
   reservations: VRReservation[];
+  split: SplitSlotInfo | null;
 }
 
 function getSlotState(hall: VRHallWithSchedule, slotTime: string): SlotState {
@@ -104,16 +120,50 @@ function getSlotState(hall: VRHallWithSchedule, slotTime: string): SlotState {
   });
 
   if (reservations.some((r) => r.type === 'blocked')) {
-    return { occupied: hall.maxCapacity, free: 0, blocked: true, reservations };
+    return { occupied: hall.maxCapacity, free: 0, blocked: true, reservations, split: null };
+  }
+
+  // Сплиты выровнены по 30-минутной сетке: пересечение = полное покрытие слота
+  const split = (hall.splits || []).find((s) => {
+    const sStart = timeToMinutes(formatApiTime(s.startTime));
+    const sEnd = timeToMinutes(formatApiTime(s.endTime));
+    return sStart <= slotMinutes && sEnd >= slotEndMinutes;
+  });
+
+  if (split) {
+    const occupiedA = reservations
+      .filter((r) => r.halfSide === 'A' || r.halfSide == null)
+      .reduce((sum, r) => sum + r.guestsCount, 0);
+    const occupiedB = reservations
+      .filter((r) => r.halfSide === 'B' || r.halfSide == null)
+      .reduce((sum, r) => sum + r.guestsCount, 0);
+    const freeA = Math.max(0, SPLIT_HALF_CAPACITY - occupiedA);
+    const freeB = Math.max(0, SPLIT_HALF_CAPACITY - occupiedB);
+    return {
+      occupied: occupiedA + occupiedB,
+      free: freeA + freeB,
+      blocked: false,
+      reservations,
+      split: {
+        id: split.id,
+        startTime: formatApiTime(split.startTime),
+        endTime: formatApiTime(split.endTime),
+        occupiedA,
+        occupiedB,
+        freeA,
+        freeB,
+      },
+    };
   }
 
   const occupied = reservations.reduce((sum, r) => sum + r.guestsCount, 0);
-  return { occupied, free: Math.max(0, hall.maxCapacity - occupied), blocked: false, reservations };
+  return { occupied, free: Math.max(0, hall.maxCapacity - occupied), blocked: false, reservations, split: null };
 }
 
 function occupancyRatio(state: SlotState, hall: VRHallWithSchedule): number {
-  if (hall.maxCapacity === 0) return 0;
-  return state.occupied / hall.maxCapacity;
+  const capacity = state.split ? SPLIT_HALF_CAPACITY * 2 : hall.maxCapacity;
+  if (capacity === 0) return 0;
+  return state.occupied / capacity;
 }
 
 type PanelMode = 'slot' | 'create' | 'edit' | 'details';
@@ -126,7 +176,7 @@ interface PanelState {
   reservationId?: string;
 }
 
-type BookingType = 'open_slot' | 'full_hall' | 'blocked';
+type BookingType = 'open_slot' | 'full_hall' | 'blocked' | 'split';
 
 const emptyForm = {
   type: 'open_slot' as BookingType,
@@ -139,6 +189,7 @@ const emptyForm = {
   guestsCount: 1,
   gameId: '',
   description: '',
+  halfSide: '' as '' | 'A' | 'B',
 };
 
 function startOfWeek(date: Date): Date {
@@ -166,6 +217,8 @@ function formatDay(date: Date): string {
 export default function VRSchedulePage() {
   const [date, setDate] = useState<Date>(new Date());
   const { branches, branchId, setBranchId } = useBranchSelection();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [halls, setHalls] = useState<VRHallWithSchedule[]>([]);
   const [games, setGames] = useState<VRGame[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -280,6 +333,7 @@ export default function VRSchedulePage() {
       guestsCount: reservation.guestsCount,
       gameId: reservation.gameId || '',
       description: reservation.description || '',
+      halfSide: reservation.halfSide || '',
     });
     setPanel({ open: true, mode: 'edit', reservationId: reservation.id });
   };
@@ -291,8 +345,11 @@ export default function VRSchedulePage() {
         const hall = halls.find((h) => h.id === next.hallId);
         if (value === 'blocked' || value === 'full_hall') {
           next.guestsCount = hall ? hall.maxCapacity : 1;
-        } else if (prev.type === 'blocked' || prev.type === 'full_hall') {
+        } else if (prev.type === 'blocked' || prev.type === 'full_hall' || prev.type === 'split') {
           next.guestsCount = 1;
+        }
+        if (value === 'split') {
+          next.halfSide = '';
         }
       }
       if (field === 'hallId') {
@@ -305,6 +362,22 @@ export default function VRSchedulePage() {
     });
   };
 
+  /** Окно сплита, полностью накрывающее выбранные зал/дату/время формы (для open_slot) */
+  const formSplitWindow = useMemo(() => {
+    if (form.type !== 'open_slot') return null;
+    const hall = halls.find((h) => h.id === form.hallId);
+    if (!hall || !form.startTime || !form.endTime) return null;
+    const startMin = timeToMinutes(form.startTime);
+    const endMin = timeToMinutes(form.endTime);
+    return (
+      (hall.splits || []).find((s) => {
+        const sStart = timeToMinutes(formatApiTime(s.startTime));
+        const sEnd = timeToMinutes(formatApiTime(s.endTime));
+        return startMin >= sStart && endMin <= sEnd;
+      }) || null
+    );
+  }, [halls, form.type, form.hallId, form.startTime, form.endTime]);
+
   const validateForm = () => {
     if (!form.hallId) return 'Выберите зал';
     if (!form.date) return 'Укажите дату';
@@ -312,6 +385,9 @@ export default function VRSchedulePage() {
     if (timeToMinutes(form.endTime) <= timeToMinutes(form.startTime)) return 'Время окончания должно быть позже начала';
     if (form.type === 'open_slot' && (form.clientName.trim() || form.clientPhone.trim()) && !form.clientPhone.trim()) {
       return 'Укажите телефон клиента';
+    }
+    if (form.type === 'open_slot' && formSplitWindow && !form.halfSide) {
+      return 'Зал разделён на половины — выберите половину';
     }
     return null;
   };
@@ -325,11 +401,26 @@ export default function VRSchedulePage() {
 
     setIsSaving(true);
     try {
+      if (form.type === 'split') {
+        await createVRSplit({
+          hallId: form.hallId,
+          date: form.date,
+          startTime: form.startTime,
+          endTime: form.endTime,
+        });
+        toast.success('Сплит создан');
+        closePanel();
+        loadSchedule();
+        if (view === 'week') loadWeekSchedule();
+        return;
+      }
+
       const payload = {
         ...form,
         guestsCount: Number(form.guestsCount),
         gameId: form.gameId || undefined,
         description: form.description || undefined,
+        halfSide: formSplitWindow && form.halfSide ? form.halfSide : undefined,
       };
 
       if (panel.mode === 'edit' && panel.reservationId) {
@@ -425,6 +516,25 @@ export default function VRSchedulePage() {
     }
   };
 
+  const handleRemoveSplit = async (splitId: string, hallName: string) => {
+    const ok = await confirm({
+      title: 'Снять сплит',
+      message: `Убрать разделение зала «${hallName}»? Зал снова станет единым.`,
+      confirmText: 'Снять сплит',
+      type: 'warning',
+    });
+    if (!ok) return;
+    try {
+      await deleteVRSplit(splitId);
+      toast.success('Сплит снят');
+      closePanel();
+      loadSchedule();
+      if (view === 'week') loadWeekSchedule();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Не удалось снять сплит');
+    }
+  };
+
   const weekDates = useMemo(() => getWeekDates(date), [date]);
 
   const handlePrev = () => {
@@ -476,6 +586,28 @@ export default function VRSchedulePage() {
   }
 
   const renderSegmentedBar = (hall: VRHallWithSchedule, state: SlotState) => {
+    if (state.split) {
+      const segments: ReactNode[] = [];
+      for (let i = 0; i < SPLIT_HALF_CAPACITY; i++) {
+        let cls = styles.barSegmentFree;
+        if (i < state.split.occupiedA) {
+          cls = state.split.freeA === 0 ? styles.barSegmentFull : styles.barSegmentPartial;
+        }
+        segments.push(<div key={`a${i}`} className={`${styles.barSegment} ${cls}`} />);
+      }
+      for (let i = 0; i < SPLIT_GAP_SEGMENTS; i++) {
+        segments.push(<div key={`gap${i}`} className={`${styles.barSegment} ${styles.barSegmentGap}`} />);
+      }
+      for (let i = 0; i < SPLIT_HALF_CAPACITY; i++) {
+        let cls = styles.barSegmentFree;
+        if (i < state.split.occupiedB) {
+          cls = state.split.freeB === 0 ? styles.barSegmentFull : styles.barSegmentPartial;
+        }
+        segments.push(<div key={`b${i}`} className={`${styles.barSegment} ${cls}`} />);
+      }
+      return <div className={styles.segmentedBar}>{segments}</div>;
+    }
+
     const capacity = hall.maxCapacity || 0;
     const segments = Array.from({ length: capacity }, (_, i) => {
       let cls = styles.barSegmentFree;
@@ -491,6 +623,13 @@ export default function VRSchedulePage() {
 
   const renderSlotStatusText = (state: SlotState, hall: VRHallWithSchedule) => {
     if (state.blocked) return <span className={styles.statusBlocked}>Заблокировано</span>;
+    if (state.split) {
+      return (
+        <span className={styles.statusPartial}>
+          Сплит: A свободно {state.split.freeA} · B свободно {state.split.freeB}
+        </span>
+      );
+    }
     if (state.occupied === 0) return <span className={styles.statusFree}>Свободно {hall.maxCapacity} мест</span>;
     if (state.free === 0) return <span className={styles.statusFull}>Полностью занято</span>;
     return <span className={styles.statusPartial}>Занято {state.occupied} из {hall.maxCapacity}</span>;
@@ -513,6 +652,10 @@ export default function VRSchedulePage() {
       <div className={styles.legendItem}>
         <div className={`${styles.legendDot} ${styles.legendBlocked}`} />
         <span>Блокировка</span>
+      </div>
+      <div className={styles.legendItem}>
+        <div className={`${styles.legendDot} ${styles.legendSplit}`} />
+        <span>Сплит зала</span>
       </div>
     </div>
   );
@@ -616,7 +759,7 @@ export default function VRSchedulePage() {
             return (
               <div
                 key={slot}
-                className={`${styles.slotRow} ${state.blocked ? styles.slotRowBlocked : ''} ${ratio === 1 && !state.blocked ? styles.slotRowFull : ''}`}
+                className={`${styles.slotRow} ${state.blocked ? styles.slotRowBlocked : ''} ${ratio === 1 && !state.blocked ? styles.slotRowFull : ''} ${state.split ? styles.slotRowSplit : ''}`}
                 onClick={() => openSlotPanel(selectedHall.id, slot)}
               >
                 <div className={styles.slotTime}>{slot}</div>
@@ -631,13 +774,17 @@ export default function VRSchedulePage() {
                           : styles.slotOccupancyFree
                   }`}
                 >
-                  {state.blocked ? '—' : `${state.occupied}/${selectedHall.maxCapacity}`}
+                  {state.blocked
+                    ? '—'
+                    : state.split
+                      ? `A ${state.split.occupiedA}/8 · B ${state.split.occupiedB}/8`
+                      : `${state.occupied}/${selectedHall.maxCapacity}`}
                 </div>
                 <div className={styles.slotBarCell}>
                   {renderSegmentedBar(selectedHall, state)}
                 </div>
                 <div className={styles.slotStatus}>{renderSlotStatusText(state, selectedHall)}</div>
-                {!state.blocked && state.free > 0 && (
+                {!state.blocked && !state.split && state.free > 0 && (
                   <button
                     type="button"
                     className={styles.slotBlockBtn}
@@ -685,7 +832,7 @@ export default function VRSchedulePage() {
                   {weekDates.map((d) => {
                     const iso = formatDateForApi(d);
                     const hall = weekData[iso];
-                    const state = hall ? getSlotState(hall, slot) : { occupied: 0, free: 0, blocked: false, reservations: [] };
+                    const state = hall ? getSlotState(hall, slot) : { occupied: 0, free: 0, blocked: false, reservations: [], split: null };
                     const ratio = hall ? occupancyRatio(state, hall) : 0;
                     const cellClass = state.blocked
                       ? styles.weekCellBlocked
@@ -709,7 +856,11 @@ export default function VRSchedulePage() {
                           {hall && renderSegmentedBar(hall, state)}
                         </div>
                         <div className={styles.weekCellLabel}>
-                          {state.blocked ? 'Блок' : `${state.occupied}/${hall ? hall.maxCapacity : selectedHall.maxCapacity}`}
+                          {state.blocked
+                            ? 'Блок'
+                            : state.split
+                              ? `A ${state.split.occupiedA}/8 · B ${state.split.occupiedB}/8`
+                              : `${state.occupied}/${hall ? hall.maxCapacity : selectedHall.maxCapacity}`}
                         </div>
                       </td>
                     );
@@ -749,7 +900,9 @@ export default function VRSchedulePage() {
                         ? (r.title || 'Блокировка')
                         : (r.clientName || r.title || 'Бронь')}
                     </div>
-                    <div className={styles.bookingType}>{getTypeLabel(r.type)}</div>
+                    <div className={styles.bookingType}>
+                      {getTypeLabel(r.type)}{r.halfSide ? ` · половина ${r.halfSide}` : ''}
+                    </div>
                   </td>
                   <td>{r.type === 'blocked' ? '—' : `${r.guestsCount} чел`}</td>
                   <td>
@@ -810,7 +963,8 @@ export default function VRSchedulePage() {
       const hall = halls.find((h) => h.id === form.hallId);
       const isBlocked = form.type === 'blocked';
       const isFullHall = form.type === 'full_hall';
-      const title = panel.mode === 'edit' ? 'Редактировать бронь' : 'Новая бронь';
+      const isSplit = form.type === 'split';
+      const title = panel.mode === 'edit' ? 'Редактировать бронь' : isSplit ? 'Новый сплит' : 'Новая бронь';
 
       return (
         <div className={styles.panelForm}>
@@ -826,6 +980,7 @@ export default function VRSchedulePage() {
                 { value: 'open_slot', label: 'Места' },
                 { value: 'full_hall', label: 'Выкуп зала' },
                 { value: 'blocked', label: 'Блокировка' },
+                ...(isAdmin ? [{ value: 'split', label: 'Сплит' }] : []),
               ].map((opt) => (
                 <button
                   key={opt.value}
@@ -900,13 +1055,15 @@ export default function VRSchedulePage() {
             </div>
           </div>
 
-          {!isBlocked && !isFullHall && (
+          {!isBlocked && !isFullHall && !isSplit && (
             <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Гостей</label>
+              <label className={styles.formLabel}>
+                Гостей{formSplitWindow ? ` (максимум ${SPLIT_HALF_CAPACITY} на половину)` : ''}
+              </label>
               <input
                 type="number"
                 min={1}
-                max={hall?.maxCapacity || 20}
+                max={formSplitWindow ? SPLIT_HALF_CAPACITY : hall?.maxCapacity || 20}
                 className={styles.formInput}
                 value={form.guestsCount}
                 onChange={(e) => handleFormChange('guestsCount', Number(e.target.value))}
@@ -915,7 +1072,30 @@ export default function VRSchedulePage() {
             </div>
           )}
 
-          {!isBlocked && (
+          {form.type === 'open_slot' && formSplitWindow && (
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
+                Половина зала — сплит {formatApiTime(formSplitWindow.startTime)}–{formatApiTime(formSplitWindow.endTime)}
+              </label>
+              <div className={styles.segmented}>
+                {[
+                  { value: 'A', label: 'Половина A' },
+                  { value: 'B', label: 'Половина B' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`${styles.segment} ${form.halfSide === opt.value ? styles.segmentActive : ''}`}
+                    onClick={() => handleFormChange('halfSide', opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!isBlocked && !isSplit && (
             <>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
@@ -976,7 +1156,7 @@ export default function VRSchedulePage() {
               onClick={submitForm}
               disabled={isSaving}
             >
-              {isSaving ? 'Сохранение...' : 'Сохранить'}
+              {isSaving ? 'Сохранение...' : isSplit ? 'Создать сплит' : 'Сохранить'}
             </button>
             <button
               className={`${styles.panelBtn} ${styles.panelBtnSecondary}`}
@@ -1018,7 +1198,17 @@ export default function VRSchedulePage() {
             {r.type !== 'blocked' && hall && (
               <div className={styles.detailsRow}>
                 <span className={styles.detailsLabel}>Гостей</span>
-                <span className={styles.detailsValue}>{r.guestsCount} из {hall.maxCapacity}</span>
+                <span className={styles.detailsValue}>
+                  {r.halfSide
+                    ? `${r.guestsCount} из ${SPLIT_HALF_CAPACITY} (половина ${r.halfSide})`
+                    : `${r.guestsCount} из ${hall.maxCapacity}`}
+                </span>
+              </div>
+            )}
+            {r.halfSide && (
+              <div className={styles.detailsRow}>
+                <span className={styles.detailsLabel}>Режим</span>
+                <span className={styles.detailsValue}>Сплит зала — половина {r.halfSide}</span>
               </div>
             )}
           </div>
@@ -1108,9 +1298,28 @@ export default function VRSchedulePage() {
           <div className={styles.slotSummary}>
             <span className={styles.slotSummaryHall}>{hall.name}</span>
             <span className={styles.slotSummaryCapacity}>
-              {state.occupied} / {hall.maxCapacity} мест
+              {state.split
+                ? `Сплит ${state.split.startTime}–${state.split.endTime} · A ${state.split.occupiedA}/8 · B ${state.split.occupiedB}/8`
+                : `${state.occupied} / ${hall.maxCapacity} мест`}
             </span>
           </div>
+
+          {state.split && (
+            <div className={styles.splitNote}>
+              <span>
+                Зал разделён: по {SPLIT_HALF_CAPACITY} мест на каждую половину.
+                Брони не могут пересекать границы сплита.
+              </span>
+              {isAdmin && (
+                <button
+                  className={`${styles.panelBtn} ${styles.panelBtnWarning}`}
+                  onClick={() => handleRemoveSplit(state.split!.id, hall.name)}
+                >
+                  Снять сплит
+                </button>
+              )}
+            </div>
+          )}
 
           {!state.blocked && state.free > 0 && (
             <button
@@ -1139,6 +1348,7 @@ export default function VRSchedulePage() {
                       {r.type === 'blocked'
                         ? (r.title || 'Блокировка')
                         : (r.clientName || r.title || r.game?.name || 'Бронь')}
+                      {r.halfSide ? ` · половина ${r.halfSide}` : ''}
                     </span>
                     <span className={`${styles.slotReservationStatus} ${getStatusClass(r.status)}`}>
                       {getStatusLabel(r.status)}

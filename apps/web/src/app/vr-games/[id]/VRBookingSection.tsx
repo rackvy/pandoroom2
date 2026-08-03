@@ -33,11 +33,14 @@ function phoneToDigits(formatted: string): string {
 /*  Types & helpers                                                   */
 /* ------------------------------------------------------------------ */
 
+const SPLIT_HALF_CAPACITY = 8 // максимум гостей на каждой половине при сплите
+
 interface Slot {
   time: string
   free: number
   blocked: boolean
   pricePerHour: number
+  split?: { start: string; end: string; freeA: number; freeB: number }
 }
 
 interface HallAvailability {
@@ -111,6 +114,7 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
   const [duration, setDuration] = useState<number>(60)
   const [guests, setGuests] = useState<number>(1)
   const [buyout, setBuyout] = useState(false)
+  const [halfSide, setHalfSide] = useState<'' | 'A' | 'B'>('')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
 
@@ -180,6 +184,7 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
     setSubmitError(null)
     setSubmitted(false)
     setBuyoutTotal(null)
+    setHalfSide('')
   }, [date, hallId])
 
   const isPastSlot = useCallback((slotTime: string): boolean => {
@@ -191,21 +196,52 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
     return slotDate.getTime() < now.getTime() + 30 * 60 * 1000
   }, [date])
 
-  /* Window analysis: min free seats across the selected start + duration */
+  /* Window analysis: min free seats across the selected start + duration.
+     Split-aware: detects whether the whole window lies inside one split
+     (then halfSide is required) or crosses a split boundary (forbidden). */
   const windowInfo = useMemo(() => {
     if (!selectedHall || !startTime) return null
     const startMin = timeToMinutes(startTime)
     const endMin = startMin + duration
-    if (endMin > 24 * 60) return { blocked: false, minFree: 0, overflow: true }
+    if (endMin > 24 * 60) {
+      return { blocked: false, minFree: 0, overflow: true, crossSplit: false, splitWindow: null, minFreeA: 0, minFreeB: 0 }
+    }
     let minFree = selectedHall.maxCapacity
     let blocked = false
+    let splitWindow: { start: string; end: string } | null = null
+    let splitSegments = 0
+    let normalSegments = 0
+    let crossSplit = false
+    let minFreeA = SPLIT_HALF_CAPACITY
+    let minFreeB = SPLIT_HALF_CAPACITY
     for (let seg = startMin; seg < endMin; seg += 30) {
       const slot = selectedHall.slots.find((s) => s.time === minToHHMM(seg))
       if (!slot) return null
       if (slot.blocked) { blocked = true; break }
+      if (slot.split) {
+        splitSegments++
+        if (!splitWindow) {
+          splitWindow = { start: slot.split.start, end: slot.split.end }
+        } else if (splitWindow.start !== slot.split.start || splitWindow.end !== slot.split.end) {
+          crossSplit = true
+        }
+        minFreeA = Math.min(minFreeA, slot.split.freeA)
+        minFreeB = Math.min(minFreeB, slot.split.freeB)
+      } else {
+        normalSegments++
+      }
       minFree = Math.min(minFree, slot.free)
     }
-    return { blocked, minFree: blocked ? 0 : minFree, overflow: false }
+    if (splitSegments > 0 && normalSegments > 0) crossSplit = true
+    return {
+      blocked,
+      minFree: blocked ? 0 : minFree,
+      overflow: false,
+      crossSplit,
+      splitWindow: splitSegments > 0 ? splitWindow : null,
+      minFreeA: blocked ? 0 : minFreeA,
+      minFreeB: blocked ? 0 : minFreeB,
+    }
   }, [selectedHall, startTime, duration])
 
   /* Buyout price quote */
@@ -224,11 +260,42 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
   }, [buyout, selectedHall, startTime, duration, date])
 
   const startSlot = selectedHall?.slots.find((s) => s.time === startTime) || null
-  const maxGuests = windowInfo ? Math.max(1, windowInfo.minFree) : 1
+
+  /* Split mode: the whole window lies inside a single split window */
+  const inSplit = !!(
+    windowInfo &&
+    !windowInfo.overflow &&
+    !windowInfo.blocked &&
+    !windowInfo.crossSplit &&
+    windowInfo.splitWindow
+  )
+
+  const guestsCap = windowInfo
+    ? inSplit
+      ? Math.min(
+          SPLIT_HALF_CAPACITY,
+          halfSide === 'A' ? windowInfo.minFreeA : halfSide === 'B' ? windowInfo.minFreeB : SPLIT_HALF_CAPACITY,
+        )
+      : windowInfo.minFree
+    : 0
+  const maxGuests = Math.max(1, guestsCap)
 
   useEffect(() => {
     if (guests > maxGuests) setGuests(maxGuests)
   }, [maxGuests, guests])
+
+  /* Drop half choice when the window moves out of the split */
+  const splitWindowKey = windowInfo?.splitWindow
+    ? `${windowInfo.splitWindow.start}-${windowInfo.splitWindow.end}`
+    : ''
+  useEffect(() => {
+    if (!splitWindowKey) setHalfSide('')
+  }, [splitWindowKey])
+
+  /* Buyout is impossible inside a split window */
+  useEffect(() => {
+    if (inSplit) setBuyout(false)
+  }, [inSplit])
 
   const canSubmit =
     !!selectedHall &&
@@ -236,7 +303,9 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
     !!windowInfo &&
     !windowInfo.blocked &&
     !windowInfo.overflow &&
-    (buyout || (guests >= 1 && guests <= windowInfo.minFree)) &&
+    !windowInfo.crossSplit &&
+    (!inSplit || halfSide !== '') &&
+    (buyout || (guests >= 1 && guests <= guestsCap)) &&
     name.trim().length > 0 &&
     phoneToDigits(phone).length === 11 &&
     !submitting
@@ -260,6 +329,7 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
           clientName: name.trim(),
           clientPhone: phoneToDigits(phone),
           gameId,
+          ...(inSplit && halfSide ? { halfSide } : {}),
         }),
       })
       const data = await res.json().catch(() => null)
@@ -303,7 +373,9 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
             <h3 className={styles.successTitle}>Заявка отправлена!</h3>
             <p className={styles.successText}>
               Мы перезвоним вам в ближайшее время, чтобы подтвердить бронь
-              {startTime && selectedHall ? ` на ${startTime} (${formatDuration(duration)})` : ''}.
+              {startTime && selectedHall
+                ? ` на ${startTime} (${formatDuration(duration)}${halfSide ? `, половина ${halfSide}` : ''})`
+                : ''}.
             </p>
             <button
               className={styles.againBtn}
@@ -313,6 +385,7 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
                 setName(client?.name || '')
                 setPhone(client?.phone ? formatPhone(client.phone) : '')
                 setBuyout(false)
+                setHalfSide('')
                 setGuests(1)
               }}
             >
@@ -384,9 +457,16 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
                           active ? styles.slotActive : '',
                           disabled ? styles.slotDisabled : '',
                           slot.blocked ? styles.slotBlocked : '',
+                          slot.split ? styles.slotSplit : '',
                         ].filter(Boolean).join(' ')}
                         onClick={() => setStartTime(active ? null : slot.time)}
-                        title={slot.blocked ? 'Время недоступно' : `Свободно ${slot.free} мест`}
+                        title={
+                          slot.blocked
+                            ? 'Время недоступно'
+                            : slot.split
+                              ? `Сплит ${slot.split.start}–${slot.split.end}: половина A — ${slot.split.freeA}, половина B — ${slot.split.freeB}`
+                              : `Свободно ${slot.free} мест`
+                        }
                       >
                         <span className={styles.slotTime}>{slot.time}</span>
                         <span className={styles.slotFree}>
@@ -427,10 +507,44 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
                 {!windowInfo.overflow && windowInfo.blocked && (
                   <div className={styles.warnBox}>Часть выбранного интервала недоступна. Выберите другое время или длительность.</div>
                 )}
-                {!windowInfo.overflow && !windowInfo.blocked && windowInfo.minFree === 0 && (
+                {!windowInfo.overflow && !windowInfo.blocked && windowInfo.minFree === 0 && !windowInfo.crossSplit && (
                   <div className={styles.warnBox}>На выбранное время нет свободных мест. Попробуйте другое время.</div>
                 )}
-                {!windowInfo.overflow && !windowInfo.blocked && windowInfo.minFree > 0 && (
+                {!windowInfo.overflow && !windowInfo.blocked && windowInfo.crossSplit && (
+                  <div className={styles.warnBox}>
+                    Выбранный интервал пересекает границу сплита
+                    {windowInfo.splitWindow ? ` (${windowInfo.splitWindow.start}–${windowInfo.splitWindow.end})` : ''}.
+                    Бронь должна быть целиком внутри сплита либо целиком вне его.
+                  </div>
+                )}
+                {inSplit && windowInfo.splitWindow && (
+                  <div className={styles.fieldGroup}>
+                    <div className={styles.splitNotice}>
+                      С {windowInfo.splitWindow.start} до {windowInfo.splitWindow.end} зал разделён на две
+                      половины — по {SPLIT_HALF_CAPACITY} мест в каждой. Игру определим на месте.
+                    </div>
+                    <span className={styles.fieldLabel}>Половина зала</span>
+                    <div className={styles.chips}>
+                      {(['A', 'B'] as const).map((side) => {
+                        const free = side === 'A' ? windowInfo.minFreeA : windowInfo.minFreeB
+                        const disabledHalf = free === 0
+                        const activeHalf = halfSide === side
+                        return (
+                          <button
+                            key={side}
+                            type="button"
+                            disabled={disabledHalf}
+                            className={`${styles.chip}${activeHalf ? ` ${styles.chipActive}` : ''}${disabledHalf ? ` ${styles.chipDisabled}` : ''}`}
+                            onClick={() => setHalfSide(side)}
+                          >
+                            Половина {side} · {disabledHalf ? 'нет мест' : `свободно ${free}`}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+                {!windowInfo.overflow && !windowInfo.blocked && !windowInfo.crossSplit && windowInfo.minFree > 0 && (
                   <div className={styles.row}>
                     <div className={styles.fieldGroup}>
                       <span className={styles.fieldLabel}>Гостей (1–{maxGuests})</span>
@@ -441,23 +555,25 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
                       </div>
                     </div>
 
-                    <label className={styles.buyout}>
-                      <input
-                        type="checkbox"
-                        checked={buyout}
-                        onChange={(e) => setBuyout(e.target.checked)}
-                      />
-                      <span>
-                        Выкупить весь зал
-                        {buyout && buyoutTotal != null && (
-                          <em className={styles.buyoutPrice}>{buyoutTotal.toLocaleString('ru-RU')} ₽</em>
-                        )}
-                        {buyout && buyoutTotal == null && <em className={styles.buyoutPrice}>считаем…</em>}
-                      </span>
-                    </label>
+                    {!inSplit && (
+                      <label className={styles.buyout}>
+                        <input
+                          type="checkbox"
+                          checked={buyout}
+                          onChange={(e) => setBuyout(e.target.checked)}
+                        />
+                        <span>
+                          Выкупить весь зал
+                          {buyout && buyoutTotal != null && (
+                            <em className={styles.buyoutPrice}>{buyoutTotal.toLocaleString('ru-RU')} ₽</em>
+                          )}
+                          {buyout && buyoutTotal == null && <em className={styles.buyoutPrice}>считаем…</em>}
+                        </span>
+                      </label>
+                    )}
                   </div>
                 )}
-                {!buyout && startSlot && !windowInfo.overflow && !windowInfo.blocked && (
+                {!buyout && startSlot && !windowInfo.overflow && !windowInfo.blocked && !windowInfo.crossSplit && (
                   <p className={styles.priceHint}>
                     {startSlot.pricePerHour.toLocaleString('ru-RU')} ₽/час за человека
                   </p>
@@ -497,7 +613,7 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
 
             {startTime && (
               <button type="submit" className={styles.submitBtn} disabled={!canSubmit}>
-                {submitting ? 'Отправляем…' : buyout ? 'Забронировать весь зал' : 'Забронировать'}
+                {submitting ? 'Отправляем…' : buyout ? 'Забронировать весь зал' : inSplit ? 'Забронировать половину' : 'Забронировать'}
               </button>
             )}
           </form>

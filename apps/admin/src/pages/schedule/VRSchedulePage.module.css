@@ -441,6 +441,16 @@
   );
 }
 
+.legendSplit {
+  background: linear-gradient(
+    90deg,
+    #86efac 0 38%,
+    transparent 38% 62%,
+    #86efac 62% 100%
+  );
+  border: 1px solid #86efac;
+}
+
 /* Day view layout */
 .dayLayout {
   display: grid;
@@ -494,6 +504,14 @@
 
 .slotRowBlocked {
   background: #f3f4f6;
+}
+
+.slotRowSplit {
+  background: #f0f9ff;
+}
+
+.slotRowSplit:hover {
+  background: #e0f2fe;
 }
 
 .slotTime {
@@ -568,6 +586,11 @@
     #9ca3af 8px
   );
   border-color: #9ca3af;
+}
+
+.barSegmentGap {
+  background: transparent;
+  border-color: transparent;
 }
 
 .slotStatus {
@@ -1131,6 +1154,23 @@
   text-align: center;
   color: var(--vr-text-secondary);
   font-size: 0.875rem;
+}
+
+.splitNote {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: var(--vr-radius);
+  color: #0c4a6e;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.splitNote button {
+  align-self: flex-start;
 }
 
 .slotReservations {

@@ -53,4 +53,8 @@ export class UpdateVRReservationDto {
   @IsOptional()
   @IsNumber()
   maxGuests?: number;
+
+  @IsOptional()
+  @IsString()
+  halfSide?: string;
 }
