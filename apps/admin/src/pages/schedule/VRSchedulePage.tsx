@@ -478,13 +478,13 @@ export default function VRSchedulePage() {
   const renderSegmentedBar = (hall: VRHallWithSchedule, state: SlotState) => {
     const capacity = hall.maxCapacity || 0;
     const segments = Array.from({ length: capacity }, (_, i) => {
-      let cls = styles.segmentFree;
+      let cls = styles.barSegmentFree;
       if (state.blocked) {
-        cls = styles.segmentBlocked;
+        cls = styles.barSegmentBlocked;
       } else if (i < state.occupied) {
-        cls = state.free === 0 ? styles.segmentFull : styles.segmentPartial;
+        cls = state.free === 0 ? styles.barSegmentFull : styles.barSegmentPartial;
       }
-      return <div key={i} className={`${styles.segment} ${cls}`} />;
+      return <div key={i} className={`${styles.barSegment} ${cls}`} />;
     });
     return <div className={styles.segmentedBar}>{segments}</div>;
   };
@@ -534,6 +534,9 @@ export default function VRSchedulePage() {
 
   const renderMiniCalendar = () => (
     <div className={styles.miniCalendar}>
+      <button className={styles.miniToday} onClick={() => setDate(new Date())}>
+        Сегодня
+      </button>
       <button className={styles.miniNav} onClick={handlePrev} title="Назад">
         ‹
       </button>
@@ -554,6 +557,15 @@ export default function VRSchedulePage() {
       <button className={styles.miniNav} onClick={handleNext} title="Вперёд">
         ›
       </button>
+      <div className={styles.miniDatePicker}>
+        <span className={styles.miniDatePickerIcon}>📅</span>
+        <input
+          type="date"
+          value={formatDateForApi(date)}
+          onChange={(e) => setDate(new Date(e.target.value))}
+          className={styles.miniDateInput}
+        />
+      </div>
     </div>
   );
 
@@ -608,6 +620,19 @@ export default function VRSchedulePage() {
                 onClick={() => openSlotPanel(selectedHall.id, slot)}
               >
                 <div className={styles.slotTime}>{slot}</div>
+                <div
+                  className={`${styles.slotOccupancy} ${
+                    state.blocked
+                      ? styles.slotOccupancyBlocked
+                      : state.free === 0 && state.occupied > 0
+                        ? styles.slotOccupancyFull
+                        : state.occupied > 0
+                          ? styles.slotOccupancyPartial
+                          : styles.slotOccupancyFree
+                  }`}
+                >
+                  {state.blocked ? '—' : `${state.occupied}/${selectedHall.maxCapacity}`}
+                </div>
                 <div className={styles.slotBarCell}>
                   {renderSegmentedBar(selectedHall, state)}
                 </div>
