@@ -734,10 +734,9 @@ export default function VRSchedulePage() {
               <tr>
                 <th>Время</th>
                 <th>Клиент / Тип</th>
-                <th>Игра</th>
                 <th>Гости</th>
                 <th>Статус</th>
-                <th>Действия</th>
+                <th className={styles.bookingsActionsHeader}>Действия</th>
               </tr>
             </thead>
             <tbody>
@@ -752,7 +751,6 @@ export default function VRSchedulePage() {
                     </div>
                     <div className={styles.bookingType}>{getTypeLabel(r.type)}</div>
                   </td>
-                  <td>{r.game?.name || '—'}</td>
                   <td>{r.type === 'blocked' ? '—' : `${r.guestsCount} чел`}</td>
                   <td>
                     <span className={`${styles.badge} ${getStatusClass(r.status)}`}>
@@ -764,27 +762,37 @@ export default function VRSchedulePage() {
                       {r.status === 'draft' && (
                         <button
                           type="button"
-                          className={`${styles.actionBtn} ${styles.actionBtnSuccess}`}
+                          className={`${styles.actionIconBtn} ${styles.actionIconBtnSuccess}`}
+                          title="Подтвердить"
                           onClick={(e) => { e.stopPropagation(); handleConfirmReservation(r.id); }}
                         >
-                          Подтвердить
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
                         </button>
                       )}
                       {r.status !== 'canceled' && (
                         <button
                           type="button"
-                          className={`${styles.actionBtn} ${styles.actionBtnWarning}`}
+                          className={`${styles.actionIconBtn} ${styles.actionIconBtnWarning}`}
+                          title={r.type === 'blocked' ? 'Снять блокировку' : 'Отменить бронь'}
                           onClick={(e) => { e.stopPropagation(); handleCancelReservation(r); }}
                         >
-                          {r.type === 'blocked' ? 'Снять' : 'Отменить'}
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M18 6 6 18" />
+                            <path d="m6 6 12 12" />
+                          </svg>
                         </button>
                       )}
                       <button
                         type="button"
-                        className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                        className={`${styles.actionIconBtn} ${styles.actionIconBtnPrimary}`}
+                        title="Изменить"
                         onClick={(e) => { e.stopPropagation(); openEditPanel(r); }}
                       >
-                        Изменить
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                        </svg>
                       </button>
                     </div>
                   </td>
@@ -1219,8 +1227,12 @@ export default function VRSchedulePage() {
         ) : (
           <>
             {renderMiniCalendar()}
-            {view === 'day' ? renderDayView() : renderWeekView()}
-            {view === 'day' && renderBookingsTable()}
+            {view === 'day' ? (
+              <div className={styles.dayLayout}>
+                {renderDayView()}
+                {renderBookingsTable()}
+              </div>
+            ) : renderWeekView()}
           </>
         )}
       </div>
