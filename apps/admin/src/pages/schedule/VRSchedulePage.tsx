@@ -626,7 +626,7 @@ export default function VRSchedulePage() {
     if (state.split) {
       return (
         <span className={styles.statusPartial}>
-          Сплит: A свободно {state.split.freeA} · B свободно {state.split.freeB}
+          Сплит (A {state.split.freeA}/{SPLIT_HALF_CAPACITY}, B {state.split.freeB}/{SPLIT_HALF_CAPACITY})
         </span>
       );
     }
