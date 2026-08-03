@@ -444,7 +444,7 @@
 /* Day view layout */
 .dayLayout {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: minmax(0, 2fr) minmax(360px, 1fr);
   gap: 1.5rem;
   align-items: start;
 }
@@ -457,7 +457,8 @@
 
 /* Day view slots */
 .dayView {
-  max-width: 960px;
+  width: 100%;
+  min-width: 0;
 }
 
 .slotsTable {
@@ -714,7 +715,8 @@
 
 /* Side bookings table */
 .bookingsSection {
-  width: 380px;
+  width: 100%;
+  min-width: 0;
   position: sticky;
   top: 1rem;
   align-self: start;
@@ -722,7 +724,6 @@
 
 @media (max-width: 1100px) {
   .bookingsSection {
-    width: 100%;
     position: static;
   }
 }
