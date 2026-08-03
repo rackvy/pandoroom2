@@ -11,7 +11,11 @@ import {
   type VRReservation,
 } from '../../api/vrSchedule';
 import { getVRGames, type VRGame } from '../../api/catalog';
-import { formatDateForApi, addDays } from '../../components/schedule/timeUtils';
+import {
+  formatDateForApi,
+  addDays,
+  formatDateDisplay,
+} from '../../components/schedule/timeUtils';
 import { toast } from '../../components/ui/Toast';
 import { confirm } from '../../components/ui/ConfirmDialog';
 import styles from './VRSchedulePage.module.css';
@@ -112,14 +116,6 @@ function occupancyRatio(state: SlotState, hall: VRHallWithSchedule): number {
   return state.occupied / hall.maxCapacity;
 }
 
-function occupancyClass(state: SlotState, ratio: number): string {
-  if (state.blocked) return styles.cellBlocked;
-  if (ratio === 0) return styles.cellEmpty;
-  if (ratio < 0.5) return styles.cellLow;
-  if (ratio < 1) return styles.cellMedium;
-  return styles.cellFull;
-}
-
 type PanelMode = 'slot' | 'create' | 'edit' | 'details';
 
 interface PanelState {
@@ -145,16 +141,46 @@ const emptyForm = {
   description: '',
 };
 
+function startOfWeek(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getWeekDates(date: Date): Date[] {
+  const start = startOfWeek(date);
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+}
+
+function formatShortWeekday(date: Date): string {
+  return date.toLocaleDateString('ru-RU', { weekday: 'short' });
+}
+
+function formatDay(date: Date): string {
+  return String(date.getDate());
+}
+
 export default function VRSchedulePage() {
   const [date, setDate] = useState<Date>(new Date());
   const { branches, branchId, setBranchId } = useBranchSelection();
   const [halls, setHalls] = useState<VRHallWithSchedule[]>([]);
   const [games, setGames] = useState<VRGame[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedHallId, setSelectedHallId] = useState<string>('all');
+  const [selectedHallId, setSelectedHallId] = useState<string>('');
+  const [view, setView] = useState<'day' | 'week'>('day');
+  const [weekData, setWeekData] = useState<Record<string, VRHallWithSchedule>>({});
   const [panel, setPanel] = useState<PanelState>({ open: false, mode: 'slot' });
   const [form, setForm] = useState(emptyForm);
   const [isSaving, setIsSaving] = useState(false);
+
+  const selectedBranch = branches.find((b) => b.id === branchId);
+  const selectedHall = useMemo(
+    () => halls.find((h) => h.id === selectedHallId),
+    [halls, selectedHallId],
+  );
 
   const loadSchedule = useCallback(async () => {
     if (!branchId) return;
@@ -174,15 +200,50 @@ export default function VRSchedulePage() {
     }
   }, [date, branchId]);
 
+  const loadWeekSchedule = useCallback(async () => {
+    if (!branchId || !selectedHallId || view !== 'week') return;
+    setIsLoading(true);
+    try {
+      const weekDates = getWeekDates(date);
+      const entries = await Promise.all(
+        weekDates.map((d) => getVRSchedule(branchId, formatDateForApi(d))),
+      );
+      const map: Record<string, VRHallWithSchedule> = {};
+      entries.forEach((dayHalls, idx) => {
+        const hall = dayHalls.find((h) => h.id === selectedHallId);
+        if (hall) {
+          map[formatDateForApi(weekDates[idx])] = hall;
+        }
+      });
+      setWeekData(map);
+    } catch (err) {
+      console.error(err);
+      toast.error('Не удалось загрузить недельное расписание');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [branchId, date, selectedHallId, view]);
+
   useEffect(() => {
     loadSchedule();
   }, [loadSchedule]);
 
-  const selectedBranch = branches.find((b) => b.id === branchId);
-  const selectedHall = useMemo(
-    () => halls.find((h) => h.id === selectedHallId),
-    [halls, selectedHallId],
-  );
+  useEffect(() => {
+    if (view === 'week') {
+      loadWeekSchedule();
+    }
+  }, [view, loadWeekSchedule]);
+
+  useEffect(() => {
+    if (halls.length) {
+      const exists = halls.some((h) => h.id === selectedHallId);
+      if (!exists || !selectedHallId) {
+        setSelectedHallId(halls[0].id);
+      }
+    } else {
+      setSelectedHallId('');
+    }
+  }, [halls, selectedHallId]);
 
   const closePanel = () => setPanel({ open: false, mode: 'slot' });
 
@@ -191,7 +252,6 @@ export default function VRSchedulePage() {
   };
 
   const openCreatePanel = (hallId: string, slot?: string) => {
-    const hall = halls.find((h) => h.id === hallId);
     const start = slot || '10:00';
     setForm({
       ...emptyForm,
@@ -199,7 +259,7 @@ export default function VRSchedulePage() {
       date: formatDateForApi(date),
       startTime: start,
       endTime: addMinutes(start, SLOT_STEP),
-      guestsCount: hall ? 1 : 1,
+      guestsCount: 1,
     });
     setPanel({ open: true, mode: 'create', hallId, slot });
   };
@@ -281,6 +341,7 @@ export default function VRSchedulePage() {
       }
       closePanel();
       loadSchedule();
+      if (view === 'week') loadWeekSchedule();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Не удалось сохранить бронь');
     } finally {
@@ -306,6 +367,7 @@ export default function VRSchedulePage() {
       });
       toast.success('Время заблокировано');
       loadSchedule();
+      if (view === 'week') loadWeekSchedule();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Не удалось заблокировать время');
     }
@@ -316,6 +378,7 @@ export default function VRSchedulePage() {
       await confirmVRReservation(id);
       toast.success('Бронь подтверждена');
       loadSchedule();
+      if (view === 'week') loadWeekSchedule();
     } catch {
       toast.error('Ошибка подтверждения брони');
     }
@@ -337,6 +400,7 @@ export default function VRSchedulePage() {
       toast.success(isBlocked ? 'Блокировка снята' : 'Бронь отменена');
       closePanel();
       loadSchedule();
+      if (view === 'week') loadWeekSchedule();
     } catch {
       toast.error('Ошибка отмены');
     }
@@ -355,17 +419,31 @@ export default function VRSchedulePage() {
       toast.success('Бронь удалена');
       closePanel();
       loadSchedule();
+      if (view === 'week') loadWeekSchedule();
     } catch {
       toast.error('Ошибка удаления брони');
     }
   };
 
-  const dateButtons = [
-    { label: 'Сегодня', date: new Date() },
-    { label: '+1 день', date: addDays(new Date(), 1) },
-    { label: '+2 дня', date: addDays(new Date(), 2) },
-    { label: '+3 дня', date: addDays(new Date(), 3) },
-  ];
+  const weekDates = useMemo(() => getWeekDates(date), [date]);
+
+  const handlePrev = () => {
+    if (view === 'week') {
+      setDate(addDays(date, -7));
+    } else {
+      setDate(addDays(date, -1));
+    }
+  };
+
+  const handleNext = () => {
+    if (view === 'week') {
+      setDate(addDays(date, 7));
+    } else {
+      setDate(addDays(date, 1));
+    }
+  };
+
+  const handleSelectWeekDay = (d: Date) => setDate(d);
 
   const panelReservation = useMemo(() => {
     if (panel.mode !== 'details' && panel.mode !== 'edit') return undefined;
@@ -379,187 +457,169 @@ export default function VRSchedulePage() {
     return { hall, state: getSlotState(hall, panel.slot) };
   }, [panel, halls]);
 
-  const renderHeader = () => (
-    <div className={styles.header}>
-      <div className={styles.headerLeft}>
-        <h1 className={styles.title}>VR-расписание</h1>
-        <span className={styles.dateDisplay}>{formatDateForApi(date)}</span>
+  const dayBookings = useMemo(() => {
+    if (!selectedHall) return [];
+    return selectedHall.reservations
+      .filter((r) => r.status !== 'canceled')
+      .slice()
+      .sort((a, b) => timeToMinutes(formatApiTime(a.startTime)) - timeToMinutes(formatApiTime(b.startTime)));
+  }, [selectedHall]);
+
+  function getStatusClass(status: string): string {
+    switch (status) {
+      case 'confirmed': return styles.statusConfirmed;
+      case 'canceled': return styles.statusCanceled;
+      case 'draft': return styles.statusDraft;
+      case 'done': return styles.statusDone;
+      default: return '';
+    }
+  }
+
+  const renderSegmentedBar = (hall: VRHallWithSchedule, state: SlotState) => {
+    const capacity = hall.maxCapacity || 0;
+    const segments = Array.from({ length: capacity }, (_, i) => {
+      let cls = styles.segmentFree;
+      if (state.blocked) {
+        cls = styles.segmentBlocked;
+      } else if (i < state.occupied) {
+        cls = state.free === 0 ? styles.segmentFull : styles.segmentPartial;
+      }
+      return <div key={i} className={`${styles.segment} ${cls}`} />;
+    });
+    return <div className={styles.segmentedBar}>{segments}</div>;
+  };
+
+  const renderSlotStatusText = (state: SlotState, hall: VRHallWithSchedule) => {
+    if (state.blocked) return <span className={styles.statusBlocked}>Заблокировано</span>;
+    if (state.occupied === 0) return <span className={styles.statusFree}>Свободно {hall.maxCapacity} мест</span>;
+    if (state.free === 0) return <span className={styles.statusFull}>Полностью занято</span>;
+    return <span className={styles.statusPartial}>Занято {state.occupied} из {hall.maxCapacity}</span>;
+  };
+
+  const renderLegend = () => (
+    <div className={styles.legend}>
+      <div className={styles.legendItem}>
+        <div className={`${styles.legendDot} ${styles.legendFree}`} />
+        <span>Свободно</span>
       </div>
-
-      <div className={styles.controls}>
-        <div className={styles.datePicker}>
-          {dateButtons.map((btn, index) => (
-            <button
-              key={index}
-              className={`${styles.dateButton} ${formatDateForApi(date) === formatDateForApi(btn.date) ? styles.active : ''}`}
-              onClick={() => setDate(btn.date)}
-            >
-              {btn.label}
-            </button>
-          ))}
-          <input
-            type="date"
-            className={styles.dateInput}
-            value={formatDateForApi(date)}
-            onChange={(e) => setDate(new Date(e.target.value))}
-          />
-        </div>
-
-        <select
-          className={styles.branchSelect}
-          value={branchId}
-          onChange={(e) => setBranchId(e.target.value)}
-        >
-          <option value="">Выберите филиал</option>
-          {branches.map((branch) => (
-            <option key={branch.id} value={branch.id}>{branch.name}</option>
-          ))}
-        </select>
-
-        <button
-          className={styles.addButton}
-          onClick={() => {
-            const firstHall = halls[0];
-            if (firstHall) openCreatePanel(firstHall.id);
-          }}
-          disabled={!halls.length}
-        >
-          + Новая бронь
-        </button>
+      <div className={styles.legendItem}>
+        <div className={`${styles.legendDot} ${styles.legendPartial}`} />
+        <span>Частично занято</span>
+      </div>
+      <div className={styles.legendItem}>
+        <div className={`${styles.legendDot} ${styles.legendFull}`} />
+        <span>Полностью занято</span>
+      </div>
+      <div className={styles.legendItem}>
+        <div className={`${styles.legendDot} ${styles.legendBlocked}`} />
+        <span>Блокировка</span>
       </div>
     </div>
   );
 
   const renderHallTabs = () => (
     <div className={styles.tabs}>
-      <button
-        className={`${styles.tab} ${selectedHallId === 'all' ? styles.tabActive : ''}`}
-        onClick={() => setSelectedHallId('all')}
-      >
-        Все залы
-      </button>
       {halls.map((hall) => (
         <button
           key={hall.id}
           className={`${styles.tab} ${selectedHallId === hall.id ? styles.tabActive : ''}`}
           onClick={() => setSelectedHallId(hall.id)}
         >
-          {hall.name}
+          <span>{hall.name}</span>
           <span className={styles.tabCapacity}>{hall.maxCapacity} мест</span>
         </button>
       ))}
     </div>
   );
 
-  const renderMatrixView = () => (
-    <div className={styles.matrixContainer}>
-      <table className={styles.matrixTable}>
-        <thead>
-          <tr>
-            <th className={styles.matrixTimeHeader}>Время</th>
-            {halls.map((hall) => (
-              <th key={hall.id} className={styles.matrixHallHeader}>
-                <div>{hall.name}</div>
-                <div className={styles.matrixHallCapacity}>{hall.maxCapacity} мест</div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {TIME_SLOTS.map((slot) => (
-            <tr key={slot}>
-              <td className={`${styles.matrixTimeCell} ${slot.endsWith(':30') ? styles.matrixTimeHalf : ''}`}>
-                {slot}
-              </td>
-              {halls.map((hall) => {
-                const state = getSlotState(hall, slot);
-                const ratio = occupancyRatio(state, hall);
-                const cellClass = occupancyClass(state, ratio);
-                return (
-                  <td
-                    key={hall.id}
-                    className={`${styles.matrixCell} ${cellClass}`}
-                    onClick={() => openSlotPanel(hall.id, slot)}
-                  >
-                    <div className={styles.matrixCellContent}>
-                      <span className={styles.matrixOccupied}>{state.occupied}</span>
-                      <span className={styles.matrixDivider}>/</span>
-                      <span className={styles.matrixTotal}>{hall.maxCapacity}</span>
-                    </div>
-                    {state.blocked && <div className={styles.matrixBlockedLabel}>Блок</div>}
-                    {!state.blocked && state.free > 0 && (
-                      <button
-                        type="button"
-                        className={styles.matrixLockBtn}
-                        title="Заблокировать"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleQuickBlock(hall, slot);
-                        }}
-                      >
-                        🔒
-                      </button>
-                    )}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  const renderMiniCalendar = () => (
+    <div className={styles.miniCalendar}>
+      <button className={styles.miniNav} onClick={handlePrev} title="Назад">
+        ‹
+      </button>
+      {weekDates.map((d) => {
+        const iso = formatDateForApi(d);
+        const active = iso === formatDateForApi(date);
+        return (
+          <button
+            key={iso}
+            className={`${styles.miniDay} ${active ? styles.miniDayActive : ''}`}
+            onClick={() => handleSelectWeekDay(d)}
+          >
+            <span className={styles.miniWeekday}>{formatShortWeekday(d)}</span>
+            <span className={styles.miniDate}>{formatDay(d)}</span>
+          </button>
+        );
+      })}
+      <button className={styles.miniNav} onClick={handleNext} title="Вперёд">
+        ›
+      </button>
     </div>
   );
 
-  const renderSingleHallView = () => {
+  const renderCapacityHeader = () => {
     if (!selectedHall) return null;
-    const hall = selectedHall;
-
+    const totalSeats = selectedHall.maxCapacity;
+    const peakOccupied = TIME_SLOTS.reduce((max, slot) => {
+      const s = getSlotState(selectedHall, slot);
+      return Math.max(max, s.blocked ? totalSeats : s.occupied);
+    }, 0);
+    const free = totalSeats - peakOccupied;
     return (
-      <div className={styles.singleView}>
-        <div className={styles.singleHeader}>
-          <h2 className={styles.singleTitle}>{hall.name}</h2>
-          <div className={styles.singleStats}>
-            <div className={styles.singleStat}>
-              <span className={styles.singleStatValue}>{hall.maxCapacity}</span>
-              <span className={styles.singleStatLabel}>всего мест</span>
-            </div>
+      <div className={styles.capacityHeader}>
+        <div className={styles.capacityInfo}>
+          <h2 className={styles.capacityTitle}>{selectedHall.name}</h2>
+          <span className={styles.capacitySubtitle}>Вместимость зала</span>
+        </div>
+        <div className={styles.capacityStats}>
+          <div className={styles.capacityStat}>
+            <span className={styles.capacityValue}>{totalSeats}</span>
+            <span className={styles.capacityLabel}>всего мест</span>
+          </div>
+          <div className={styles.capacityDivider} />
+          <div className={styles.capacityStat}>
+            <span className={styles.capacityValue}>{free}</span>
+            <span className={styles.capacityLabel}>свободно</span>
+          </div>
+          <div className={styles.capacityDivider} />
+          <div className={styles.capacityStat}>
+            <span className={styles.capacityValue}>{peakOccupied}</span>
+            <span className={styles.capacityLabel}>пиковая загрузка</span>
           </div>
         </div>
+      </div>
+    );
+  };
 
-        <div className={styles.slotList}>
+  const renderDayView = () => {
+    if (!selectedHall) return null;
+    return (
+      <div className={styles.dayView}>
+        {renderCapacityHeader()}
+        {renderLegend()}
+        <div className={styles.slotsTable}>
           {TIME_SLOTS.map((slot) => {
-            const state = getSlotState(hall, slot);
-            const ratio = occupancyRatio(state, hall);
-            const cellClass = occupancyClass(state, ratio);
+            const state = getSlotState(selectedHall, slot);
+            const ratio = occupancyRatio(state, selectedHall);
             return (
               <div
                 key={slot}
-                className={`${styles.slotCard} ${cellClass}`}
-                onClick={() => openSlotPanel(hall.id, slot)}
+                className={`${styles.slotRow} ${state.blocked ? styles.slotRowBlocked : ''} ${ratio === 1 && !state.blocked ? styles.slotRowFull : ''}`}
+                onClick={() => openSlotPanel(selectedHall.id, slot)}
               >
-                <div className={styles.slotCardHeader}>
-                  <span className={styles.slotTime}>{slot}</span>
-                  <span className={styles.slotCapacity}>
-                    {state.occupied}/{hall.maxCapacity}
-                  </span>
+                <div className={styles.slotTime}>{slot}</div>
+                <div className={styles.slotBarCell}>
+                  {renderSegmentedBar(selectedHall, state)}
                 </div>
-                <div className={styles.slotBarTrack}>
-                  <div
-                    className={styles.slotBarFill}
-                    style={{ width: `${ratio * 100}%` }}
-                  />
-                </div>
-                <div className={styles.slotGuests}>
-                  {state.blocked ? 'Заблокировано' : state.free === 0 ? 'Полностью занято' : `Свободно ${state.free}`}
-                </div>
+                <div className={styles.slotStatus}>{renderSlotStatusText(state, selectedHall)}</div>
                 {!state.blocked && state.free > 0 && (
                   <button
                     type="button"
-                    className={styles.slotLockBtn}
+                    className={styles.slotBlockBtn}
                     title="Заблокировать"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleQuickBlock(hall, slot);
+                      handleQuickBlock(selectedHall, slot);
                     }}
                   >
                     🔒
@@ -568,6 +628,145 @@ export default function VRSchedulePage() {
               </div>
             );
           })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderWeekView = () => {
+    if (!selectedHall) return null;
+    return (
+      <div className={styles.weekView}>
+        <div className={styles.weekTableWrapper}>
+          <table className={styles.weekTable}>
+            <thead>
+              <tr>
+                <th className={styles.weekTimeHeader}>Время</th>
+                {weekDates.map((d) => (
+                  <th
+                    key={formatDateForApi(d)}
+                    className={`${styles.weekDayHeader} ${formatDateForApi(d) === formatDateForApi(date) ? styles.weekDayHeaderActive : ''}`}
+                  >
+                    <div>{formatShortWeekday(d)}</div>
+                    <div className={styles.weekDayNumber}>{formatDay(d)}</div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {TIME_SLOTS.map((slot) => (
+                <tr key={slot}>
+                  <td className={styles.weekTimeCell}>{slot}</td>
+                  {weekDates.map((d) => {
+                    const iso = formatDateForApi(d);
+                    const hall = weekData[iso];
+                    const state = hall ? getSlotState(hall, slot) : { occupied: 0, free: 0, blocked: false, reservations: [] };
+                    const ratio = hall ? occupancyRatio(state, hall) : 0;
+                    const cellClass = state.blocked
+                      ? styles.weekCellBlocked
+                      : ratio === 0
+                        ? styles.weekCellEmpty
+                        : ratio < 1
+                          ? styles.weekCellPartial
+                          : styles.weekCellFull;
+                    return (
+                      <td
+                        key={iso}
+                        className={`${styles.weekCell} ${cellClass}`}
+                        onClick={() => {
+                          if (hall) {
+                            setDate(d);
+                            openSlotPanel(hall.id, slot);
+                          }
+                        }}
+                      >
+                        <div className={styles.weekCellBar}>
+                          {hall && renderSegmentedBar(hall, state)}
+                        </div>
+                        <div className={styles.weekCellLabel}>
+                          {state.blocked ? 'Блок' : `${state.occupied}/${hall ? hall.maxCapacity : selectedHall.maxCapacity}`}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
+  const renderBookingsTable = () => {
+    if (!selectedHall || dayBookings.length === 0) return null;
+    return (
+      <div className={styles.bookingsSection}>
+        <h3 className={styles.bookingsTitle}>Брони на {formatDateDisplay(date)}</h3>
+        <div className={styles.bookingsTableWrapper}>
+          <table className={styles.bookingsTable}>
+            <thead>
+              <tr>
+                <th>Время</th>
+                <th>Клиент / Тип</th>
+                <th>Игра</th>
+                <th>Гости</th>
+                <th>Статус</th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dayBookings.map((r) => (
+                <tr key={r.id} className={styles.bookingRow} onClick={() => openDetailsPanel(r.id)}>
+                  <td>{formatApiTime(r.startTime)} – {formatApiTime(r.endTime)}</td>
+                  <td>
+                    <div className={styles.bookingClient}>
+                      {r.type === 'blocked'
+                        ? (r.title || 'Блокировка')
+                        : (r.clientName || r.title || 'Бронь')}
+                    </div>
+                    <div className={styles.bookingType}>{getTypeLabel(r.type)}</div>
+                  </td>
+                  <td>{r.game?.name || '—'}</td>
+                  <td>{r.type === 'blocked' ? '—' : `${r.guestsCount} чел`}</td>
+                  <td>
+                    <span className={`${styles.badge} ${getStatusClass(r.status)}`}>
+                      {getStatusLabel(r.status)}
+                    </span>
+                  </td>
+                  <td>
+                    <div className={styles.bookingActions}>
+                      {r.status === 'draft' && (
+                        <button
+                          type="button"
+                          className={`${styles.actionBtn} ${styles.actionBtnSuccess}`}
+                          onClick={(e) => { e.stopPropagation(); handleConfirmReservation(r.id); }}
+                        >
+                          Подтвердить
+                        </button>
+                      )}
+                      {r.status !== 'canceled' && (
+                        <button
+                          type="button"
+                          className={`${styles.actionBtn} ${styles.actionBtnWarning}`}
+                          onClick={(e) => { e.stopPropagation(); handleCancelReservation(r); }}
+                        >
+                          {r.type === 'blocked' ? 'Снять' : 'Отменить'}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className={`${styles.actionBtn} ${styles.actionBtnPrimary}`}
+                        onClick={(e) => { e.stopPropagation(); openEditPanel(r); }}
+                      >
+                        Изменить
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );
@@ -927,19 +1126,53 @@ export default function VRSchedulePage() {
     return null;
   };
 
-  function getStatusClass(status: string): string {
-    switch (status) {
-      case 'confirmed': return styles.statusConfirmed;
-      case 'canceled': return styles.statusCanceled;
-      case 'draft': return styles.statusDraft;
-      case 'done': return styles.statusDone;
-      default: return '';
-    }
-  }
-
   return (
     <div className={styles.page}>
-      {renderHeader()}
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.title}>VR-расписание</h1>
+          <span className={styles.dateDisplay}>{formatDateDisplay(date)}</span>
+        </div>
+
+        <div className={styles.controls}>
+          <select
+            className={styles.branchSelect}
+            value={branchId}
+            onChange={(e) => setBranchId(e.target.value)}
+          >
+            <option value="">Выберите филиал</option>
+            {branches.map((branch) => (
+              <option key={branch.id} value={branch.id}>{branch.name}</option>
+            ))}
+          </select>
+
+          <div className={styles.viewToggle}>
+            <button
+              className={`${styles.viewBtn} ${view === 'day' ? styles.viewBtnActive : ''}`}
+              onClick={() => setView('day')}
+            >
+              День
+            </button>
+            <button
+              className={`${styles.viewBtn} ${view === 'week' ? styles.viewBtnActive : ''}`}
+              onClick={() => setView('week')}
+            >
+              Неделя
+            </button>
+          </div>
+
+          <button
+            className={styles.addButton}
+            onClick={() => {
+              if (selectedHall) openCreatePanel(selectedHall.id);
+            }}
+            disabled={!selectedHall}
+          >
+            + Новая бронь
+          </button>
+        </div>
+      </div>
+
       {renderHallTabs()}
 
       <div className={styles.content}>
@@ -958,10 +1191,12 @@ export default function VRSchedulePage() {
             <p>Нет VR залов</p>
             <p>Добавьте VR залы в настройках</p>
           </div>
-        ) : selectedHallId === 'all' ? (
-          renderMatrixView()
         ) : (
-          renderSingleHallView()
+          <>
+            {renderMiniCalendar()}
+            {view === 'day' ? renderDayView() : renderWeekView()}
+            {view === 'day' && renderBookingsTable()}
+          </>
         )}
       </div>
 
