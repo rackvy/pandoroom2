@@ -103,6 +103,11 @@ export const createVRReservation = async (data: any): Promise<VRReservation> => 
   return response.data;
 };
 
+export const updateVRReservation = async (id: string, data: any): Promise<VRReservation> => {
+  const response = await api.patch(`/api/admin/vr-schedule/reservations/${id}`, data);
+  return response.data;
+};
+
 export const moveVRReservation = async (id: string, data: any): Promise<VRReservation> => {
   const response = await api.patch(`/api/admin/vr-schedule/reservations/${id}/move`, data);
   return response.data;

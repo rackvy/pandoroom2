@@ -17,6 +17,7 @@ import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { VRScheduleService } from './vr-schedule.service';
 import { CreateVRReservationDto } from './dto/create-vr-reservation.dto';
+import { UpdateVRReservationDto } from './dto/update-vr-reservation.dto';
 import { MoveVRReservationDto } from './dto/move-vr-reservation.dto';
 
 @Controller('api/admin/vr-schedule')
@@ -78,13 +79,19 @@ export class VRScheduleController {
   @Post('reservations')
   @UsePipes(new ValidationPipe({ transform: true }))
   createReservation(@Body() dto: CreateVRReservationDto) {
-    return this.vrScheduleService.createReservation(dto, 'confirmed');
+    return this.vrScheduleService.createReservation(dto, 'confirmed', 30);
+  }
+
+  @Patch('reservations/:id')
+  @UsePipes(new ValidationPipe({ transform: true }))
+  updateReservation(@Param('id') id: string, @Body() dto: UpdateVRReservationDto) {
+    return this.vrScheduleService.updateReservation(id, dto, 30);
   }
 
   @Patch('reservations/:id/move')
   @UsePipes(new ValidationPipe({ transform: true }))
   moveReservation(@Param('id') id: string, @Body() dto: MoveVRReservationDto) {
-    return this.vrScheduleService.moveReservation(id, dto);
+    return this.vrScheduleService.moveReservation(id, dto, 30);
   }
 
   @Patch('reservations/:id/confirm')

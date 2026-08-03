@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { createVRReservation, getVRSchedule, getVRPrice, type VRHall, type VRReservation } from '../../api/vrSchedule';
+import { createVRReservation, updateVRReservation, getVRSchedule, getVRPrice, type VRHall, type VRReservation } from '../../api/vrSchedule';
+import { formatDateForApi } from './timeUtils';
 import { toast } from '../ui/Toast';
 import ClientPicker, { type ClientPickerValue } from '../booking/ClientPicker';
 import styles from './VRBookingModal.module.css';
@@ -14,6 +15,7 @@ interface VRBookingModalProps {
   defaultHallId?: string;
   defaultDate: string;
   defaultStartTime?: string;
+  reservation?: VRReservation;
 }
 
 function timeToMinutes(t: string): number {
@@ -40,6 +42,7 @@ export default function VRBookingModal({
   defaultHallId,
   defaultDate,
   defaultStartTime,
+  reservation,
 }: VRBookingModalProps) {
   const [type, setType] = useState<BookingType>('open_slot');
   const [hallId, setHallId] = useState(defaultHallId || '');
@@ -53,6 +56,8 @@ export default function VRBookingModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const mode = reservation ? 'edit' : 'create';
+
   // Availability for the selected date (to show free seats)
   const [dayReservations, setDayReservations] = useState<Record<string, VRReservation[]>>({});
   // Buyout price quote
@@ -62,25 +67,29 @@ export default function VRBookingModal({
   const selectedHall = halls.find((h) => h.id === hallId);
 
   useEffect(() => {
-    if (defaultHallId) setHallId(defaultHallId);
-    if (defaultDate) setDate(defaultDate);
-    if (defaultStartTime) {
-      setStartTime(defaultStartTime);
-      setEndTime(minToHHMM(timeToMinutes(defaultStartTime) + 60));
+    if (reservation) {
+      setType(reservation.type);
+      setHallId(reservation.hallId);
+      setDate(formatApiTime(reservation.date) ? formatDateForApi(new Date(reservation.date)) : defaultDate);
+      setStartTime(formatApiTime(reservation.startTime));
+      setEndTime(formatApiTime(reservation.endTime));
+      setClient({
+        clientId: reservation.clientId,
+        clientName: reservation.clientName || '',
+        clientPhone: reservation.clientPhone || '',
+      });
+      setGuestsCount(String(reservation.guestsCount || 1));
+      setDescription(reservation.description || '');
+      setBlockReason(reservation.title || '');
+    } else {
+      if (defaultHallId) setHallId(defaultHallId);
+      if (defaultDate) setDate(defaultDate);
+      if (defaultStartTime) {
+        setStartTime(defaultStartTime);
+        setEndTime(minToHHMM(timeToMinutes(defaultStartTime) + 30));
+      }
     }
-  }, [defaultHallId, defaultDate, defaultStartTime]);
-
-  // Reset transient state when the modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setError(null);
-      setBuyoutTotal(null);
-      setClient({ clientId: null, clientName: '', clientPhone: '' });
-      setGuestsCount('1');
-      setDescription('');
-      setBlockReason('');
-    }
-  }, [isOpen]);
+  }, [reservation, defaultHallId, defaultDate, defaultStartTime]);
 
   // Load availability whenever date changes (or modal opens)
   useEffect(() => {
@@ -173,8 +182,13 @@ export default function VRBookingModal({
         }
       }
 
-      await createVRReservation(data);
-      toast.success(type === 'blocked' ? 'Время заблокировано' : 'Бронь создана');
+      if (mode === 'edit' && reservation) {
+        await updateVRReservation(reservation.id, data);
+        toast.success('Бронь обновлена');
+      } else {
+        await createVRReservation(data);
+        toast.success(type === 'blocked' ? 'Время заблокировано' : 'Бронь создана');
+      }
       onClose();
       onSuccess();
     } catch (err: any) {
@@ -199,7 +213,11 @@ export default function VRBookingModal({
       <div className={styles.modal}>
         <div className={styles.header}>
           <h3 className={styles.title}>
-            {type === 'blocked' ? 'Блокировка времени' : 'Новая бронь VR'}
+            {mode === 'edit'
+              ? 'Редактировать бронь'
+              : type === 'blocked'
+                ? 'Блокировка времени'
+                : 'Новая бронь VR'}
           </h3>
           <button className={styles.closeButton} onClick={handleClose} disabled={isLoading}>
             &times;
@@ -266,7 +284,7 @@ export default function VRBookingModal({
 
           <div className={styles.formGroup}>
             <label className={styles.label}>
-              {type === 'blocked' ? 'Время блокировки (30 минут)' : 'Время (минимум 1 час, шаг 30 минут)'}
+              {type === 'blocked' ? 'Время блокировки (30 минут)' : 'Время (минимум 30 минут, шаг 30 минут)'}
             </label>
             <div className={styles.timeRow}>
               <input
@@ -387,10 +405,12 @@ export default function VRBookingModal({
               disabled={isLoading || notEnoughSeats || (!!freeInWindow?.blocked && type !== 'blocked')}
             >
               {isLoading
-                ? 'Создание...'
-                : type === 'blocked'
-                  ? 'Заблокировать'
-                  : 'Создать бронь'}
+                ? 'Сохранение...'
+                : mode === 'edit'
+                  ? 'Сохранить изменения'
+                  : type === 'blocked'
+                    ? 'Заблокировать'
+                    : 'Создать бронь'}
             </button>
           </div>
         </form>

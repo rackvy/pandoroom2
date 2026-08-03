@@ -263,7 +263,7 @@ export class VRScheduleService {
 
   /* ==================== RESERVATIONS ==================== */
 
-  private validateTimes(type: string, startMin: number, endMin: number) {
+  private validateTimes(type: string, startMin: number, endMin: number, minDuration = 60) {
     if (startMin % SLOT_STEP !== 0 || endMin % SLOT_STEP !== 0) {
       throw new BadRequestException('Время должно быть кратно 30 минутам (например, 12:00 или 12:30)');
     }
@@ -273,8 +273,8 @@ export class VRScheduleService {
         throw new BadRequestException('Блокировка длится ровно 30 минут');
       }
     } else {
-      if (duration < 60) {
-        throw new BadRequestException('Минимальная длительность брони — 1 час');
+      if (duration < minDuration) {
+        throw new BadRequestException(`Минимальная длительность брони — ${minDuration} минут`);
       }
     }
     if (endMin > DAY_END) {
@@ -327,7 +327,7 @@ export class VRScheduleService {
     }
   }
 
-  async createReservation(data: any, status: 'draft' | 'confirmed' = 'confirmed') {
+  async createReservation(data: any, status: 'draft' | 'confirmed' = 'confirmed', minDuration = 60) {
     const hall = await this.prisma.vRHall.findUnique({ where: { id: data.hallId } });
     if (!hall) {
       throw new NotFoundException('VR-зал не найден');
@@ -336,7 +336,7 @@ export class VRScheduleService {
     const type = data.type === 'blocked' ? 'blocked' : data.type === 'full_hall' ? 'full_hall' : 'open_slot';
     const startMin = parseHHMM(data.startTime);
     const endMin = parseHHMM(data.endTime);
-    this.validateTimes(type, startMin, endMin);
+    this.validateTimes(type, startMin, endMin, minDuration);
 
     const guests = type === 'blocked' || type === 'full_hall' ? hall.maxCapacity : Math.max(1, Number(data.guestsCount) || 1);
     if (type === 'open_slot' && guests > hall.maxCapacity) {
@@ -380,7 +380,66 @@ export class VRScheduleService {
     });
   }
 
-  async moveReservation(id: string, data: any) {
+  async updateReservation(id: string, data: any, minDuration = 60) {
+    const reservation = await this.prisma.vRReservation.findUnique({ where: { id } });
+    if (!reservation) {
+      throw new NotFoundException('Бронь не найдена');
+    }
+
+    const hallId = data.hallId || reservation.hallId;
+    const hall = await this.prisma.vRHall.findUnique({ where: { id: hallId } });
+    if (!hall) throw new NotFoundException('VR-зал не найден');
+
+    const type = data.type === 'blocked' ? 'blocked' : data.type === 'full_hall' ? 'full_hall' : reservation.type;
+    const date = data.date ? new Date(data.date) : reservation.date;
+    const startMin = data.startTime ? parseHHMM(data.startTime) : dateToMinutes(reservation.startTime);
+    const endMin = data.endTime ? parseHHMM(data.endTime) : dateToMinutes(reservation.endTime);
+
+    let guests = reservation.guestsCount;
+    if (type === 'blocked' || type === 'full_hall') {
+      guests = hall.maxCapacity;
+    } else if (data.guestsCount !== undefined) {
+      guests = Math.max(1, Number(data.guestsCount) || 1);
+    }
+    if (type === 'open_slot' && guests > hall.maxCapacity) {
+      throw new BadRequestException(`Максимум ${hall.maxCapacity} гостей`);
+    }
+
+    this.validateTimes(type, startMin, endMin, minDuration);
+    await this.assertCapacity(hall, date, startMin, endMin, guests, id);
+
+    let clientId = reservation.clientId;
+    if (data.clientId !== undefined) clientId = data.clientId || null;
+    else if (data.clientPhone && String(data.clientPhone).trim()) {
+      const client = await this.clientsService.getOrCreate(
+        String(data.clientPhone).trim(),
+        (data.clientName || '').trim() || 'Гость',
+      );
+      clientId = client.id;
+    }
+
+    return this.prisma.vRReservation.update({
+      where: { id },
+      data: {
+        ...(data.hallId !== undefined ? { hallId } : {}),
+        ...(data.date !== undefined ? { date } : {}),
+        ...(data.startTime !== undefined ? { startTime: minToUTCDate(startMin) } : {}),
+        ...(data.endTime !== undefined ? { endTime: minToUTCDate(endMin) } : {}),
+        ...(data.type !== undefined ? { type } : {}),
+        ...(data.title !== undefined ? { title: data.title || null } : {}),
+        ...(data.description !== undefined ? { description: data.description || null } : {}),
+        ...(data.gameId !== undefined ? { gameId: data.gameId || null } : {}),
+        ...(data.clientName !== undefined ? { clientName: data.clientName || null } : {}),
+        ...(data.clientPhone !== undefined ? { clientPhone: data.clientPhone || null } : {}),
+        ...(clientId !== reservation.clientId || data.clientId !== undefined || data.clientPhone !== undefined ? { clientId } : {}),
+        ...(data.guestsCount !== undefined || data.type !== undefined ? { guestsCount: guests } : {}),
+        ...(data.maxGuests !== undefined ? { maxGuests: data.maxGuests != null ? Number(data.maxGuests) : null } : {}),
+      },
+      include: { game: true, hall: true, client: true },
+    });
+  }
+
+  async moveReservation(id: string, data: any, minDuration = 60) {
     const reservation = await this.prisma.vRReservation.findUnique({ where: { id } });
     if (!reservation) {
       throw new NotFoundException('Бронь не найдена');
@@ -393,7 +452,7 @@ export class VRScheduleService {
     const date = data.date ? new Date(data.date) : reservation.date;
     const startMin = data.startTime ? parseHHMM(data.startTime) : dateToMinutes(reservation.startTime);
     const endMin = data.endTime ? parseHHMM(data.endTime) : dateToMinutes(reservation.endTime);
-    this.validateTimes(reservation.type, startMin, endMin);
+    this.validateTimes(reservation.type, startMin, endMin, minDuration);
     await this.assertCapacity(hall, date, startMin, endMin, reservation.guestsCount, id);
 
     return this.prisma.vRReservation.update({
