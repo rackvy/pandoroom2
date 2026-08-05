@@ -15,6 +15,8 @@ export class IikoService {
   async getAccessToken(): Promise<string | null> {
     const apiLogin = this.configService.get<string>('IIKO_API_LOGIN');
     const apiUrl = this.configService.get<string>('IIKO_API_URL', 'https://api-ru.iiko.services');
+    const appId = this.configService.get<string>('IIKO_APP_ID');
+    const clientSecret = this.configService.get<string>('IIKO_CLIENT_SECRET');
 
     if (!apiLogin) {
       this.logger.warn('[STUB] IIKO_API_LOGIN not configured');
@@ -23,6 +25,30 @@ export class IikoService {
 
     if (this.cachedToken && this.cachedToken.expiresAt > Date.now()) {
       return this.cachedToken.token;
+    }
+
+    // Новая схема авторизации iiko (обязательна с 01.06.2026,
+    // старый метод /api/1/access_token отключается 29.08.2026)
+    if (appId && clientSecret) {
+      try {
+        const response = await fetch(`${apiUrl}/api/v2/access_token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiLogin, appId, clientSecret }),
+        });
+        const data = await response.json();
+        if (response.ok && data.token) {
+          // v2-токен живёт 60 минут, кэшируем с запасом
+          this.cachedToken = { token: data.token, expiresAt: Date.now() + 50 * 60 * 1000 };
+          return data.token;
+        }
+        this.logger.error(
+          `iiko v2 auth failed (${response.status}): ${data.errorDescription || data.error || JSON.stringify(data)}`,
+        );
+      } catch (error: any) {
+        this.logger.error(`Failed to get iiko token (v2): ${error.message}`);
+      }
+      // fallback на старую схему ниже
     }
 
     try {
