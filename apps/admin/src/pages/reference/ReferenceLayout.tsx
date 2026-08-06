@@ -17,6 +17,7 @@ const referenceEntities: EntityItem[] = [
   { id: 'notification-templates', name: 'Шаблоны уведомлений', path: '/reference/notification-templates', icon: '📨' },
   { id: 'age-restrictions', name: 'Возрастные ограничения', path: '/reference/age-restrictions', icon: '🔞' },
   { id: 'difficulties', name: 'Сложности', path: '/reference/difficulties', icon: '🔥' },
+  { id: 'review-sources', name: 'Источники отзывов', path: '/reference/review-sources', icon: '📡' },
 ];
 
 export default function ReferenceLayout() {

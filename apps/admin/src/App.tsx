@@ -19,7 +19,7 @@ import BlogListPage from './pages/content/BlogListPage'
 import BlogForm from './pages/content/BlogForm'
 import ReviewsListPage from './pages/content/ReviewsListPage'
 import ReviewForm from './pages/content/ReviewForm'
-import ReviewSourcesPage from './pages/content/ReviewSourcesPage'
+import ReviewSourcesPage from './pages/reference/ReviewSourcesPage'
 import AboutFactsListPage from './pages/content/AboutFactsListPage'
 import PageBlocksEditor from './pages/content/PageBlocksEditor'
 import SuppliersListPage from './pages/content/SuppliersListPage'
@@ -88,7 +88,7 @@ function AppRoutes() {
           <Route path="reviews" element={<ReviewsListPage />} />
           <Route path="reviews/new" element={<ReviewForm />} />
           <Route path="reviews/:id/edit" element={<ReviewForm />} />
-          <Route path="review-sources" element={<ReviewSourcesPage />} />
+          <Route path="review-sources" element={<Navigate to="/reference/review-sources" replace />} />
           <Route path="about" element={<AboutFactsListPage />} />
           <Route path="pages" element={<PageBlocksEditor />} />
           <Route path="vr-games" element={<VRGamesListPage />} />
@@ -117,6 +117,7 @@ function AppRoutes() {
           <Route path="notification-templates" element={<NotificationTemplatesPage />} />
           <Route path="age-restrictions" element={<AgeRestrictionsPage />} />
           <Route path="difficulties" element={<DifficultiesPage />} />
+          <Route path="review-sources" element={<ReviewSourcesPage />} />
         </Route>
         <Route path="employees" element={<EmployeesPage />} />
         <Route path="chat" element={<ChatPage />} />

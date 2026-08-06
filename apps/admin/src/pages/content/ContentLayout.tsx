@@ -13,7 +13,6 @@ const contentEntities: EntityItem[] = [
   { id: 'news', name: 'Новости', path: '/content/news', icon: '📰' },
   { id: 'blog', name: 'Блог', path: '/content/blog', icon: '📝' },
   { id: 'reviews', name: 'Отзывы', path: '/content/reviews', icon: '⭐' },
-  { id: 'review-sources', name: 'Источники отзывов', path: '/content/review-sources', icon: '📡' },
   { id: 'about', name: 'О нас (факты)', path: '/content/about', icon: 'ℹ️' },
   { id: 'pages', name: 'Страницы', path: '/content/pages', icon: '📄' },
   { id: 'vr-games', name: 'VR Игры', path: '/content/vr-games', icon: '🎮' },

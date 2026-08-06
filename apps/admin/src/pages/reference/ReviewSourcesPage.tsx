@@ -5,7 +5,7 @@ import { getMediaUrl } from '../../utils/media';
 import { toast } from '../../components/ui/Toast';
 import { confirm } from '../../components/ui/ConfirmDialog';
 import MediaPicker from '../../components/ui/MediaPicker';
-import styles from './QuestsListPage.module.css';
+import styles from '../content/QuestsListPage.module.css';
 
 export default function ReviewSourcesPage() {
   const [sources, setSources] = useState<ReviewSource[]>([]);
