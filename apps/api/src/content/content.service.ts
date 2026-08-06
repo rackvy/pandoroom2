@@ -198,17 +198,20 @@ export class ContentService {
     });
   }
 
-  async createReviewSource(dto: { name: string }) {
+  async createReviewSource(dto: { name: string; iconId?: string | null }) {
     return this.prisma.reviewSource.create({
-      data: dto,
+      data: { name: dto.name, iconId: dto.iconId ?? null },
       include: { icon: true },
     });
   }
 
-  async updateReviewSource(id: string, dto: { name: string }) {
+  async updateReviewSource(id: string, dto: { name?: string; iconId?: string | null }) {
+    const data: { name?: string; iconId?: string | null } = {};
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.iconId !== undefined) data.iconId = dto.iconId;
     return this.prisma.reviewSource.update({
       where: { id },
-      data: dto,
+      data,
       include: { icon: true },
     });
   }

@@ -7,6 +7,14 @@ export const metadata = {
   description: 'Отзывы наших гостей',
 }
 
+const API_ROOT = process.env.NEXT_PUBLIC_API_URL?.replace('/api/public', '') || 'http://localhost:3001'
+
+function resolveMediaUrl(url?: string | null): string | null {
+  if (!url) return null
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `${API_ROOT}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
 async function getReviews() {
   try {
     const { fetchApi } = await import('@/lib/api')
@@ -51,6 +59,14 @@ export default async function ReviewsPage() {
                       <h4>{review.authorName || review.name || 'Гость'}</h4>
                       {review.source && (
                         <span className={reviewsStyles.source}>
+                          {review.source.icon?.url && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={resolveMediaUrl(review.source.icon.url) || ''}
+                              alt=""
+                              className={reviewsStyles.sourceIcon}
+                            />
+                          )}
                           {review.source.name}
                         </span>
                       )}

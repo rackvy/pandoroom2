@@ -122,12 +122,12 @@ export class ContentController {
   }
 
   @Post('review-sources')
-  createReviewSource(@Body() dto: { name: string }) {
+  createReviewSource(@Body() dto: { name: string; iconId?: string | null }) {
     return this.contentService.createReviewSource(dto);
   }
 
   @Patch('review-sources/:id')
-  updateReviewSource(@Param('id') id: string, @Body() dto: { name: string }) {
+  updateReviewSource(@Param('id') id: string, @Body() dto: { name?: string; iconId?: string | null }) {
     return this.contentService.updateReviewSource(id, dto);
   }
 

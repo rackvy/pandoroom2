@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getReviewSources, createReviewSource, updateReviewSource, deleteReviewSource, type ReviewSource } from '../../api/content';
+import { type Media } from '../../api/media';
+import { getMediaUrl } from '../../utils/media';
 import { toast } from '../../components/ui/Toast';
 import { confirm } from '../../components/ui/ConfirmDialog';
+import MediaPicker from '../../components/ui/MediaPicker';
 import styles from './QuestsListPage.module.css';
 
 export default function ReviewSourcesPage() {
@@ -10,7 +13,10 @@ export default function ReviewSourcesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [newName, setNewName] = useState('');
+  const [newIcon, setNewIcon] = useState<Media | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  // 'create' — выбор логотипа для нового источника, иначе id источника в таблице
+  const [pickerTarget, setPickerTarget] = useState<'create' | string | null>(null);
 
   const loadSources = useCallback(async () => {
     try {
@@ -33,8 +39,9 @@ export default function ReviewSourcesPage() {
     if (!newName.trim()) return;
 
     try {
-      await createReviewSource({ name: newName.trim() });
+      await createReviewSource({ name: newName.trim(), iconId: newIcon?.id ?? null });
       setNewName('');
+      setNewIcon(null);
       setIsAdding(false);
       loadSources();
       toast.success('Источник создан');
@@ -62,6 +69,16 @@ export default function ReviewSourcesPage() {
     }
   };
 
+  const handleRemoveIcon = async (source: ReviewSource) => {
+    try {
+      await updateReviewSource(source.id, { iconId: null });
+      loadSources();
+      toast.success('Логотип удален');
+    } catch (err) {
+      toast.error('Ошибка удаления логотипа');
+    }
+  };
+
   const handleDelete = async (source: ReviewSource) => {
     const confirmed = await confirm({
       title: 'Удалить источник?',
@@ -80,6 +97,21 @@ export default function ReviewSourcesPage() {
     }
   };
 
+  const handlePickIcon = (media: Media) => {
+    if (pickerTarget === 'create') {
+      setNewIcon(media);
+      return;
+    }
+    if (!pickerTarget) return;
+    const sourceId = pickerTarget;
+    updateReviewSource(sourceId, { iconId: media.id })
+      .then(() => {
+        loadSources();
+        toast.success('Логотип обновлен');
+      })
+      .catch(() => toast.error('Ошибка обновления логотипа'));
+  };
+
   if (loading) {
     return <div className={styles.loading}>Загрузка...</div>;
   }
@@ -88,7 +120,13 @@ export default function ReviewSourcesPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Источники отзывов</h1>
-        <button className={styles.addButton} onClick={() => setIsAdding(true)}>
+        <button
+          className={styles.addButton}
+          onClick={() => {
+            setIsAdding(true);
+            setNewIcon(null);
+          }}
+        >
           <span>+</span>
           <span>Добавить источник</span>
         </button>
@@ -108,6 +146,32 @@ export default function ReviewSourcesPage() {
                 autoFocus
               />
             </div>
+            <div>
+              <label className={styles.label}>Логотип</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {newIcon ? (
+                  <img
+                    src={getMediaUrl(newIcon.url)}
+                    alt=""
+                    style={{ width: '38px', height: '38px', objectFit: 'contain', border: '1px solid #e5e7eb', borderRadius: '6px', background: '#fff' }}
+                  />
+                ) : (
+                  <div
+                    style={{ width: '38px', height: '38px', border: '1px dashed #d1d5db', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: '18px' }}
+                  >
+                    ?
+                  </div>
+                )}
+                <button type="button" className={styles.cancelButton} onClick={() => setPickerTarget('create')}>
+                  Выбрать
+                </button>
+                {newIcon && (
+                  <button type="button" className={styles.cancelButton} onClick={() => setNewIcon(null)} title="Убрать логотип">
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
             <button type="button" className={styles.cancelButton} onClick={() => setIsAdding(false)}>
               Отмена
             </button>
@@ -125,7 +189,7 @@ export default function ReviewSourcesPage() {
           <thead>
             <tr>
               <th>Название</th>
-              <th>Иконка</th>
+              <th>Логотип</th>
               <th>Действия</th>
             </tr>
           </thead>
@@ -159,11 +223,31 @@ export default function ReviewSourcesPage() {
                   )}
                 </td>
                 <td>
-                  {source.icon?.url ? (
-                    <img src={source.icon.url} alt="" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
-                  ) : (
-                    '-'
-                  )}
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    {source.icon?.url ? (
+                      <>
+                        <img
+                          src={getMediaUrl(source.icon.url)}
+                          alt=""
+                          title="Нажмите, чтобы заменить"
+                          onClick={() => setPickerTarget(source.id)}
+                          style={{ width: '32px', height: '32px', objectFit: 'contain', cursor: 'pointer', border: '1px solid #e5e7eb', borderRadius: '6px', background: '#fff' }}
+                        />
+                        <button
+                          type="button"
+                          className={styles.actionButton}
+                          onClick={() => handleRemoveIcon(source)}
+                          title="Убрать логотип"
+                        >
+                          ✕
+                        </button>
+                      </>
+                    ) : (
+                      <button type="button" className={styles.cancelButton} onClick={() => setPickerTarget(source.id)}>
+                        Выбрать
+                      </button>
+                    )}
+                  </div>
                 </td>
                 <td>
                   <div className={styles.actions}>
@@ -188,6 +272,14 @@ export default function ReviewSourcesPage() {
           </tbody>
         </table>
       )}
+
+      <MediaPicker
+        open={pickerTarget !== null}
+        title="Выбор логотипа из медиатеки"
+        accept="image"
+        onSelect={handlePickIcon}
+        onClose={() => setPickerTarget(null)}
+      />
     </div>
   );
 }

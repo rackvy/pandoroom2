@@ -8,6 +8,7 @@ interface ReviewData {
   date: string
   text: string
   source: string
+  sourceIcon?: string | null
 }
 
 interface Props {
@@ -30,7 +31,13 @@ export default function ReviewsSlider({ reviews }: Props) {
             </div>
             <div className="rs-card-stars">{'\u2605'.repeat(5)}</div>
             <p className="rs-card-text">{review.text}</p>
-            <span className="rs-card-source">{review.source}</span>
+            <span className="rs-card-source">
+              {review.sourceIcon && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={review.sourceIcon} alt="" className="rs-source-icon" />
+              )}
+              {review.source}
+            </span>
           </article>
         ))}
       </div>
@@ -98,11 +105,20 @@ export default function ReviewsSlider({ reviews }: Props) {
           flex: 1;
         }
         .rs-card-source {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
           font-size: 11px;
           font-weight: 700;
           color: var(--color-cta-green, #b5e61d);
           letter-spacing: 1px;
           align-self: flex-start;
+        }
+        .rs-source-icon {
+          width: 16px;
+          height: 16px;
+          object-fit: contain;
+          border-radius: 3px;
         }
       `}} />
     </div>

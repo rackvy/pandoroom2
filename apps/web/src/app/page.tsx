@@ -60,6 +60,14 @@ async function getHomeBlocks() {
 
 /* ==================== MAPPING HELPERS ==================== */
 
+const API_ROOT = process.env.NEXT_PUBLIC_API_URL?.replace('/api/public', '') || 'http://localhost:3001'
+
+function resolveMediaUrl(url?: string | null): string | null {
+  if (!url) return null
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return `${API_ROOT}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
 function difficultyToLevel(d?: string | null): number {
   if (d === 'easy' || d === 'Легкий') return 1
   if (d === 'medium' || d === 'Средний') return 3
@@ -278,6 +286,7 @@ export default async function Home() {
       date: new Date(r.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
       text: r.text,
       source: r.source?.name || '',
+      sourceIcon: resolveMediaUrl(r.source?.icon?.url),
     }))
 
   const heroTitle = homeBlocks.find(b => b.blockKey === 'hero_title')?.title || 'Самый большой квеструм и площадки для праздников во Владивостоке'

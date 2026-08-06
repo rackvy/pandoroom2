@@ -157,12 +157,12 @@ export async function getReviewSources(): Promise<ReviewSource[]> {
   return response.data;
 }
 
-export async function createReviewSource(data: { name: string }): Promise<ReviewSource> {
+export async function createReviewSource(data: { name: string; iconId?: string | null }): Promise<ReviewSource> {
   const response = await api.post('/api/admin/content/review-sources', data);
   return response.data;
 }
 
-export async function updateReviewSource(id: string, data: { name: string }): Promise<ReviewSource> {
+export async function updateReviewSource(id: string, data: { name?: string; iconId?: string | null }): Promise<ReviewSource> {
   const response = await api.patch(`/api/admin/content/review-sources/${id}`, data);
   return response.data;
 }
