@@ -41,6 +41,8 @@ export interface Table {
   capacity: number | null;
   sortOrder: number;
   isActive: boolean;
+  imageId: string | null;
+  image?: { id: string; url: string; altText?: string | null } | null;
 }
 
 // Branches

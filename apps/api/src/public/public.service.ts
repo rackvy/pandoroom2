@@ -353,6 +353,7 @@ export class PublicService {
         tables: {
           where: { isActive: true },
           orderBy: { sortOrder: 'asc' },
+          include: { image: true },
         },
       },
     });
@@ -366,6 +367,8 @@ export class PublicService {
           id: table.id,
           title: table.title,
           capacity: table.capacity,
+          imageUrl: table.image?.url ?? null,
+          imageAlt: table.image?.altText ?? null,
         })),
       }))
       .filter((zone) => zone.tables.length > 0);

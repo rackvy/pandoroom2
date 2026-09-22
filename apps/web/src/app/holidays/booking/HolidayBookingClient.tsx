@@ -225,10 +225,14 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                         className={`${styles.card} ${styles.tableCard} ${active ? styles.cardActive : ''}`}
                         onClick={() => toggleInSet(setSelectedTables, selectedTables, table.id)}
                       >
-                        <span className={styles.tableIcon}>
-                          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 11h16M6 11V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4M5 11l-1 8M19 11l1 8M8 11v4M16 11v4" />
-                          </svg>
+                        <span className={styles.tablePhoto}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={table.imageUrl || '/images/table-placeholder.jpg'}
+                            alt={table.imageAlt || table.title}
+                            className={styles.tablePhotoImg}
+                            loading="lazy"
+                          />
                         </span>
                         <span className={styles.cardName}>{table.title}</span>
                         {table.capacity ? (

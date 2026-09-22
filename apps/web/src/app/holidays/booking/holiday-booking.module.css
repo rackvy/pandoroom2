@@ -331,15 +331,26 @@
   background-color: var(--color-cta-green, #b5e61d);
 }
 
-/* ---- Table cards (no photo) ---- */
+/* ---- Table cards ---- */
 .tableCard {
-  padding: 20px 18px 18px;
+  padding: 14px 14px 18px;
   gap: 10px;
 }
 
-.tableIcon {
-  color: var(--color-cta-green, #b5e61d);
-  display: inline-flex;
+.tablePhoto {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #0f0f0f;
+}
+
+.tablePhotoImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* ---- Menu section ---- */

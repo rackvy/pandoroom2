@@ -162,6 +162,8 @@ export interface TablePublic {
   id: string
   title: string
   capacity?: number | null
+  imageUrl?: string | null
+  imageAlt?: string | null
 }
 
 export interface TableZonePublic {

@@ -144,6 +144,7 @@ model Media {
   cakeImages        Cake[]
   showProgramImages ShowProgram[]
   decorationImages  Decoration[]
+  tableImages       Table[]   @relation("TableImage")
   vrGameImages      VRGame[] @relation("VRGamePreview")
   vrGameBackgrounds VRGame[] @relation("VRGameBackground")
   vrGameVideos      VRGame[] @relation("VRGameVideo")
@@ -642,9 +643,11 @@ model Table {
   capacity  Int?
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
+  imageId   String?
 
   branch        Branch             @relation(fields: [branchId], references: [id], onDelete: Cascade)
   zone          TableZone          @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  image         Media?             @relation("TableImage", fields: [imageId], references: [id], onDelete: SetNull)
   reservations  TableReservation[]
 
   createdAt DateTime @default(now())

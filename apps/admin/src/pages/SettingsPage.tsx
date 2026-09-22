@@ -3,6 +3,9 @@ import { getBranches, getTableZones, getTables, createBranch, updateBranch, dele
 import { getVRHalls, createVRHall, updateVRHall, deleteVRHall, createVRPriceRule, updateVRPriceRule, deleteVRPriceRule, type VRHall, type VRPriceRule } from '../api/vrSchedule';
 import { toast } from '../components/ui/Toast';
 import YandexMapPicker from '../components/YandexMapPicker';
+import MediaPicker from '../components/ui/MediaPicker';
+import { type Media } from '../api/media';
+import { getMediaUrl } from '../utils/media';
 import styles from './SettingsPage.module.css';
 
 const ZONE_KEYS = [
@@ -53,6 +56,9 @@ export default function SettingsPage() {
   const [branchForm, setBranchForm] = useState({ ...DEFAULT_BRANCH_FORM });
   const [zoneForm, setZoneForm] = useState<{ key: 'CAFE' | 'LOUNGE' | 'KIDS'; name: string; sortOrder: number }>({ key: 'CAFE', name: '', sortOrder: 0 });
   const [tableForm, setTableForm] = useState({ zoneId: '', title: '', capacity: '', sortOrder: 0 });
+  const [tableImageId, setTableImageId] = useState<string | null>(null);
+  const [tableImageUrl, setTableImageUrl] = useState<string | null>(null);
+  const [tablePickerOpen, setTablePickerOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   // VR Halls
@@ -181,6 +187,7 @@ export default function SettingsPage() {
         title: tableForm.title,
         capacity: tableForm.capacity ? parseInt(tableForm.capacity) : null,
         sortOrder: tableForm.sortOrder,
+        imageId: tableImageId,
         branchId: selectedBranch.id,
         isActive: true,
       };
@@ -190,6 +197,8 @@ export default function SettingsPage() {
         await createTable(data);
       }
       setTableForm({ zoneId: '', title: '', capacity: '', sortOrder: 0 });
+      setTableImageId(null);
+      setTableImageUrl(null);
       setEditingId(null);
       await loadTables(selectedBranch.id);
     } finally {
@@ -493,29 +502,60 @@ export default function SettingsPage() {
             <input placeholder="Название стола (например: Стол 1, VIP-зона)" value={tableForm.title} onChange={e => setTableForm({...tableForm, title: e.target.value})} required />
             <input type="number" placeholder="Вместимость (человек)" value={tableForm.capacity} onChange={e => setTableForm({...tableForm, capacity: e.target.value})} />
             <input type="number" placeholder="Порядок отображения" value={tableForm.sortOrder} onChange={e => setTableForm({...tableForm, sortOrder: parseInt(e.target.value) || 0})} />
+            <div className={styles.photoField}>
+              <span className={styles.photoLabel}>Фото стола</span>
+              <div className={styles.photoRow}>
+                {tableImageUrl ? (
+                  <img src={getMediaUrl(tableImageUrl)} alt="Фото стола" className={styles.photoPreview} />
+                ) : (
+                  <div className={styles.photoPreviewEmpty}>фото не задано — на сайте будет заглушка</div>
+                )}
+                <div className={styles.photoActions}>
+                  <button type="button" onClick={() => setTablePickerOpen(true)}>🖼️ Выбрать из медиатеки</button>
+                  {tableImageId && (
+                    <button type="button" onClick={() => { setTableImageId(null); setTableImageUrl(null); }}>Убрать фото</button>
+                  )}
+                </div>
+              </div>
+            </div>
             <button type="submit" disabled={isLoading}>{editingId ? '💾 Обновить' : '➕ Добавить стол'}</button>
-            {editingId && <button type="button" onClick={() => { setEditingId(null); setTableForm({ zoneId: '', title: '', capacity: '', sortOrder: 0 }); }}>❌ Отмена</button>}
+            {editingId && <button type="button" onClick={() => { setEditingId(null); setTableForm({ zoneId: '', title: '', capacity: '', sortOrder: 0 }); setTableImageId(null); setTableImageUrl(null); }}>❌ Отмена</button>}
           </form>
 
           <table className={styles.table}>
             <thead>
-              <tr><th>Зал</th><th>Название</th><th>Вместимость</th><th>Порядок</th><th>Действия</th></tr>
+              <tr><th>Зал</th><th>Название</th><th>Фото</th><th>Вместимость</th><th>Порядок</th><th>Действия</th></tr>
             </thead>
             <tbody>
               {tables.map(t => (
                 <tr key={t.id}>
                   <td><span className={getZoneBadgeClass(zones.find(z => z.id === t.zoneId)?.key || '')}>{zones.find(z => z.id === t.zoneId)?.name || '-'}</span></td>
                   <td><strong>{t.title}</strong></td>
+                  <td>
+                    {t.image?.url ? (
+                      <img src={getMediaUrl(t.image.url)} alt="" className={styles.tableThumb} />
+                    ) : (
+                      <span className={styles.tableThumbEmpty}>нет</span>
+                    )}
+                  </td>
                   <td>{t.capacity ? `${t.capacity} чел.` : '-'}</td>
                   <td>{t.sortOrder}</td>
                   <td>
-                    <button onClick={() => { setEditingId(t.id); setTableForm({ zoneId: t.zoneId, title: t.title, capacity: t.capacity?.toString() || '', sortOrder: t.sortOrder }); }}>✏️ Изменить</button>
+                    <button onClick={() => { setEditingId(t.id); setTableForm({ zoneId: t.zoneId, title: t.title, capacity: t.capacity?.toString() || '', sortOrder: t.sortOrder }); setTableImageId(t.imageId ?? null); setTableImageUrl(t.image?.url ?? null); }}>✏️ Изменить</button>
                     <button onClick={() => handleDeleteTable(t.id)}>🗑️ Удалить</button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          <MediaPicker
+            open={tablePickerOpen}
+            title="Выбор фото стола из медиатеки"
+            accept="image"
+            onSelect={(media: Media) => { setTableImageId(media.id); setTableImageUrl(media.url); setTablePickerOpen(false); }}
+            onClose={() => setTablePickerOpen(false)}
+          />
         </div>
       )}
 

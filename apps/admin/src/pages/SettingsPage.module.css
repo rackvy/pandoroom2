@@ -484,3 +484,69 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Фото стола */
+.photoField {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.photoLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.photoRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.photoPreview {
+  width: 132px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  background: white;
+}
+
+.photoPreviewEmpty {
+  width: 132px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #9ca3af;
+  border: 2px dashed #e5e7eb;
+  border-radius: 10px;
+  background: white;
+}
+
+.photoActions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tableThumb {
+  display: block;
+  width: 56px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.tableThumbEmpty {
+  color: #9ca3af;
+  font-size: 0.85rem;
+}

@@ -445,14 +445,14 @@ export class CatalogService {
     return this.prisma.table.findMany({
       where: { branchId },
       orderBy: { sortOrder: 'asc' },
-      include: { zone: true },
+      include: { zone: true, image: true },
     });
   }
 
   async createTable(data: any) {
     return this.prisma.table.create({
       data,
-      include: { zone: true },
+      include: { zone: true, image: true },
     });
   }
 
@@ -460,7 +460,7 @@ export class CatalogService {
     return this.prisma.table.update({
       where: { id },
       data,
-      include: { zone: true },
+      include: { zone: true, image: true },
     });
   }
 
