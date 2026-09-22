@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Quest, TableZonePublic, IikoMenuItemPublic } from '@/lib/api'
 import styles from './holiday-booking.module.css'
@@ -198,6 +198,15 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
 
   // ---- section 6: menu ----
   const [menuQty, setMenuQty] = useState<Record<string, number>>({})
+
+  const tablesSliderRef = useRef<HTMLDivElement>(null)
+  const scrollTables = (dir: number) => {
+    const el = tablesSliderRef.current
+    if (!el) return
+    const card = el.firstElementChild as HTMLElement | null
+    const step = card ? card.offsetWidth + 34 : el.clientWidth
+    el.scrollBy({ left: dir * step, behavior: 'smooth' })
+  }
   const [activeFoodCat, setActiveFoodCat] = useState('')
 
   const cakes = useMemo(() => byCategory(menu, CAKE_CATEGORIES), [menu])
@@ -481,8 +490,18 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
       {tablesCount > 0 && (
         <section className={styles.panel} id="tables">
           <div className="container">
-            <h2 className={styles.sectionTitle}>1. Выберите стол</h2>
-            <div className={styles.tableGrid}>
+            <div className={styles.sliderHead}>
+              <h2 className={styles.sectionTitle}>1. Выберите стол</h2>
+              <div className={styles.sliderNav}>
+                <button type="button" className={styles.sliderBtn} onClick={() => scrollTables(-1)} aria-label="Предыдущие столы">
+                  ‹
+                </button>
+                <button type="button" className={styles.sliderBtn} onClick={() => scrollTables(1)} aria-label="Следующие столы">
+                  ›
+                </button>
+              </div>
+            </div>
+            <div className={styles.tableSlider} ref={tablesSliderRef}>
               {zones.flatMap((zone) =>
                 zone.tables.map((table) => {
                   const active = selectedTables.has(table.id)
