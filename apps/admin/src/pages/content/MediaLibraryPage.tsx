@@ -277,7 +277,11 @@ export default function MediaLibraryPage() {
               >
                 <div className={styles.thumb}>
                   {item.mimeType.startsWith('image/') ? (
-                    <img src={getMediaUrl(item.url)} alt={item.altText || item.originalName} />
+                    <img
+                      src={getMediaUrl(item.thumbUrl || item.url)}
+                      alt={item.altText || item.originalName}
+                      loading="lazy"
+                    />
                   ) : isVideo(item) ? (
                     <div className={styles.thumbPlaceholder}>
                       <span className={styles.thumbIcon}>🎬</span>
@@ -321,7 +325,7 @@ export default function MediaLibraryPage() {
             <div className={styles.preview}>
               {selected.mimeType.startsWith('image/') ? (
                 <img
-                  src={getMediaUrl(selected.url)}
+                  src={getMediaUrl(selected.webUrl || selected.url)}
                   alt={selected.altText || selected.originalName}
                 />
               ) : isVideo(selected) ? (

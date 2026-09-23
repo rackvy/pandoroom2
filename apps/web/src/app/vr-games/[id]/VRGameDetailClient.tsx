@@ -54,12 +54,16 @@ export default function VRGameDetailClient({ game, news = [] }: VRGameDetailClie
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
 
-  /* Gallery images */
-  const galleryImages: string[] = (game.galleryPhotos || []).length > 0
-    ? game.galleryPhotos.map((gp) => gp.image.url)
+  /* Gallery items: thumb for the grid, web for the lightbox */
+  const galleryItems = (game.galleryPhotos || []).length > 0
+    ? game.galleryPhotos.map((gp) => ({
+        thumb: gp.image.thumbUrl || gp.image.url,
+        web: gp.image.webUrl || gp.image.url,
+      }))
     : game.previewImage?.url
-      ? [game.previewImage.url]
+      ? [{ thumb: game.previewImage.url, web: game.previewImage.url }]
       : []
+  const galleryImages: string[] = galleryItems.map((item) => item.web)
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index)
@@ -175,22 +179,22 @@ export default function VRGameDetailClient({ game, news = [] }: VRGameDetailClie
           <div className="container">
             <h2 className={styles.sectionTitle}>Фотографии</h2>
             <div className={styles.galleryGrid}>
-              {galleryImages.slice(0, 5).map((src, idx) => (
+              {galleryItems.slice(0, 5).map((item, idx) => (
                 <button
                   key={idx}
                   className={`${styles.galleryItem}${idx === 0 ? ` ${styles.galleryItemMain}` : ''}`}
                   onClick={() => openLightbox(idx)}
                 >
                   <Image
-                    src={src}
+                    src={item.thumb}
                     alt={`Фото игры ${idx + 1}`}
                     fill
                     sizes={idx === 0 ? '(max-width: 768px) 100vw, 60vw' : '(max-width: 768px) 50vw, 20vw'}
                     className={styles.galleryImg}
                   />
-                  {idx === 4 && galleryImages.length > 5 && (
+                  {idx === 4 && galleryItems.length > 5 && (
                     <div className={styles.galleryMore}>
-                      +{galleryImages.length - 5}
+                      +{galleryItems.length - 5}
                     </div>
                   )}
                 </button>

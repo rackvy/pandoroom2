@@ -37,7 +37,13 @@ export interface Quest {
 export interface QuestGalleryPhoto {
   id: string
   sortOrder: number
-  image: { id: string; url: string; altText?: string | null }
+  image: {
+    id: string
+    url: string
+    webUrl?: string | null
+    thumbUrl?: string | null
+    altText?: string | null
+  }
 }
 
 export interface ContentSection {

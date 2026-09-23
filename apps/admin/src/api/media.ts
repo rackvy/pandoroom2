@@ -4,6 +4,8 @@ export interface Media {
   id: string;
   type: 'image' | 'file';
   url: string;
+  webUrl?: string | null;
+  thumbUrl?: string | null;
   originalName: string;
   mimeType: string;
   sizeBytes: number;

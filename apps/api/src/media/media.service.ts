@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { S3Service } from './s3.service';
+import sharp from 'sharp';
 import * as path from 'path';
 import * as fs from 'fs';
 import { randomUUID } from 'crypto';
@@ -11,6 +12,13 @@ interface UploadedFile {
   size: number;
   buffer: Buffer;
 }
+
+const VARIANT_SPECS = [
+  { suffix: 'web', size: 1920, quality: 80 },
+  { suffix: 'thumb', size: 640, quality: 75 },
+] as const;
+
+const RASTER_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/heic', 'image/heif'];
 
 @Injectable()
 export class MediaService {
@@ -69,11 +77,36 @@ export class MediaService {
     // Determine media type
     const type = file.mimetype.startsWith('image/') ? 'image' : 'file';
 
+    let webUrl: string | null = null;
+    let thumbUrl: string | null = null;
+    if (RASTER_TYPES.includes(file.mimetype)) {
+      try {
+        const variants = await this.buildVariants(file.buffer, file.mimetype);
+        for (const variant of variants) {
+          const variantName = `${id}_${variant.suffix}${variant.ext}`;
+          let variantUrl: string;
+          if (this.useS3) {
+            variantUrl = await this.s3Service.uploadFile(`uploads/${variantName}`, variant.buffer, variant.mimeType);
+          } else {
+            fs.writeFileSync(path.join(this.uploadDir, variantName), variant.buffer);
+            variantUrl = `/uploads/${variantName}`;
+          }
+          if (variant.suffix === 'web') webUrl = variantUrl;
+          else thumbUrl = variantUrl;
+        }
+        this.logger.log(`Variants generated for ${id}: web=${webUrl}, thumb=${thumbUrl}`);
+      } catch (error) {
+        this.logger.error(`Failed to generate variants for ${id}, keeping original only`, error);
+      }
+    }
+
     // Save to database
     const media = await this.prisma.media.create({
       data: {
         id,
         url,
+        webUrl,
+        thumbUrl,
         originalName: file.originalname,
         mimeType: file.mimetype,
         sizeBytes: BigInt(file.size),
@@ -87,6 +120,24 @@ export class MediaService {
       ...media,
       sizeBytes: Number(media.sizeBytes),
     };
+  }
+
+  private async buildVariants(buffer: Buffer, mimeType: string) {
+    const isPng = mimeType === 'image/png';
+    const ext = isPng ? '.png' : '.jpg';
+    const outMime = isPng ? 'image/png' : 'image/jpeg';
+
+    const variants: { suffix: 'web' | 'thumb'; buffer: Buffer; mimeType: string; ext: string }[] = [];
+    for (const spec of VARIANT_SPECS) {
+      let pipeline = sharp(buffer, { failOn: 'none' })
+        .rotate()
+        .resize({ width: spec.size, height: spec.size, fit: 'inside', withoutEnlargement: true });
+      pipeline = isPng
+        ? pipeline.png({ compressionLevel: 9, palette: true })
+        : pipeline.flatten({ background: '#ffffff' }).jpeg({ quality: spec.quality, mozjpeg: true });
+      variants.push({ suffix: spec.suffix, buffer: await pipeline.toBuffer(), mimeType: outMime, ext });
+    }
+    return variants;
   }
 
   async update(id: string, data: { altText?: string }) {
@@ -191,8 +242,10 @@ export class MediaService {
 
     if (this.useS3) {
       // Delete from S3
-      const key = this.s3Service.extractKeyFromUrl(media.url);
-      if (key) {
+      const keys = [media.url, media.webUrl, media.thumbUrl]
+        .map((u) => (u ? this.s3Service.extractKeyFromUrl(u) : null))
+        .filter((k): k is string => Boolean(k));
+      for (const key of keys) {
         try {
           await this.s3Service.deleteFile(key);
           this.logger.log(`File deleted from S3: ${key}`);
@@ -203,11 +256,13 @@ export class MediaService {
       }
     } else {
       // Delete file from local disk
-      const filename = path.basename(media.url);
-      const filepath = path.join(this.uploadDir, filename);
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath);
-        this.logger.log(`File deleted locally: ${filepath}`);
+      for (const u of [media.url, media.webUrl, media.thumbUrl]) {
+        if (!u) continue;
+        const filepath = path.join(this.uploadDir, path.basename(u));
+        if (fs.existsSync(filepath)) {
+          fs.unlinkSync(filepath);
+          this.logger.log(`File deleted locally: ${filepath}`);
+        }
       }
     }
 

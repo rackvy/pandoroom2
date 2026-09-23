@@ -133,7 +133,11 @@ export default function MediaPicker({
               >
                 <div className={styles.thumb}>
                   {item.mimeType.startsWith('image/') ? (
-                    <img src={getMediaUrl(item.url)} alt={item.altText || item.originalName} />
+                    <img
+                      src={getMediaUrl(item.thumbUrl || item.url)}
+                      alt={item.altText || item.originalName}
+                      loading="lazy"
+                    />
                   ) : (
                     <div className={styles.thumbPlaceholder}>
                       <span className={styles.thumbIcon}>{isVideo(item) ? '🎬' : '📄'}</span>
