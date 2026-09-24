@@ -45,6 +45,7 @@ export default function MediaLibraryPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
+  const [hideUnused, setHideUnused] = useState(false);
 
   // Upload state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,6 +181,7 @@ export default function MediaLibraryPage() {
 
   const filtered = media.filter((item) => {
     if (!matchesTypeFilter(item, typeFilter)) return false;
+    if (hideUnused && item.used === false) return false;
     const q = searchQuery.trim().toLowerCase();
     if (!q) return true;
     return (
@@ -240,6 +242,14 @@ export default function MediaLibraryPage() {
             </button>
           ))}
         </div>
+        <label className={styles.unusedToggle}>
+          <input
+            type="checkbox"
+            checked={hideUnused}
+            onChange={(e) => setHideUnused(e.target.checked)}
+          />
+          Скрыть неиспользуемые
+        </label>
       </div>
 
       {uploadProgress && (
@@ -304,6 +314,16 @@ export default function MediaLibraryPage() {
                     {formatSize(item.sizeBytes)} ·{' '}
                     {new Date(item.createdAt).toLocaleDateString('ru-RU')}
                   </div>
+                  {((item.copies ?? 1) > 1 || item.used === false) && (
+                    <div className={styles.cardBadges}>
+                      {(item.copies ?? 1) > 1 && (
+                        <span className={styles.badgeCopies}>{item.copies} коп.</span>
+                      )}
+                      {item.used === false && (
+                        <span className={styles.badgeUnused}>не используется</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

@@ -229,6 +229,49 @@
   color: #9ca3af;
 }
 
+.unusedToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  user-select: none;
+}
+
+.unusedToggle input {
+  accent-color: #A0BF39;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.cardBadges {
+  display: flex;
+  gap: 0.375rem;
+  margin-top: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.badgeCopies,
+.badgeUnused {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+}
+
+.badgeCopies {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badgeUnused {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
 /* Modal */
 .overlay {
   position: fixed;

@@ -10,6 +10,8 @@ export interface Media {
   mimeType: string;
   sizeBytes: number;
   altText?: string | null;
+  used?: boolean;
+  copies?: number;
   createdAt: string;
 }
 

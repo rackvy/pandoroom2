@@ -44,14 +44,50 @@ export class MediaService {
   }
 
   async findAll() {
-    const media = await this.prisma.media.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    const [media, nameGroups, usedIds] = await Promise.all([
+      this.prisma.media.findMany({
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.media.groupBy({ by: ['originalName'], _count: { _all: true } }),
+      this.collectUsedMediaIds(),
+    ]);
+    const copiesByName = new Map(nameGroups.map((g) => [g.originalName, g._count._all]));
     // Convert BigInt to number for JSON serialization
     return media.map(m => ({
       ...m,
       sizeBytes: Number(m.sizeBytes),
+      used: usedIds.has(m.id),
+      copies: copiesByName.get(m.originalName) ?? 1,
     }));
+  }
+
+  private async collectUsedMediaIds(): Promise<Set<string>> {
+    const refs: [string, string][] = [
+      ['Quest', 'previewImageId'],
+      ['Quest', 'backgroundImageId'],
+      ['QuestGalleryPhoto', 'imageId'],
+      ['News', 'imageId'],
+      ['BlogPost', 'imageId'],
+      ['AboutFact', 'iconId'],
+      ['ReviewSource', 'iconId'],
+      ['PageBlock', 'fileId'],
+      ['PageBlock', 'imageId'],
+      ['Cake', 'imageId'],
+      ['ShowProgram', 'imageId'],
+      ['Decoration', 'imageId'],
+      ['VRGame', 'previewImageId'],
+      ['VRGame', 'backgroundImageId'],
+      ['VRGame', 'videoId'],
+      ['VRGameGalleryPhoto', 'imageId'],
+      ['Table', 'imageId'],
+    ];
+    const union = refs
+      .map(([table, column]) => `SELECT "${column}" AS mid FROM "${table}" WHERE "${column}" IS NOT NULL`)
+      .join(' UNION ');
+    const rows = await this.prisma.$queryRawUnsafe<{ mid: string }[]>(
+      `SELECT mid FROM (${union}) u`,
+    );
+    return new Set(rows.map((r) => r.mid));
   }
 
   async upload(file: UploadedFile, altText?: string) {
@@ -175,6 +211,7 @@ export class MediaService {
       vrBackgrounds,
       vrVideos,
       vrGallery,
+      tables,
     ] = await Promise.all([
       this.prisma.quest.count({ where: { previewImageId: id } }),
       this.prisma.quest.count({ where: { backgroundImageId: id } }),
@@ -192,6 +229,7 @@ export class MediaService {
       this.prisma.vRGame.count({ where: { backgroundImageId: id } }),
       this.prisma.vRGame.count({ where: { videoId: id } }),
       this.prisma.vRGameGalleryPhoto.count({ where: { imageId: id } }),
+      this.prisma.table.count({ where: { imageId: id } }),
     ]);
 
     const labels: [string, number][] = [
@@ -211,6 +249,7 @@ export class MediaService {
       ['VR игры (фон)', vrBackgrounds],
       ['VR игры (видео)', vrVideos],
       ['VR игры (галерея)', vrGallery],
+      ['Столы', tables],
     ];
 
     const usages = labels
