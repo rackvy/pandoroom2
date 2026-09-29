@@ -145,18 +145,23 @@ export class PaymentsService {
 
     const notifiedStatus = String(body?.Status || '').toUpperCase();
     const cfg = await this.tbankConfig();
-    const livePayment = booking.paymentId && !booking.paymentId.startsWith('stub-');
+    const stubPayment = !booking.paymentId || booking.paymentId.startsWith('stub-');
     let status = notifiedStatus;
 
-    if (cfg.terminalKey && cfg.password && livePayment) {
+    if (cfg.terminalKey && cfg.password) {
+      // Уведомлению не верим ни при каких условиях: переспрашиваем банк.
+      // Без этого подделанный POST с Status=CONFIRMED помечал бронь оплаченной.
       const state = await this.request(cfg, 'GetState', {
         OrderId: orderId,
-        PaymentId: booking.paymentId,
+        ...(stubPayment ? {} : { PaymentId: booking.paymentId }),
       });
-      status = String(state.Status || notifiedStatus).toUpperCase();
+      status = String(state.Status || '').toUpperCase();
       if (status !== notifiedStatus) {
-        this.logger.log(`TBank ${orderId}: уведомление ${notifiedStatus}, банк ${status}`);
+        this.logger.log(`TBank ${orderId}: уведомление ${notifiedStatus}, банк ${status || '—'}`);
       }
+    } else if (!stubPayment) {
+      this.logger.warn(`TBank ${orderId}: ключей терминала нет, но paymentId живой — статус не меняем`);
+      return;
     }
 
     if (!status) {
