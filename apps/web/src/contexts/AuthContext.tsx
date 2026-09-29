@@ -75,15 +75,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const login = useCallback(async (phone: string, password: string) => {
+  const login = useCallback(async (phone: string, code: string) => {
     const res = await fetch(`${LK_API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, password }),
+      body: JSON.stringify({ phone, code }),
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.message || 'Ошибка авторизации')
+      const message = Array.isArray(err.message) ? err.message.join('; ') : err.message
+      throw new Error(message || 'Ошибка авторизации')
     }
     const data = await res.json()
     const clientUser = {

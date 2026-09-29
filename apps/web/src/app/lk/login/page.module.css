@@ -212,6 +212,65 @@
     color: #fff;
 }
 
+/* Способ доставки кода */
+.channels {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.channel,
+.channelActive {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 10px;
+    color: #aaa;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.channel input,
+.channelActive input {
+    accent-color: var(--color-primary, #b5e61d);
+}
+
+.channel:hover {
+    border-color: #444;
+}
+
+.channelActive {
+    border-color: var(--color-primary, #b5e61d);
+    color: #fff;
+}
+
+/* Повторная отправка кода */
+.resendBtn {
+    background: none;
+    border: 1px solid #333;
+    border-radius: 10px;
+    color: #aaa;
+    font-size: 14px;
+    padding: 12px;
+    cursor: pointer;
+    font-family: 'Manrope', sans-serif;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.resendBtn:hover:not(:disabled) {
+    border-color: var(--color-primary, #b5e61d);
+    color: #fff;
+}
+
+.resendBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .backLink {
     display: block;
     text-align: center;

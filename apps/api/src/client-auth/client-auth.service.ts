@@ -1,11 +1,9 @@
 import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
+import { OtpService } from './otp.service';
 import { ClientLoginDto } from './dto/client-login.dto';
-
-// Temporary hardcoded password for all clients
-const TEMP_PASSWORD = '2424';
+import { isValidPhone, normalizePhone } from './phone';
 
 @Injectable()
 export class ClientAuthService {
@@ -14,35 +12,24 @@ export class ClientAuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private otpService: OtpService,
   ) {}
 
   async login(dto: ClientLoginDto) {
-    // Normalize phone: strip all non-digits
-    const phone = dto.phone.replace(/\D/g, '');
-
-    // Find existing client first
-    const existing = await this.prisma.client.findUnique({ where: { phone } });
-
-    // Check password (temporary: everyone uses 2424)
-    if (dto.password !== TEMP_PASSWORD) {
-      if (existing?.passwordHash) {
-        const isValid = await bcrypt.compare(dto.password, existing.passwordHash);
-        if (!isValid) {
-          throw new UnauthorizedException('Неверный телефон или пароль');
-        }
-      } else {
-        throw new UnauthorizedException('Неверный телефон или пароль');
-      }
+    const phone = normalizePhone(dto.phone);
+    if (!isValidPhone(phone)) {
+      throw new UnauthorizedException('Неверный формат номера');
     }
 
-    // Use existing client or auto-register new one
-    const client = existing || await this.prisma.client.create({
-      data: {
-        phone,
-        name: 'Новый клиент',
-        passwordHash: await bcrypt.hash(TEMP_PASSWORD, 10),
-      },
-    });
+    await this.otpService.verifyAndConsume(phone, dto.code);
+
+    // Неизвестный номер регистрируется: факт владения телефоном подтверждён кодом
+    const existing = await this.prisma.client.findUnique({ where: { phone } });
+    const client =
+      existing ||
+      (await this.prisma.client.create({
+        data: { phone, name: 'Новый клиент' },
+      }));
 
     if (!existing) {
       this.logger.log(`Auto-registered new client: ${phone}`);

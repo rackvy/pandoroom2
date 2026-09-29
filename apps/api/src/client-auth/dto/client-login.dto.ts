@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, Length, Matches } from 'class-validator';
 
 export class ClientLoginDto {
   @IsString()
@@ -6,6 +6,7 @@ export class ClientLoginDto {
   phone: string;
 
   @IsString()
-  @IsNotEmpty()
-  password: string;
+  @Length(4, 6)
+  @Matches(/^\d+$/, { message: 'Код должен состоять из цифр' })
+  code: string;
 }

@@ -1,6 +1,9 @@
-import { Controller, Post, Get, Patch, Body, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Req, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
+import { Request } from 'express';
 import { ClientAuthService } from './client-auth.service';
+import { OtpService } from './otp.service';
 import { ClientLoginDto } from './dto/client-login.dto';
+import { SendCodeDto } from './dto/send-code.dto';
 import { Public } from '../common/decorators/public.decorator';
 import { Client } from '../common/decorators/client.decorator';
 import { CurrentClient, ClientUserPayload } from '../common/decorators/current-client.decorator';
@@ -9,7 +12,23 @@ import { ClientGuard } from '../common/guards/client.guard';
 @Controller('api/lk')
 @UseGuards(ClientGuard)
 export class ClientAuthController {
-  constructor(private clientAuthService: ClientAuthService) {}
+  constructor(
+    private clientAuthService: ClientAuthService,
+    private otpService: OtpService,
+  ) {}
+
+  @Get('auth/channels')
+  @Public()
+  channels() {
+    return this.otpService.channels();
+  }
+
+  @Post('auth/send-code')
+  @Public()
+  @UsePipes(new ValidationPipe({ transform: true }))
+  sendCode(@Body() dto: SendCodeDto, @Req() request: Request) {
+    return this.otpService.send(dto.phone, dto.channel || 'call', request.ip || null);
+  }
 
   @Post('auth/login')
   @Public()

@@ -11,7 +11,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  
+
+  // За Traefik иначе request.ip — адрес docker-шлюза для всех посетителей
+  app.set('trust proxy', 1);
+
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,

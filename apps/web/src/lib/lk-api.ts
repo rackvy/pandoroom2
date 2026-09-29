@@ -25,7 +25,8 @@ export async function lkFetch(endpoint: string, options?: RequestInit) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}))
-    throw new Error(err.message || `API Error: ${res.status}`)
+    const message = Array.isArray(err.message) ? err.message.join('; ') : err.message
+    throw new Error(message || `API Error: ${res.status}`)
   }
 
   return res.json()

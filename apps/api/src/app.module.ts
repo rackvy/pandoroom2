@@ -16,6 +16,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { VRScheduleModule } from './vr-schedule/vr-schedule.module';
 import { GoogleCalendarModule } from './google-calendar/google-calendar.module';
 import { PaymentsModule } from './payments/payments.module';
+import { IntegrationsModule } from './integrations/integrations.module';
+import { ZvonokModule } from './zvonok/zvonok.module';
 import { ReportsModule } from './reports/reports.module';
 import { IikoModule } from './iiko/iiko.module';
 import { WaitlistModule } from './waitlist/waitlist.module';
@@ -44,6 +46,8 @@ import { RolesGuard } from './common/guards/roles.guard';
     VRScheduleModule,
     GoogleCalendarModule,
     PaymentsModule,
+    IntegrationsModule,
+    ZvonokModule,
     ReportsModule,
     IikoModule,
     WaitlistModule,

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { getBranches, getTableZones, getTables, createBranch, updateBranch, deleteBranch, createTableZone, updateTableZone, deleteTableZone, createTable, updateTable, deleteTable, type Branch, type TableZone, type Table } from '../api/catalog';
 import { getVRHalls, createVRHall, updateVRHall, deleteVRHall, createVRPriceRule, updateVRPriceRule, deleteVRPriceRule, type VRHall, type VRPriceRule } from '../api/vrSchedule';
 import { toast } from '../components/ui/Toast';
+import SettingsIntegrations from '../components/SettingsIntegrations';
 import YandexMapPicker from '../components/YandexMapPicker';
 import MediaPicker from '../components/ui/MediaPicker';
 import { type Media } from '../api/media';
@@ -50,7 +51,7 @@ export default function SettingsPage() {
   const [zones, setZones] = useState<TableZone[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'branches' | 'zones' | 'tables' | 'vr'>('branches');
+  const [activeTab, setActiveTab] = useState<'branches' | 'zones' | 'tables' | 'vr' | 'integrations'>('branches');
 
   // Forms
   const [branchForm, setBranchForm] = useState({ ...DEFAULT_BRANCH_FORM });
@@ -323,7 +324,7 @@ export default function SettingsPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h2 className={styles.title}>Настройки</h2>
-        <p className={styles.subtitle}>Управление филиалами, залами и столами</p>
+        <p className={styles.subtitle}>Управление филиалами, залами, столами и интеграциями</p>
       </div>
 
       {/* Tabs */}
@@ -340,10 +341,13 @@ export default function SettingsPage() {
         <button className={activeTab === 'vr' ? styles.activeTab : styles.tab} onClick={() => setActiveTab('vr')} disabled={!selectedBranch}>
           🥽 VR Залы
         </button>
+        <button className={activeTab === 'integrations' ? styles.activeTab : styles.tab} onClick={() => setActiveTab('integrations')}>
+          🔌 Интеграции
+        </button>
       </div>
 
       {/* Branch Selector */}
-      {activeTab !== 'branches' && (
+      {activeTab !== 'branches' && activeTab !== 'integrations' && (
         <div className={styles.branchSelector}>
           <label>📍 Филиал:</label>
           <select value={selectedBranch?.id || ''} onChange={(e) => {
@@ -680,6 +684,9 @@ export default function SettingsPage() {
           )}
         </div>
       )}
+
+      {/* Integrations Tab */}
+      {activeTab === 'integrations' && <SettingsIntegrations />}
     </div>
   );
 }

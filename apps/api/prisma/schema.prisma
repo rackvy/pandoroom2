@@ -944,3 +944,33 @@ model ChatMessage {
   @@index([bookingId])
   @@index([isRead])
 }
+
+// ==================== ИНТЕГРАЦИИ ====================
+
+/// Ключи внешних сервисов. Значения читаются через IntegrationsService,
+/// секретные поля в API отдаются замаскированными.
+model IntegrationSetting {
+  provider  String   // tbank | zvonok | whatsapp | yandex_disk | google_calendar
+  key       String
+  value     String   @db.Text
+  isSecret  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@id([provider, key])
+}
+
+/// Одноразовые коды входа в личный кабинет (звонком или СМС).
+model OtpCode {
+  id         String    @id @default(uuid())
+  phone      String
+  codeHash   String
+  channel    String    @default("call")
+  attempts   Int       @default(0)
+  ip         String?
+  expiresAt  DateTime
+  consumedAt DateTime?
+  sentAt     DateTime  @default(now())
+
+  @@index([phone, sentAt])
+  @@index([ip, sentAt])
+}
