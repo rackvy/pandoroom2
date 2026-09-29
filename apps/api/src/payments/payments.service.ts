@@ -189,11 +189,22 @@ export class PaymentsService {
     };
     payload.Token = this.sign(payload, cfg.password as string);
 
-    const response = await fetch(`${cfg.apiUrl}/${action}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${cfg.apiUrl}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      const cause = (err as { cause?: { code?: string } })?.cause;
+      const code = cause?.code || 'сеть недоступна';
+      const note =
+        code === 'SELF_SIGNED_CERT_IN_CHAIN'
+          ? ' — цепочка сертификатов Т-Банка от Минцифры не доверена в Node'
+          : '';
+      throw new Error(`${action}: нет связи с Т-Банком (${code})${note}`);
+    }
 
     const result = await response.json().catch(() => null);
     if (!result) {
