@@ -363,6 +363,7 @@ export class PublicService {
         branchId: zone.branchId,
         key: zone.key,
         name: zone.name,
+        recommendedMaxAge: zone.recommendedMaxAge,
         tables: zone.tables.map((table) => ({
           id: table.id,
           title: table.title,

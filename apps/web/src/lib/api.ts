@@ -177,6 +177,7 @@ export interface TableZonePublic {
   branchId: string
   key: 'CAFE' | 'LOUNGE' | 'KIDS'
   name: string
+  recommendedMaxAge: number | null
   tables: TablePublic[]
 }
 

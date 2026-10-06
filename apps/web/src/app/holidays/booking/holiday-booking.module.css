@@ -568,6 +568,12 @@
   color: #ffffff;
 }
 
+.ageHint {
+  color: var(--color-text-muted, #9ca3af);
+  font-size: 14px;
+  margin: 0 0 18px;
+}
+
 .tableFeatures {
   display: flex;
   flex-wrap: wrap;

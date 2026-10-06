@@ -55,7 +55,7 @@ export default function SettingsPage() {
 
   // Forms
   const [branchForm, setBranchForm] = useState({ ...DEFAULT_BRANCH_FORM });
-  const [zoneForm, setZoneForm] = useState<{ key: 'CAFE' | 'LOUNGE' | 'KIDS'; name: string; sortOrder: number }>({ key: 'CAFE', name: '', sortOrder: 0 });
+  const [zoneForm, setZoneForm] = useState<{ key: 'CAFE' | 'LOUNGE' | 'KIDS'; name: string; sortOrder: number; recommendedMaxAge: number | null }>({ key: 'CAFE', name: '', sortOrder: 0, recommendedMaxAge: null });
   const [tableForm, setTableForm] = useState({ zoneId: '', title: '', capacity: '', sortOrder: 0 });
   const [tableImageId, setTableImageId] = useState<string | null>(null);
   const [tableImageUrl, setTableImageUrl] = useState<string | null>(null);
@@ -163,7 +163,7 @@ export default function SettingsPage() {
       } else {
         await createTableZone({ ...zoneForm, branchId: selectedBranch.id, isActive: true });
       }
-      setZoneForm({ key: 'CAFE', name: '', sortOrder: 0 });
+      setZoneForm({ key: 'CAFE', name: '', sortOrder: 0, recommendedMaxAge: null });
       setEditingId(null);
       await loadZones(selectedBranch.id);
     } finally {
@@ -469,22 +469,32 @@ export default function SettingsPage() {
             </select>
             <input placeholder="Название зала" value={zoneForm.name} onChange={e => setZoneForm({...zoneForm, name: e.target.value})} required />
             <input type="number" placeholder="Порядок отображения" value={zoneForm.sortOrder} onChange={e => setZoneForm({...zoneForm, sortOrder: parseInt(e.target.value) || 0})} />
+            <input
+              type="number"
+              min={0}
+              max={99}
+              placeholder="Подходит до возраста (лет)"
+              title="Пусто — без ограничений по возрасту"
+              value={zoneForm.recommendedMaxAge ?? ''}
+              onChange={e => setZoneForm({...zoneForm, recommendedMaxAge: e.target.value === '' ? null : parseInt(e.target.value) || 0})}
+            />
             <button type="submit" disabled={isLoading}>{editingId ? '💾 Обновить' : '➕ Добавить зал'}</button>
-            {editingId && <button type="button" onClick={() => { setEditingId(null); setZoneForm({ key: 'CAFE', name: '', sortOrder: 0 }); }}>❌ Отмена</button>}
+            {editingId && <button type="button" onClick={() => { setEditingId(null); setZoneForm({ key: 'CAFE', name: '', sortOrder: 0, recommendedMaxAge: null }); }}>❌ Отмена</button>}
           </form>
 
           <table className={styles.table}>
             <thead>
-              <tr><th>Тип</th><th>Название</th><th>Порядок</th><th>Действия</th></tr>
+              <tr><th>Тип</th><th>Название</th><th>Возраст</th><th>Порядок</th><th>Действия</th></tr>
             </thead>
             <tbody>
               {zones.map(z => (
                 <tr key={z.id}>
                   <td><span className={getZoneBadgeClass(z.key)}>{ZONE_KEYS.find(k => k.value === z.key)?.label || z.key}</span></td>
                   <td><strong>{z.name}</strong></td>
+                  <td>{z.recommendedMaxAge != null ? `до ${z.recommendedMaxAge} лет` : 'без ограничений'}</td>
                   <td>{z.sortOrder}</td>
                   <td>
-                    <button onClick={() => { setEditingId(z.id); setZoneForm({ key: z.key, name: z.name, sortOrder: z.sortOrder }); }}>✏️ Изменить</button>
+                    <button onClick={() => { setEditingId(z.id); setZoneForm({ key: z.key, name: z.name, sortOrder: z.sortOrder, recommendedMaxAge: z.recommendedMaxAge }); }}>✏️ Изменить</button>
                     <button onClick={() => handleDeleteZone(z.id)}>🗑️ Удалить</button>
                   </td>
                 </tr>

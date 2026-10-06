@@ -31,6 +31,7 @@ export interface TableZone {
   name: string;
   sortOrder: number;
   isActive: boolean;
+  recommendedMaxAge: number | null;
 }
 
 export interface Table {

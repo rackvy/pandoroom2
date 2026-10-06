@@ -628,6 +628,8 @@ model TableZone {
   name      String
   sortOrder Int          @default(0)
   isActive  Boolean      @default(true)
+  // Мягкая рекомендация: до какого возраста детям подходит зал. null — без ограничений.
+  recommendedMaxAge Int?
 
   branch    Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
   tables    Table[]

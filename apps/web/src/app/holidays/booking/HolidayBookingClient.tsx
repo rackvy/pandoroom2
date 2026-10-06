@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Quest, TableZonePublic, IikoMenuItemPublic } from '@/lib/api'
 import styles from './holiday-booking.module.css'
@@ -249,6 +249,27 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
     setter(next)
   }
 
+  // ---- возрастной фильтр залов (мягкий: скрываем неподходящие, менеджер может предложить любой) ----
+  const ageNum = birthdayAge.trim() === '' ? null : parseInt(birthdayAge, 10)
+  const birthdayAgeValue = ageNum !== null && !Number.isNaN(ageNum) && ageNum > 0 ? ageNum : null
+  const visibleZones = useMemo(
+    () =>
+      zones.filter(
+        (z) => birthdayAgeValue === null || z.recommendedMaxAge == null || birthdayAgeValue <= z.recommendedMaxAge,
+      ),
+    [zones, birthdayAgeValue],
+  )
+  const hiddenZonesCount = zones.length - visibleZones.length
+
+  useEffect(() => {
+    if (hiddenZonesCount === 0) return
+    const visibleTableIds = new Set(visibleZones.flatMap((z) => z.tables.map((t) => t.id)))
+    setSelectedTables((prev) => {
+      const next = new Set(Array.from(prev).filter((id) => visibleTableIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [visibleZones, hiddenZonesCount])
+
   const changeQty =
     (setter: React.Dispatch<React.SetStateAction<Record<string, number>>>) =>
     (id: string, delta: number) => {
@@ -314,7 +335,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
   const FOOD_LEVELS = ['Маловато еды', 'Впритык', 'Наесться от души']
   const meterFill = Math.min(100, Math.round((portionsPerGuest / 2.2) * 100))
 
-  const tablesCount = zones.reduce((sum, z) => sum + z.tables.length, 0)
+  const tablesCount = visibleZones.reduce((sum, z) => sum + z.tables.length, 0)
 
   return (
     <main className={styles.page}>
@@ -487,60 +508,75 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
       </section>
 
       {/* ==================== 1. TABLES ==================== */}
-      {tablesCount > 0 && (
+      {zones.length > 0 && (
         <section className={styles.panel} id="tables">
           <div className="container">
             <div className={styles.sliderHead}>
               <h2 className={styles.sectionTitle}>1. Выберите стол</h2>
-              <div className={styles.sliderNav}>
-                <button type="button" className={styles.sliderBtn} onClick={() => scrollTables(-1)} aria-label="Предыдущие столы">
-                  ‹
-                </button>
-                <button type="button" className={styles.sliderBtn} onClick={() => scrollTables(1)} aria-label="Следующие столы">
-                  ›
-                </button>
-              </div>
-            </div>
-            <div className={styles.tableSlider} ref={tablesSliderRef}>
-              {zones.flatMap((zone) =>
-                zone.tables.map((table) => {
-                  const active = selectedTables.has(table.id)
-                  return (
-                    <article
-                      key={table.id}
-                      className={`${styles.tableCard} ${active ? styles.cardActive : ''}`}
-                    >
-                      <div className={styles.tablePhoto}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={table.imageUrl || '/images/table-placeholder.jpg'}
-                          alt={table.imageAlt || table.title}
-                          className={styles.tablePhotoImg}
-                          loading="lazy"
-                        />
-                      </div>
-                      <div className={styles.tableHead}>
-                        <span className={styles.tableZone}>{ZONE_LABELS[zone.key] || zone.name}</span>
-                        <span className={styles.tableName}>{table.title}</span>
-                      </div>
-                      <div className={styles.tableFeatures}>
-                        {table.capacity ? <span>до {table.capacity} человек</span> : null}
-                        <span>Праздничная сервировка</span>
-                      </div>
-                      <div className={styles.tableActions}>
-                        <button
-                          type="button"
-                          className={`${styles.pillBtn} ${active ? styles.pillBtnOn : ''}`}
-                          onClick={() => toggleInSet(setSelectedTables, selectedTables, table.id)}
-                        >
-                          {active ? '✓ Стол выбран' : 'Выбрать этот стол'}
-                        </button>
-                      </div>
-                    </article>
-                  )
-                }),
+              {tablesCount > 0 && (
+                <div className={styles.sliderNav}>
+                  <button type="button" className={styles.sliderBtn} onClick={() => scrollTables(-1)} aria-label="Предыдущие столы">
+                    ‹
+                  </button>
+                  <button type="button" className={styles.sliderBtn} onClick={() => scrollTables(1)} aria-label="Следующие столы">
+                    ›
+                  </button>
+                </div>
               )}
             </div>
+            {hiddenZonesCount > 0 && (
+              <p className={styles.ageHint}>
+                Имениннику {birthdayAgeValue} — залы для детей помладше мы скрыли. Если хотите другой зал, менеджер
+                поможет по телефону{' '}
+                <a href="tel:+74232022696" className={styles.noticeLink}>
+                  8 (423) 202-26-96
+                </a>
+                .
+              </p>
+            )}
+            {tablesCount > 0 && (
+              <div className={styles.tableSlider} ref={tablesSliderRef}>
+                {visibleZones.flatMap((zone) =>
+                  zone.tables.map((table) => {
+                    const active = selectedTables.has(table.id)
+                    return (
+                      <article
+                        key={table.id}
+                        className={`${styles.tableCard} ${active ? styles.cardActive : ''}`}
+                      >
+                        <div className={styles.tablePhoto}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={table.imageUrl || '/images/table-placeholder.jpg'}
+                            alt={table.imageAlt || table.title}
+                            className={styles.tablePhotoImg}
+                            loading="lazy"
+                          />
+                        </div>
+                        <div className={styles.tableHead}>
+                          <span className={styles.tableZone}>{ZONE_LABELS[zone.key] || zone.name}</span>
+                          <span className={styles.tableName}>{table.title}</span>
+                        </div>
+                        <div className={styles.tableFeatures}>
+                          {table.capacity ? <span>до {table.capacity} человек</span> : null}
+                          {zone.recommendedMaxAge != null ? <span>подходит до {zone.recommendedMaxAge} лет</span> : null}
+                          <span>Праздничная сервировка</span>
+                        </div>
+                        <div className={styles.tableActions}>
+                          <button
+                            type="button"
+                            className={`${styles.pillBtn} ${active ? styles.pillBtnOn : ''}`}
+                            onClick={() => toggleInSet(setSelectedTables, selectedTables, table.id)}
+                          >
+                            {active ? '✓ Стол выбран' : 'Выбрать этот стол'}
+                          </button>
+                        </div>
+                      </article>
+                    )
+                  }),
+                )}
+              </div>
+            )}
           </div>
         </section>
       )}
