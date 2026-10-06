@@ -100,7 +100,7 @@ function AppRoutes() {
         <Route path="clients/new" element={<ClientCreatePage />} />
         <Route path="clients/:id" element={<ClientDetailPage />} />
         <Route path="reference" element={<ReferenceLayout />}>
-          <Route index element={<Navigate to="/reference/suppliers" replace />} />
+          <Route index element={<Navigate to="/reference/iiko-menu" replace />} />
           <Route path="suppliers" element={<SuppliersListPage />} />
           <Route path="suppliers/new" element={<SupplierForm />} />
           <Route path="suppliers/:id/edit" element={<SupplierForm />} />

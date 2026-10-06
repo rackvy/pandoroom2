@@ -8,11 +8,9 @@ interface EntityItem {
   icon: string;
 }
 
+// Поставщики, Торты, Шоу-программы и Декорации скрыты: данные ведутся в iiko.
+// Страницы и роуты оставлены намеренно, скрыто только меню.
 const referenceEntities: EntityItem[] = [
-  { id: 'suppliers', name: 'Поставщики', path: '/reference/suppliers', icon: '🚚' },
-  { id: 'cakes', name: 'Торты', path: '/reference/cakes', icon: '🎂' },
-  { id: 'show-programs', name: 'Шоу-программы', path: '/reference/show-programs', icon: '🎭' },
-  { id: 'decorations', name: 'Декорации', path: '/reference/decorations', icon: '🎨' },
   { id: 'iiko-menu', name: 'Меню iiko', path: '/reference/iiko-menu', icon: '🍽️' },
   { id: 'notification-templates', name: 'Шаблоны уведомлений', path: '/reference/notification-templates', icon: '📨' },
   { id: 'age-restrictions', name: 'Возрастные ограничения', path: '/reference/age-restrictions', icon: '🔞' },
