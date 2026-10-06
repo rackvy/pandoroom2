@@ -74,6 +74,19 @@ export async function deleteQuestScheduleSlot(id: string): Promise<void> {
   await api.delete(`/api/admin/quest-schedule/slots/${id}`);
 }
 
+export async function copyQuestScheduleDay(
+  questId: string,
+  fromDayOfWeek: number,
+  toDayOfWeek: number,
+): Promise<QuestScheduleSlot[]> {
+  const response = await api.post('/api/admin/quest-schedule/slots/copy-day', {
+    questId,
+    fromDayOfWeek,
+    toDayOfWeek,
+  });
+  return response.data;
+}
+
 export async function createSpecialPrice(data: CreateSpecialPriceData): Promise<any> {
   const response = await api.post('/api/admin/quest-schedule/special-prices', data);
   return response.data;

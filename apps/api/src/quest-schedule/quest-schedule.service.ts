@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface CreateSlotDto {
@@ -141,6 +141,45 @@ export class QuestScheduleService {
     await this.findSlotById(id);
     await this.prisma.questScheduleSlot.delete({ where: { id } });
     return { message: 'Слот удален' };
+  }
+
+  async copyDaySlots(data: {
+    questId: string;
+    fromDayOfWeek: number;
+    toDayOfWeek: number;
+  }): Promise<ScheduleSlotResponse[]> {
+    const { questId, fromDayOfWeek, toDayOfWeek } = data;
+
+    const sourceSlots = await this.prisma.questScheduleSlot.findMany({
+      where: { questId, dayOfWeek: fromDayOfWeek },
+      orderBy: [{ sortOrder: 'asc' }, { startTime: 'asc' }],
+    });
+
+    if (sourceSlots.length === 0) {
+      throw new BadRequestException('В исходном дне нет слотов для копирования');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.questScheduleSlot.deleteMany({
+        where: { questId, dayOfWeek: toDayOfWeek },
+      });
+
+      for (let i = 0; i < sourceSlots.length; i++) {
+        const source = sourceSlots[i];
+        await tx.questScheduleSlot.create({
+          data: {
+            questId,
+            dayOfWeek: toDayOfWeek,
+            startTime: source.startTime,
+            basePrice: source.basePrice,
+            isActive: source.isActive,
+            sortOrder: i,
+          },
+        });
+      }
+    });
+
+    return this.findAllSlots(questId);
   }
 
   // ==================== SPECIAL PRICES ====================

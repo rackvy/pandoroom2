@@ -8,6 +8,7 @@ import {
   createQuestScheduleSlot,
   updateQuestScheduleSlot,
   deleteQuestScheduleSlot,
+  copyQuestScheduleDay,
   createSpecialPrice,
   deleteSpecialPrice,
   getPublicQuestSchedule,
@@ -135,6 +136,38 @@ export default function QuestSchedulePage() {
       loadSchedule(selectedQuestId);
     } catch (error) {
       console.error('Failed to toggle slot:', error);
+    }
+  };
+
+  const handleCopyDay = async (fromDay: number, toDay: number) => {
+    if (!selectedQuestId) return;
+
+    const sourceCount = slotsByDay[fromDay].length;
+    if (sourceCount === 0) {
+      toast.error(`В дне «${DAY_NAMES[fromDay]}» нет слотов для копирования`);
+      return;
+    }
+
+    const targetCount = slotsByDay[toDay].length;
+    const message = targetCount > 0
+      ? `Слоты дня «${DAY_NAMES[toDay]}» (${targetCount} шт.) будут заменены слотами дня «${DAY_NAMES[fromDay]}» (${sourceCount} шт.). Специальные цены заменяемых слотов будут удалены. Продолжить?`
+      : `Скопировать слоты дня «${DAY_NAMES[fromDay]}» (${sourceCount} шт.) в день «${DAY_NAMES[toDay]}»?`;
+
+    const confirmed = await confirm({
+      title: 'Копирование слотов',
+      message,
+      confirmText: 'Копировать',
+      cancelText: 'Отмена',
+    });
+    if (!confirmed) return;
+
+    try {
+      await copyQuestScheduleDay(selectedQuestId, fromDay, toDay);
+      toast.success(`Слоты скопированы: ${DAY_NAMES[fromDay]} → ${DAY_NAMES[toDay]}`);
+      loadSchedule(selectedQuestId);
+    } catch (error) {
+      console.error('Failed to copy day slots:', error);
+      toast.error('Ошибка копирования слотов');
     }
   };
 
@@ -290,7 +323,25 @@ export default function QuestSchedulePage() {
             <div className={styles.scheduleGrid}>
               {DAY_NAMES.map((dayName, dayIndex) => (
                 <div key={dayIndex} className={styles.dayColumn}>
-                  <div className={styles.dayHeader}>{dayName}</div>
+                  <div className={styles.dayHeader}>
+                    <span>{dayName}</span>
+                    <select
+                      className={styles.copySelect}
+                      onChange={(e) => {
+                        const fromDay = Number(e.target.value);
+                        if (fromDay >= 0) {
+                          handleCopyDay(fromDay, dayIndex);
+                        }
+                      }}
+                      value=""
+                      title="Копировать из..."
+                    >
+                      <option value="">Копировать из...</option>
+                      {DAY_NAMES.map((name, idx) => (
+                        idx !== dayIndex && <option key={idx} value={idx}>{name}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className={styles.slotsList}>
                     {slotsByDay[dayIndex].length === 0 ? (
                       <div className={styles.noSlots}>Нет слотов</div>

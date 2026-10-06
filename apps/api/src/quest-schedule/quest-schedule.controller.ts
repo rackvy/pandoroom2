@@ -50,6 +50,21 @@ class UpdateSlotDto {
   isActive?: boolean;
 }
 
+class CopyDayDto {
+  @IsString()
+  questId: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(6)
+  fromDayOfWeek: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(6)
+  toDayOfWeek: number;
+}
+
 class CreateSpecialPriceDto {
   @IsString()
   slotId: string;
@@ -117,6 +132,12 @@ export class QuestScheduleController {
   @Roles(EmployeeRole.ADMIN)
   removeSlot(@Param('id') id: string) {
     return this.scheduleService.removeSlot(id);
+  }
+
+  @Post('slots/copy-day')
+  @Roles(EmployeeRole.ADMIN)
+  async copyDaySlots(@Body() data: CopyDayDto): Promise<ScheduleSlotResponse[]> {
+    return this.scheduleService.copyDaySlots(data);
   }
 
   // ==================== SPECIAL PRICES ====================
