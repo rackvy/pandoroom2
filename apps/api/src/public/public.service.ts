@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
+import { ClientsService } from '../clients/clients.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -43,6 +44,7 @@ export class PublicService {
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
+    private clientsService: ClientsService,
   ) {}
 
   async findAllBranches() {
@@ -257,45 +259,22 @@ export class PublicService {
     const extrasStr = extras.length > 0 ? ` [${extras.join(', ')}]` : '';
 
     // 7. Find or create Client by phone, link booking to them
-    const phoneDigits = data.phone.replace(/\D/g, '');
-    const existingClient = await this.prisma.client.findUnique({
-      where: { phone: phoneDigits },
-    });
-
-    let clientId: string;
-    if (existingClient) {
-      clientId = existingClient.id;
-      // Update name if it changed (e.g. user filled different name in booking form)
-      if (existingClient.name !== data.name.trim()) {
-        await this.prisma.client.update({
-          where: { id: existingClient.id },
-          data: { name: data.name.trim() },
-        });
-      }
-    } else {
-      const newClient = await this.prisma.client.create({
-        data: {
-          phone: phoneDigits,
-          name: data.name.trim(),
-        },
-      });
-      clientId = newClient.id;
-    }
+    const client = await this.clientsService.getOrCreate(data.phone, data.name);
 
     // 8. Create Booking + QuestReservation linked to Client
     const booking = await this.prisma.booking.create({
       data: {
         branchId: quest.branchId,
-        clientId,
+        clientId: client.id,
         eventDate,
         clientName: data.name,
-        clientPhone: phoneDigits,
+        clientPhone: client.phone,
         status: 'draft',
         depositRub: 0,
         questReservations: {
           create: {
             branchId: quest.branchId,
-            clientId,
+            clientId: client.id,
             questId: data.questId,
             eventDate,
             startTime,

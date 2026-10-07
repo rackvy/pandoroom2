@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { isValidPhone, normalizePhone } from '../client-auth/phone';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -11,10 +12,16 @@ export class ClientsService {
     const where: any = {};
     
     if (search) {
+      const digits = search.replace(/\D/g, '');
+      const phoneClause =
+        digits.length >= 4
+          ? { phone: { contains: digits.slice(-10) } }
+          : { phone: { contains: search, mode: 'insensitive' as const } };
+
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
+        phoneClause,
       ];
     }
 
@@ -80,16 +87,23 @@ export class ClientsService {
     return client;
   }
 
-  async findByPhone(phone: string) {
+  async findByPhone(rawPhone: string) {
+    const phone = normalizePhone(rawPhone || '');
+    if (!isValidPhone(phone)) return null;
     return this.prisma.client.findUnique({
       where: { phone },
     });
   }
 
   async create(data: CreateClientDto) {
+    const phone = normalizePhone(data.phone);
+    if (!isValidPhone(phone)) {
+      throw new BadRequestException('Некорректный номер телефона');
+    }
+
     // Check if phone already exists
     const existing = await this.prisma.client.findUnique({
-      where: { phone: data.phone },
+      where: { phone },
     });
 
     if (existing) {
@@ -99,6 +113,7 @@ export class ClientsService {
     return this.prisma.client.create({
       data: {
         ...data,
+        phone,
         birthday: data.birthday ? new Date(data.birthday) : null,
       },
     });
@@ -108,9 +123,14 @@ export class ClientsService {
     await this.findOne(id);
 
     // Check phone uniqueness if updating phone
+    let phone: string | undefined;
     if (data.phone) {
+      phone = normalizePhone(data.phone);
+      if (!isValidPhone(phone)) {
+        throw new BadRequestException('Некорректный номер телефона');
+      }
       const existing = await this.prisma.client.findUnique({
-        where: { phone: data.phone },
+        where: { phone },
       });
 
       if (existing && existing.id !== id) {
@@ -122,6 +142,7 @@ export class ClientsService {
       where: { id },
       data: {
         ...data,
+        phone,
         birthday: data.birthday ? new Date(data.birthday) : undefined,
       },
     });
@@ -134,17 +155,30 @@ export class ClientsService {
   }
 
   // Get or create client by phone (used when creating bookings)
-  async getOrCreate(phone: string, name: string) {
+  async getOrCreate(rawPhone: string, name: string) {
+    const phone = normalizePhone(rawPhone || '');
+    if (!isValidPhone(phone)) {
+      throw new BadRequestException('Некорректный номер телефона');
+    }
+
+    const trimmedName = (name || '').trim();
     const existing = await this.prisma.client.findUnique({
       where: { phone },
     });
 
     if (existing) {
+      // Имя из новой заявки важнее сохранённого: гость мог указать другого ответственного
+      if (trimmedName && trimmedName !== existing.name) {
+        return this.prisma.client.update({
+          where: { id: existing.id },
+          data: { name: trimmedName },
+        });
+      }
       return existing;
     }
 
     return this.prisma.client.create({
-      data: { phone, name },
+      data: { phone, name: trimmedName || 'Новый клиент' },
     });
   }
 }

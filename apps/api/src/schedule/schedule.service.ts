@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { normalizePhone } from '../client-auth/phone';
 import { ReservationStatus, BookingStatus } from '@prisma/client';
 import { WaitlistService } from '../waitlist/waitlist.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -346,7 +347,7 @@ export class ScheduleService {
         eventDate,
         clientId: clientIdForTable,
         clientName: dto.clientName || '',
-        clientPhone: dto.clientPhone || '',
+        clientPhone: dto.clientPhone ? normalizePhone(dto.clientPhone) : '',
         depositRub: 0,
         status: BookingStatus.draft,
       },
@@ -442,7 +443,7 @@ export class ScheduleService {
         eventDate,
         clientId: clientIdForQuest,
         clientName: dto.clientName || '',
-        clientPhone: dto.clientPhone || '',
+        clientPhone: dto.clientPhone ? normalizePhone(dto.clientPhone) : '',
         depositRub: 0,
         status: BookingStatus.draft,
       },

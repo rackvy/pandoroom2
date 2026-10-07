@@ -60,3 +60,37 @@ FROM "_vr_parents" p
 WHERE r."id" = p."vrId";
 
 DROP TABLE "_vr_parents";
+
+-- Снапшоты телефона приводим к канону 7XXXXXXXXXX: из них формируются SMS и поиск клиента.
+-- Client.phone не трогаем: на нём уникальный индекс, нормализация столкнула бы
+-- уже накопленные дубликаты (+79991234567 и 79991234567) — их решает менеджер вручную.
+UPDATE "Booking" b
+SET "clientPhone" = n."phone"
+FROM (
+    SELECT "id", CASE
+        WHEN length(d) = 11 AND left(d, 1) = '8' THEN '7' || substring(d from 2)
+        WHEN length(d) = 10 THEN '7' || d
+        ELSE d
+    END AS "phone"
+    FROM (
+        SELECT "id", regexp_replace(COALESCE("clientPhone", ''), '\D', '', 'g') AS d
+        FROM "Booking"
+    ) raw
+) n
+WHERE b."id" = n."id" AND n."phone" <> '' AND b."clientPhone" IS DISTINCT FROM n."phone";
+
+UPDATE "VRReservation" v
+SET "clientPhone" = n."phone"
+FROM (
+    SELECT "id", CASE
+        WHEN length(d) = 11 AND left(d, 1) = '8' THEN '7' || substring(d from 2)
+        WHEN length(d) = 10 THEN '7' || d
+        ELSE d
+    END AS "phone"
+    FROM (
+        SELECT "id", regexp_replace(COALESCE("clientPhone", ''), '\D', '', 'g') AS d
+        FROM "VRReservation"
+        WHERE "clientPhone" IS NOT NULL
+    ) raw
+) n
+WHERE v."id" = n."id" AND n."phone" <> '' AND v."clientPhone" IS DISTINCT FROM n."phone";

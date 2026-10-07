@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { normalizePhone } from '../client-auth/phone';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClientsService } from '../clients/clients.service';
 import { WaitlistService } from '../waitlist/waitlist.service';
@@ -128,6 +129,7 @@ export class BookingService {
     const prismaData = {
       ...data,
       clientId,
+      clientPhone: data.clientPhone ? normalizePhone(data.clientPhone) : data.clientPhone,
       eventDate: new Date(data.eventDate),
     };
     return this.prisma.booking.create({
@@ -254,8 +256,9 @@ export class BookingService {
 
     // Get or create client if phone provided
     let clientId: string | undefined = undefined;
-    if (data.clientPhone && data.clientName) {
-      const client = await this.clientsService.getOrCreate(data.clientPhone, data.clientName);
+    const clientPhone = data.clientPhone ? normalizePhone(data.clientPhone) : data.clientPhone;
+    if (clientPhone && data.clientName) {
+      const client = await this.clientsService.getOrCreate(clientPhone, data.clientName);
       clientId = client.id;
     }
 
@@ -264,7 +267,7 @@ export class BookingService {
       where: { id },
       data: {
         clientName: data.clientName,
-        clientPhone: data.clientPhone,
+        clientPhone,
         clientId: clientId,
         depositRub: data.depositRub,
         status: data.status,

@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { normalizePhone } from '../client-auth/phone';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -31,11 +32,13 @@ export class WaitlistService {
       where: { questId: data.questId, status: 'waiting' },
     });
 
+    const phone = normalizePhone(data.clientPhone);
+
     const entry = await this.prisma.waitlistEntry.create({
       data: {
         questId: data.questId,
         clientName: data.clientName,
-        clientPhone: data.clientPhone,
+        clientPhone: phone,
         desiredDate: data.desiredDate ? new Date(data.desiredDate) : null,
         desiredTime: data.desiredTime || null,
         position: count + 1,
@@ -50,7 +53,7 @@ export class WaitlistService {
         questName: quest.name,
       },
       channel: 'sms',
-      recipient: data.clientPhone,
+      recipient: phone,
       waitlistId: entry.id,
     });
 
@@ -133,7 +136,7 @@ export class WaitlistService {
     // Send notification to client's ЛК chat
     try {
       const clientRecord = await this.prisma.client.findFirst({
-        where: { phone: entry.clientPhone },
+        where: { phone: normalizePhone(entry.clientPhone) },
       });
       if (clientRecord) {
         const chatText = `Время ${timeStr} на квест «${quest.name}» ${eventDateStr} освободилось! Успейте забронировать.`;

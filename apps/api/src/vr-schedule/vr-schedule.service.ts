@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { normalizePhone } from '../client-auth/phone';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClientsService } from '../clients/clients.service';
 import { VRHall } from '@prisma/client';
@@ -476,7 +477,7 @@ export class VRScheduleService {
         description: data.description || null,
         gameId: data.gameId || null,
         clientName: data.clientName || null,
-        clientPhone: data.clientPhone || null,
+        clientPhone: data.clientPhone ? normalizePhone(data.clientPhone) : null,
         clientId,
         guestsCount: guests,
         maxGuests: data.maxGuests != null ? Number(data.maxGuests) : null,
@@ -545,7 +546,7 @@ export class VRScheduleService {
         ...(data.description !== undefined ? { description: data.description || null } : {}),
         ...(data.gameId !== undefined ? { gameId: data.gameId || null } : {}),
         ...(data.clientName !== undefined ? { clientName: data.clientName || null } : {}),
-        ...(data.clientPhone !== undefined ? { clientPhone: data.clientPhone || null } : {}),
+        ...(data.clientPhone !== undefined ? { clientPhone: data.clientPhone ? normalizePhone(data.clientPhone) : null } : {}),
         ...(clientId !== reservation.clientId || data.clientId !== undefined || data.clientPhone !== undefined ? { clientId } : {}),
         ...(data.guestsCount !== undefined || data.type !== undefined ? { guestsCount: guests } : {}),
         ...(data.maxGuests !== undefined ? { maxGuests: data.maxGuests != null ? Number(data.maxGuests) : null } : {}),
