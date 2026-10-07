@@ -1,8 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookingFullDetails, getBookingFull, updateBookingBasic, getBranches, type Branch } from '../api/schedule';
+import {
+  BookingFullDetails,
+  getBookingFull,
+  updateBookingBasic,
+  getBranches,
+  getQuestScheduleGrid,
+  type Branch,
+  type QuestSlot,
+} from '../api/schedule';
 import TableSelector from '../components/booking/TableSelector';
 import QuestSelector from '../components/booking/QuestSelector';
+import ItemSelectorModal, { type SelectableItem } from '../components/schedule/ItemSelectorModal';
+import {
+  BOOKING_STATUSES,
+  BOOKING_TYPE_LABELS,
+  addTableReservationToBooking,
+  bookingApiError,
+  confirmBooking,
+  partyEndTime,
+} from '../api/bookings';
+import { getCakes, getDecorations, getShowPrograms } from '../api/content';
+import { getIikoMenu, type IikoMenuItem } from '../api/iiko';
+import { getVRHalls, createVRReservation, cancelVRReservation, type VRHall } from '../api/vrSchedule';
 import api from '../lib/axios';
 import { toast } from '../components/ui/Toast';
 import { confirm } from '../components/ui/ConfirmDialog';
@@ -13,43 +33,15 @@ import { createIikoOrder, getIikoOrderStatus } from '../api/iiko';
 import BookingChat from '../components/booking/BookingChat';
 import styles from './BookingEditPage.module.css';
 
-interface Cake {
-  id: string;
-  cakeId: string;
-  cakeName: string;
-  weightKg: number;
-  inscription: string | null;
-  comment: string | null;
-}
+type CatalogKind = 'cake' | 'decoration' | 'food' | 'show';
 
-interface DecorationItem {
-  id: string;
-  decorationId: string;
-  decorationName: string;
-  quantity: number;
-  comment: string | null;
-}
+/** SelectableItem плюс цех: модальный выбор возвращает объект позиции целиком. */
+type CatalogItem = SelectableItem & { department?: string | null };
 
-interface FoodItem {
-  id: string;
-  menuItemId: string;
-  menuItemName: string;
-  quantity: number;
-  servingTime: string | null;
-  comment: string | null;
-  department: string | null;
-}
-
-interface ExtraSlot {
-  id: string;
-  showProgramId: string | null;
-  showProgramName: string | null;
-  supplierId: string | null;
-  supplierName: string | null;
-  startTime: string;
-  endTime: string;
-  comment: string | null;
-}
+type Cake = BookingFullDetails['bookingCakes'][number];
+type DecorationItem = BookingFullDetails['decorationItems'][number];
+type FoodItem = BookingFullDetails['foodItems'][number];
+type ExtraSlot = BookingFullDetails['extraSlots'][number];
 
 export default function BookingEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -90,7 +82,7 @@ export default function BookingEditPage() {
   const [showTableSelector, setShowTableSelector] = useState(false);
   const [showQuestSelector, setShowQuestSelector] = useState(false);
   const [selectedQuestForAdd, setSelectedQuestForAdd] = useState<{ questId: string; questName: string } | null>(null);
-  const [availableSlotsForQuest, setAvailableSlotsForQuest] = useState<Array<{ slotId: string; startTime: string; finalPrice: number; isBooked: boolean }>>([]);
+  const [availableSlotsForQuest, setAvailableSlotsForQuest] = useState<QuestSlot[]>([]);
   const [newQuestTime, setNewQuestTime] = useState('');
   const [addingQuestReservation, setAddingQuestReservation] = useState(false);
   const [addAnimatorToQuest, setAddAnimatorToQuest] = useState(false);
@@ -106,10 +98,30 @@ export default function BookingEditPage() {
   const [bookingStatus, setBookingStatus] = useState<string>('');
   const [savingStatus, setSavingStatus] = useState(false);
 
+  // Стол предлагается выбрать на конкретное время — без него нельзя проверить свободен ли он
+  const [tableStartTime, setTableStartTime] = useState('');
+  const [addingTable, setAddingTable] = useState(false);
+
+  const [confirming, setConfirming] = useState(false);
+
+  // Позиции берутся из справочников: id вручную менеджер не знает
+  const [catalog, setCatalog] = useState<Record<CatalogKind, CatalogItem[]>>({
+    cake: [],
+    decoration: [],
+    food: [],
+    show: [],
+  });
+  const [picker, setPicker] = useState<CatalogKind | null>(null);
+
+  const [vrHalls, setVrHalls] = useState<VRHall[]>([]);
+  const [showVrForm, setShowVrForm] = useState(false);
+  const [vrForm, setVrForm] = useState({ hallId: '', startTime: '', endTime: '', guestsCount: '2' });
+
   useEffect(() => {
     loadData();
     loadBranches();
     loadManagers();
+    loadCatalogs();
     loadPaymentStatus();
   }, [id]);
 
@@ -140,6 +152,16 @@ export default function BookingEditPage() {
       setIikoOrderId(data.iikoOrderId || null);
       setIikoStatus(data.iikoOrderStatus || null);
       setBookingStatus(data.status || 'draft');
+      setTableStartTime(
+        data.tableReservations[0]?.startTime ??
+          data.tableSlots[0]?.startTime ??
+          data.questReservations[0]?.startTime ??
+          data.questSlots[0]?.startTime ??
+          '16:00',
+      );
+      if (data.branch?.id) {
+        loadVrHalls(data.branch.id);
+      }
     } catch (error) {
       console.error('Failed to load booking:', error);
     } finally {
@@ -162,6 +184,67 @@ export default function BookingEditPage() {
       setManagers(response.data);
     } catch (error) {
       console.error('Failed to load managers:', error);
+    }
+  };
+
+  const departmentLabels: Record<string, string> = {
+    bar: 'Бар',
+    pizza: 'Пицца',
+    hot_kitchen: 'Горячий цех',
+    cold_kitchen: 'Холодный цех',
+  };
+
+  const loadCatalogs = async () => {
+    try {
+      const [cakes, decorations, shows, menu] = await Promise.all([
+        getCakes(),
+        getDecorations(),
+        getShowPrograms(),
+        getIikoMenu(),
+      ]);
+      setCatalog({
+        cake: cakes.map((cake) => ({
+          id: cake.id,
+          name: cake.name,
+          description: `${Math.round(cake.weightGrams / 100) / 10} кг`,
+          price: cake.priceRub,
+          imageUrl: cake.image?.url,
+        })),
+        decoration: decorations.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.priceRub,
+          imageUrl: item.image?.url,
+        })),
+        show: shows.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.priceRub,
+          imageUrl: item.image?.url,
+        })),
+        food: menu
+          .filter((item) => item.isActive)
+          .map((item: IikoMenuItem) => ({
+            id: item.iikoId,
+            name: item.name,
+            description: [item.category, item.department ? departmentLabels[item.department] ?? item.department : null]
+              .filter(Boolean)
+              .join(' · '),
+            price: item.price,
+            imageUrl: item.imageUrl ?? undefined,
+            department: item.department,
+          })),
+      });
+    } catch (error) {
+      console.error('Не удалось загрузить справочники:', error);
+    }
+  };
+
+  const loadVrHalls = async (branchId: string) => {
+    try {
+      setVrHalls(await getVRHalls(branchId));
+    } catch (error) {
+      console.error('Не удалось загрузить VR-залы:', error);
     }
   };
 
@@ -215,6 +298,10 @@ export default function BookingEditPage() {
         clientName: formData.clientName,
         clientPhone: formData.clientPhone,
         depositRub: Number(formData.depositRub) || 0,
+        birthdayPersonName: formData.birthdayPersonName,
+        birthdayPersonAge: formData.birthdayPersonAge === '' ? null : Number(formData.birthdayPersonAge),
+        guestsKids: formData.guestsKids === '' ? null : Number(formData.guestsKids),
+        guestsAdults: formData.guestsAdults === '' ? null : Number(formData.guestsAdults),
         commentClient: formData.commentClient,
         commentInternal: formData.commentInternal,
         managerId: formData.managerId || undefined,
@@ -228,18 +315,144 @@ export default function BookingEditPage() {
     }
   };
 
-  const handleAddCake = async () => {
-    // Open modal or inline form to add cake
-    const cakeId = prompt('ID торта:');
-    if (!cakeId || !id) return;
+  const PICKER_TITLES: Record<CatalogKind, string> = {
+    cake: 'Торт из справочника',
+    decoration: 'Украшение зала',
+    food: 'Позиция из меню iiko',
+    show: 'Доп. развлечение',
+  };
+
+  const pickerFields = (kind: CatalogKind) => {
+    if (kind === 'cake') {
+      return [{ name: 'inscription', label: 'Надпись на торте', type: 'text' as const }];
+    }
+    if (kind === 'decoration') {
+      return [{ name: 'quantity', label: 'Количество, шт', type: 'number' as const, defaultValue: 1 }];
+    }
+    if (kind === 'food') {
+      return [
+        { name: 'quantity', label: 'Количество, шт', type: 'number' as const, defaultValue: 1 },
+        { name: 'servingTime', label: 'Время подачи', type: 'time' as const, defaultValue: tableStartTime },
+      ];
+    }
+    const defaultEnd = partyEndTime(tableStartTime || '16:00', 60);
+    return [
+      { name: 'startTime', label: 'Начало', type: 'time' as const, defaultValue: tableStartTime },
+      { name: 'endTime', label: 'Конец', type: 'time' as const, defaultValue: defaultEnd },
+    ];
+  };
+
+  const handleCatalogPick = async (kind: CatalogKind, item: SelectableItem, extra: Record<string, any>) => {
+    if (!id) return;
+    const catalogItem = item as CatalogItem;
+    const priceRub = catalogItem.price ?? 0;
     try {
-      await api.post(`/api/admin/bookings/${id}/cakes`, {
-        cakeId,
-        weightKg: 2,
-      });
-      loadData();
+      if (kind === 'cake') {
+        await api.post(`/api/admin/bookings/${id}/cakes`, {
+          cakeId: catalogItem.id,
+          inscription: extra.inscription || null,
+          priceRub,
+        });
+      } else if (kind === 'decoration') {
+        await api.post(`/api/admin/bookings/${id}/decorations`, {
+          decorationId: catalogItem.id,
+          quantity: Number(extra.quantity) || 1,
+          priceRub,
+        });
+      } else if (kind === 'food') {
+        await api.post(`/api/admin/bookings/${id}/food`, {
+          menuItemId: catalogItem.id,
+          quantity: Number(extra.quantity) || 1,
+          priceRub,
+          department: catalogItem.department || undefined,
+          servingTime: extra.servingTime || undefined,
+        });
+      } else {
+        await api.post(`/api/admin/bookings/${id}/extra-slots`, {
+          showProgramId: catalogItem.id,
+          startTime: extra.startTime || undefined,
+          endTime: extra.endTime || undefined,
+          priceRub,
+        });
+      }
+      toast.success(`Добавлено: ${catalogItem.name}`);
+      await loadData();
     } catch (error) {
-      alert('Ошибка добавления торта');
+      toast.error(bookingApiError(error, 'Не удалось добавить позицию'));
+    }
+  };
+
+  const handleAddTable = async (tableId: string, tableTitle: string, zoneName: string) => {
+    if (!id || !tableStartTime) return;
+    setAddingTable(true);
+    try {
+      await addTableReservationToBooking(id, { tableId, startTime: tableStartTime });
+      toast.success(`Стол «${zoneName} / ${tableTitle}» занят с ${tableStartTime}`);
+      setShowTableSelector(false);
+      await loadData();
+    } catch (error) {
+      toast.error(bookingApiError(error, 'Не удалось занять стол'));
+    } finally {
+      setAddingTable(false);
+    }
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!id) return;
+    setConfirming(true);
+    try {
+      await confirmBooking(id);
+      toast.success('Заявка подтверждена, столы и квесты заняты');
+      await loadData();
+    } catch (error) {
+      toast.error(bookingApiError(error, 'Не удалось подтвердить заявку'));
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  const handleAddVr = async () => {
+    if (!id || !booking || !vrForm.hallId || !vrForm.startTime || !vrForm.endTime) {
+      toast.error('Выберите зал и время VR-сеанса');
+      return;
+    }
+    try {
+      await createVRReservation({
+        hallId: vrForm.hallId,
+        date: booking.eventDate,
+        startTime: vrForm.startTime,
+        endTime: vrForm.endTime,
+        type: 'open_slot',
+        guestsCount: Number(vrForm.guestsCount) || 1,
+        bookingId: id,
+        clientId: booking.clientId ?? undefined,
+        clientName: booking.clientName,
+        clientPhone: booking.clientPhone,
+      });
+      toast.success('VR-бронь добавлена');
+      setShowVrForm(false);
+      setVrForm({ hallId: '', startTime: '', endTime: '', guestsCount: '2' });
+      await loadData();
+    } catch (error) {
+      toast.error(bookingApiError(error, 'Не удалось добавить VR-бронь'));
+    }
+  };
+
+  const handleRemoveVr = async (resId: string) => {
+    const confirmed = await confirm({
+      title: 'Отмена VR-брони',
+      message: 'Отменить эту VR-бронь?',
+      confirmText: 'Отменить бронь',
+      cancelText: 'Назад',
+      type: 'danger',
+    });
+    if (!confirmed) return;
+    try {
+      await cancelVRReservation(resId);
+      toast.success('VR-бронь отменена');
+      await loadData();
+    } catch (error) {
+      toast.error(bookingApiError(error, 'Ошибка отмены'));
     }
   };
 
@@ -261,20 +474,6 @@ export default function BookingEditPage() {
     }
   };
 
-  const handleAddDecoration = async () => {
-    const decorationId = prompt('ID украшения:');
-    if (!decorationId || !id) return;
-    try {
-      await api.post(`/api/admin/bookings/${id}/decorations`, {
-        decorationId,
-        quantity: 1,
-      });
-      loadData();
-    } catch (error) {
-      alert('Ошибка добавления украшения');
-    }
-  };
-
   const handleRemoveDecoration = async (itemId: string) => {
     const confirmed = await confirm({
       title: 'Удаление украшения',
@@ -293,29 +492,6 @@ export default function BookingEditPage() {
     }
   };
 
-  const handleAddFood = async () => {
-    const menuItemId = prompt('ID блюда:');
-    if (!menuItemId || !id) return;
-    const department = prompt('Цех (bar / pizza / hot_kitchen / cold_kitchen):') || null;
-    try {
-      await api.post(`/api/admin/bookings/${id}/food`, {
-        menuItemId,
-        quantity: 1,
-        department,
-      });
-      loadData();
-    } catch (error) {
-      alert('Ошибка добавления блюда');
-    }
-  };
-
-  const departmentLabels: Record<string, string> = {
-    bar: 'Бар',
-    pizza: 'Пицца',
-    hot_kitchen: 'Горячий цех',
-    cold_kitchen: 'Холодный цех',
-  };
-
   const handleRemoveFood = async (itemId: string) => {
     const confirmed = await confirm({
       title: 'Удаление блюда',
@@ -331,23 +507,6 @@ export default function BookingEditPage() {
       loadData();
     } catch (error) {
       toast.error('Ошибка удаления');
-    }
-  };
-
-  const handleAddExtra = async () => {
-    const showProgramId = prompt('ID шоу-программы (или оставьте пустым):');
-    const supplierId = prompt('ID поставщика (или оставьте пустым):');
-    if (!id) return;
-    try {
-      await api.post(`/api/admin/bookings/${id}/extra-slots`, {
-        showProgramId: showProgramId || null,
-        supplierId: supplierId || null,
-        startTime: '15:00',
-        endTime: '16:00',
-      });
-      loadData();
-    } catch (error) {
-      alert('Ошибка добавления развлечения');
     }
   };
 
@@ -485,15 +644,10 @@ export default function BookingEditPage() {
     if (!booking) return;
     setSelectedQuestForAdd({ questId, questName });
     setShowQuestSelector(false);
-    // Fetch available slots for this quest on this date
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const res = await fetch(`${apiUrl}/api/public/schedule/grid?date=${booking.eventDate}`);
-      if (res.ok) {
-        const data = await res.json();
-        const questData = data.find((q: any) => q.questId === questId);
-        setAvailableSlotsForQuest(questData?.slots || []);
-      }
+      const grid = await getQuestScheduleGrid(booking.eventDate, booking.branch.id);
+      const quest = grid.find((item) => item.questId === questId);
+      setAvailableSlotsForQuest((quest?.slots || []).filter((slot) => slot.isAvailable));
     } catch (err) {
       console.error('Failed to load slots:', err);
       setAvailableSlotsForQuest([]);
@@ -581,13 +735,26 @@ export default function BookingEditPage() {
               onChange={(e) => handleStatusChange(e.target.value)}
               disabled={savingStatus}
             >
-              <option value="draft">Черновик</option>
-              <option value="confirmed">Подтверждено</option>
-              <option value="paid">Оплачено</option>
-              <option value="done">Завершено</option>
-              <option value="cancelled">Отменено</option>
+              {Object.entries(BOOKING_STATUSES).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
             </select>
           </div>
+          {bookingStatus === 'draft' && (
+            <div className={styles.dateField}>
+              <label>Занятость</label>
+              <button
+                className={styles.paymentBtn}
+                onClick={handleConfirmBooking}
+                disabled={confirming}
+                title="Столы и квесты из заявки становятся бронями расписания"
+              >
+                {confirming ? 'Проверка…' : 'Подтвердить заявку'}
+              </button>
+            </div>
+          )}
           <div className={styles.dateField}>
             <label>Дата мероприятия</label>
             <input 
@@ -605,6 +772,8 @@ export default function BookingEditPage() {
         <div className={styles.branchInfo}>
           <span className={styles.branchLabel}>Филиал:</span>
           <span className={styles.branchName}>{booking.branch.name}</span>
+          <span className={styles.branchLabel}>Тип:</span>
+          <span className={styles.badge}>{BOOKING_TYPE_LABELS[booking.type] ?? booking.type}</span>
           <span className={styles.branchBadges}>
             <span className={styles.branchBadgeLabel}>Тип филиала:</span>
             {selectedBranch?.hasCafe && <span className={styles.badge}>Кафе</span>}
@@ -710,30 +879,53 @@ export default function BookingEditPage() {
                     </div>
                   </div>
                 ))}
-                
-                {/* Table Selector */}
+
+                {booking.tableSlots.map((slot) => (
+                  <div key={slot.id} className={styles.tableRow}>
+                    <div className={styles.formGroup}>
+                      <label>Запрошен</label>
+                      <div className={styles.tag}>
+                        {slot.tableTitle ? `${slot.zoneName} / ${slot.tableTitle}` : slot.title}
+                      </div>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Время</label>
+                      <div className={styles.timeDisplay}>
+                        {slot.startTime} — {slot.endTime}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Выбор стола: свободны только столы на конкретное время, поэтому время нужно до списка */}
                 {showTableSelector && booking?.branch?.id && (
                   <div className={styles.selectorContainer}>
+                    <div className={styles.formGroupSmall}>
+                      <label>Начало праздника</label>
+                      <input
+                        type="time"
+                        value={tableStartTime}
+                        onChange={(e) => setTableStartTime(e.target.value)}
+                      />
+                    </div>
                     <TableSelector
                       branchId={booking.branch.id}
                       eventDate={booking.eventDate}
-                      onSelect={(_tableId, tableTitle, zoneName) => {
-                        // TODO: Add table reservation via API
-                        toast.success(`Выбран стол: ${zoneName} / ${tableTitle}`);
-                        setShowTableSelector(false);
-                      }}
+                      startTime={tableStartTime}
+                      onSelect={handleAddTable}
                     />
                     <button 
                       className={styles.cancelButton}
                       onClick={() => setShowTableSelector(false)}
+                      disabled={addingTable}
                     >
-                      Отмена
+                      {addingTable ? 'Занятие стола…' : 'Отмена'}
                     </button>
                   </div>
                 )}
-                
+
                 {!showTableSelector && (
-                  <button 
+                  <button
                     className={styles.addButton}
                     onClick={() => setShowTableSelector(true)}
                   >
@@ -938,20 +1130,110 @@ export default function BookingEditPage() {
               </div>
             )}
 
-            {/* VR - only show if branch has VR */}
+            {/* VR - только если в филиале есть VR-залы */}
             {branchHasVR && (
               <div className={styles.subSection}>
                 <h4>2.2 VR бронирования</h4>
-                <div className={styles.vrPlaceholder}>
-                  VR бронирования — управление через VR сетку
-                </div>
+                {booking.vrReservations.map((res) => (
+                  <div key={res.id} className={styles.addonRow}>
+                    <div className={styles.tag}>{res.hallName || 'VR-зал'}</div>
+                    <div className={styles.timeDisplay}>
+                      {res.startTime} — {res.endTime}
+                    </div>
+                    <div className={styles.quantity}>{res.guestsCount} чел</div>
+                    <div className={styles.rowActions}>
+                      <button
+                        className={styles.deleteBtn}
+                        onClick={() => handleRemoveVr(res.id)}
+                      >
+                        🗑
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {showVrForm && (
+                  <div className={styles.selectorContainer}>
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}>
+                        <label>Зал</label>
+                        <select
+                          value={vrForm.hallId}
+                          onChange={(e) => setVrForm({ ...vrForm, hallId: e.target.value })}
+                        >
+                          <option value="">Выберите зал</option>
+                          {vrHalls.map((hall) => (
+                            <option key={hall.id} value={hall.id}>
+                              {hall.name} (до {hall.maxCapacity} чел)
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className={styles.formGroupSmall}>
+                        <label>Начало</label>
+                        <input
+                          type="time"
+                          value={vrForm.startTime}
+                          onChange={(e) =>
+                            setVrForm({
+                              ...vrForm,
+                              startTime: e.target.value,
+                              endTime: partyEndTime(e.target.value, 60),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className={styles.formGroupSmall}>
+                        <label>Конец</label>
+                        <input
+                          type="time"
+                          value={vrForm.endTime}
+                          onChange={(e) => setVrForm({ ...vrForm, endTime: e.target.value })}
+                        />
+                      </div>
+                      <div className={styles.formGroupSmall}>
+                        <label>Игроков</label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={vrForm.guestsCount}
+                          onChange={(e) => setVrForm({ ...vrForm, guestsCount: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.buttonRow}>
+                      <button
+                        className={styles.addButton}
+                        onClick={handleAddVr}
+                        disabled={!vrForm.hallId || !vrForm.startTime || !vrForm.endTime}
+                      >
+                        Забронировать VR
+                      </button>
+                      <button
+                        className={styles.cancelButton}
+                        onClick={() => setShowVrForm(false)}
+                      >
+                        Отмена
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {!showVrForm && (
+                  <button
+                    className={styles.addButton}
+                    onClick={() => setShowVrForm(true)}
+                  >
+                    + добавить VR-сеанс
+                  </button>
+                )}
               </div>
             )}
 
             {/* Cakes - only for cafe branches */}
             {(!selectedBranch || branchHasCafe) && (
               <div className={styles.subSection}>
-                <h4>{branchHasVR ? '2.3' : '2.2'} Торт и украшения торта</h4>
+                <h4>{branchHasVR ? '2.3' : '2.2'} Торт</h4>
               {cakes.map((cake) => (
                 <div key={cake.id} className={styles.addonRow}>
                   <div className={styles.tag}>{cake.cakeName} {cake.weightKg} кг</div>
@@ -959,7 +1241,6 @@ export default function BookingEditPage() {
                     <div className={styles.inscription}>{cake.inscription}</div>
                   )}
                   <div className={styles.rowActions}>
-                    <button className={styles.editBtn}>Изменить</button>
                     <button 
                       className={styles.deleteBtn}
                       onClick={() => handleRemoveCake(cake.id)}
@@ -970,11 +1251,8 @@ export default function BookingEditPage() {
                 </div>
               ))}
               <div className={styles.buttonRow}>
-                <button className={styles.addButton} onClick={handleAddCake}>
-                  + добавить торт
-                </button>
-                <button className={styles.addButton}>
-                  + добавить украшение торта
+                <button className={styles.addButton} onClick={() => setPicker('cake')}>
+                  + добавить торт из справочника
                 </button>
               </div>
               </div>
@@ -985,14 +1263,16 @@ export default function BookingEditPage() {
               <h4>2.4 Дополнительные развлечения</h4>
               {extraSlots.map((slot) => (
                 <div key={slot.id} className={styles.addonRow}>
-                  <div className={styles.tag}>
-                    {slot.showProgramName || slot.supplierName || 'Развлечение'}
-                  </div>
-                  <div className={styles.timeDisplay}>
-                    {slot.startTime.slice(0, 5)} — {slot.endTime.slice(0, 5)}
-                  </div>
+                  <div className={styles.tag}>{slot.title || 'Развлечение'}</div>
+                  {slot.startTime && slot.endTime && (
+                    <div className={styles.timeDisplay}>
+                      {slot.startTime} — {slot.endTime}
+                    </div>
+                  )}
+                  {slot.priceRub > 0 && (
+                    <div className={styles.quantity}>{slot.priceRub} ₽</div>
+                  )}
                   <div className={styles.rowActions}>
-                    <button className={styles.editBtn}>Изменить</button>
                     <button 
                       className={styles.deleteBtn}
                       onClick={() => handleRemoveExtra(slot.id)}
@@ -1002,7 +1282,7 @@ export default function BookingEditPage() {
                   </div>
                 </div>
               ))}
-              <button className={styles.addButton} onClick={handleAddExtra}>
+              <button className={styles.addButton} onClick={() => setPicker('show')}>
                 + добавить доп. развлечение
               </button>
             </div>
@@ -1010,13 +1290,15 @@ export default function BookingEditPage() {
             {/* Decorations - only for cafe branches */}
             {(!selectedBranch || branchHasCafe) && (
               <div className={styles.subSection}>
-                <h4>2.5 Украшение зала</h4>
+                <h4>2.5 Украшение зала и оформление торта</h4>
                 {decorations.map((item) => (
                   <div key={item.id} className={styles.addonRow}>
                     <div className={styles.tag}>{item.decorationName}</div>
                     <div className={styles.quantity}>{item.quantity} шт</div>
+                    {item.priceRub > 0 && (
+                      <div className={styles.quantity}>{item.priceRub} ₽</div>
+                    )}
                     <div className={styles.rowActions}>
-                      <button className={styles.editBtn}>Изменить</button>
                       <button
                         className={styles.deleteBtn}
                         onClick={() => handleRemoveDecoration(item.id)}
@@ -1026,8 +1308,8 @@ export default function BookingEditPage() {
                     </div>
                   </div>
                 ))}
-                <button className={styles.addButton} onClick={handleAddDecoration}>
-                  + добавить украшение зала
+                <button className={styles.addButton} onClick={() => setPicker('decoration')}>
+                  + добавить украшение из справочника
                 </button>
               </div>
             )}
@@ -1043,8 +1325,10 @@ export default function BookingEditPage() {
                   </div>
                   <div className={styles.foodQty}>{item.quantity} шт</div>
                   <div className={styles.foodTime}>{item.servingTime?.slice(0, 5) || '—'}</div>
+                  {item.priceRub > 0 && (
+                    <div className={styles.foodTime}>{item.priceRub} ₽</div>
+                  )}
                   <div className={styles.rowActions}>
-                    <button className={styles.editBtn}>Изменить</button>
                     <button 
                       className={styles.deleteBtn}
                       onClick={() => handleRemoveFood(item.id)}
@@ -1054,8 +1338,8 @@ export default function BookingEditPage() {
                   </div>
                 </div>
               ))}
-              <button className={styles.addButton} onClick={handleAddFood}>
-                + добавить позицию вручную
+              <button className={styles.addButton} onClick={() => setPicker('food')}>
+                + добавить позицию из меню iiko
               </button>
             </div>
           </section>
@@ -1136,6 +1420,18 @@ export default function BookingEditPage() {
           </button>
         </div>
       </div>
+
+      <ItemSelectorModal
+        isOpen={picker !== null}
+        onClose={() => setPicker(null)}
+        title={picker ? PICKER_TITLES[picker] : ''}
+        items={picker ? catalog[picker] : []}
+        extraFields={picker ? pickerFields(picker) : []}
+        onSelect={(item, extra) => {
+          if (!picker) return;
+          void handleCatalogPick(picker, item, extra);
+        }}
+      />
     </div>
   );
 }

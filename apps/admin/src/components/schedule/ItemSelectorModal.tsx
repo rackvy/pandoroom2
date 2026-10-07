@@ -78,17 +78,23 @@ export default function ItemSelectorModal({
           <button className={styles.closeBtn} onClick={handleClose}>×</button>
         </div>
 
-        <div className={styles.searchBox}>
-          <input
-            type="text"
-            placeholder="Поиск..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
+        {items.length > 0 && (
+          <div className={styles.searchBox}>
+            <input
+              type="text"
+              placeholder="Поиск..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
+        )}
 
-        {!selectedItem ? (
+        {items.length === 0 ? (
+          <div className={styles.empty}>
+            Справочник пуст: позиции нужно завести в iiko или в админке
+          </div>
+        ) : !selectedItem ? (
           <div className={styles.itemsList}>
             {filteredItems.length === 0 ? (
               <div className={styles.empty}>Ничего не найдено</div>

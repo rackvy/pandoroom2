@@ -126,6 +126,7 @@ export interface QuickBookingResponse {
 export interface BookingFullDetails {
   id: string;
   status: string;
+  type: string;
   eventDate: string;
   clientId: string | null;
   clientName: string;
@@ -140,6 +141,26 @@ export interface BookingFullDetails {
   managerId: string | null;
   manager: { id: string; fullName: string; email: string } | null;
   branch: { id: string; name: string };
+  googleEventId: string | null;
+  iikoOrderId: string | null;
+  iikoOrderStatus: string | null;
+  /** Запрошено в заявке — подтверждение переносит это в занятость. */
+  tableSlots: Array<{
+    id: string;
+    tableId: string | null;
+    tableTitle: string | null;
+    zoneName: string | null;
+    title: string;
+    startTime: string;
+    endTime: string;
+  }>;
+  questSlots: Array<{
+    id: string;
+    questId: string | null;
+    questName: string | null;
+    title: string;
+    startTime: string;
+  }>;
   tableReservations: Array<{
     id: string;
     tableId: string;
@@ -162,13 +183,53 @@ export interface BookingFullDetails {
     extraPlayers: number;
     extraPlayersPrice: number;
   }>;
-  extraSlots: any[];
-  bookingCakes: any[];
-  decorationItems: any[];
-  foodItems: any[];
-  googleEventId: string | null;
-  iikoOrderId: string | null;
-  iikoOrderStatus: string | null;
+  vrReservations: Array<{
+    id: string;
+    hallId: string;
+    hallName: string | null;
+    startTime: string;
+    endTime: string;
+    type: string;
+    status: string;
+    title: string | null;
+    guestsCount: number;
+  }>;
+  extraSlots: Array<{
+    id: string;
+    type: string;
+    title: string;
+    priceRub: number;
+    startTime: string | null;
+    endTime: string | null;
+    comment: string | null;
+  }>;
+  bookingCakes: Array<{
+    id: string;
+    cakeId: string | null;
+    cakeName: string;
+    weightKg: number | null;
+    inscription: string | null;
+    priceRub: number;
+    comment: string | null;
+  }>;
+  decorationItems: Array<{
+    id: string;
+    decorationId: string | null;
+    decorationName: string;
+    quantity: number;
+    priceRub: number;
+    comment: string | null;
+  }>;
+  foodItems: Array<{
+    id: string;
+    menuItemId: string | null;
+    menuItemName: string;
+    quantity: number;
+    priceRub: number;
+    servingTime: string | null;
+    department: string | null;
+    comment: string | null;
+  }>;
 }
 
 export interface UpdateBookingBasicRequest {
@@ -176,6 +237,10 @@ export interface UpdateBookingBasicRequest {
   clientPhone?: string;
   depositRub?: number;
   status?: string;
+  birthdayPersonName?: string;
+  birthdayPersonAge?: number | null;
+  guestsKids?: number | null;
+  guestsAdults?: number | null;
   commentClient?: string;
   commentInternal?: string;
   managerId?: string;
