@@ -295,16 +295,21 @@ export class PublicService {
     startTime.setHours(hours, minutes, 0, 0);
     const endTime = new Date(startTime.getTime() + quest.durationMinutes * 60000);
 
-    // 4. Check for existing reservation at this time
-    const existingReservation = await this.prisma.questReservation.findFirst({
+    // 4. Check for existing reservation overlapping this quest run
+    const sameDayReservations = await this.prisma.questReservation.findMany({
       where: {
         questId: data.questId,
         eventDate,
-        startTime,
         status: { not: 'canceled' },
       },
     });
-    if (existingReservation) {
+    const toMinutes = (time: Date) => time.getHours() * 60 + time.getMinutes();
+    const requestedStart = hours * 60 + minutes;
+    const requestedEnd = requestedStart + quest.durationMinutes;
+    const conflict = sameDayReservations.find(
+      r => toMinutes(r.startTime) < requestedEnd && toMinutes(r.endTime) > requestedStart,
+    );
+    if (conflict) {
       throw new BadRequestException('Это время уже забронировано. Выберите другое.');
     }
 

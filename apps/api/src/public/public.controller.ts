@@ -3,7 +3,13 @@ import { PageKey } from '@prisma/client';
 import { PublicService, HolidayBookingRequest } from './public.service';
 import { Public } from '../common/decorators/public.decorator';
 import { QuestScheduleService } from '../quest-schedule/quest-schedule.service';
+import { ScheduleService } from '../schedule/schedule.service';
 import { WaitlistService } from '../waitlist/waitlist.service';
+import {
+  DEFAULT_PARTY_DURATION_MINUTES,
+  DAY_END_MINUTES,
+  partyEndHHMM,
+} from '../common/slot-time';
 
 @Controller('api/public')
 @Public()
@@ -11,8 +17,55 @@ export class PublicController {
   constructor(
     private publicService: PublicService,
     private questScheduleService: QuestScheduleService,
+    private scheduleService: ScheduleService,
     private waitlistService: WaitlistService,
   ) {}
+
+  /** Окно праздника: старт + длительность (по умолчанию 120 минут), конец — не позже полуночи. */
+  private partyWindow(date: string, time: string, durationMinutes?: string) {
+    if (!date || !time) throw new BadRequestException('Укажите дату и время');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new BadRequestException('Некорректная дата');
+    if (!/^([01]?\d|2[0-3]):[0-5]\d$/.test(time)) throw new BadRequestException('Некорректное время');
+    const duration = durationMinutes ? Number(durationMinutes) : DEFAULT_PARTY_DURATION_MINUTES;
+    if (!Number.isInteger(duration) || duration <= 0 || duration > DAY_END_MINUTES) {
+      throw new BadRequestException('Некорректная длительность');
+    }
+    return { date, startTime: time, endTime: partyEndHHMM(time, duration) };
+  }
+
+  // ==================== AVAILABILITY ====================
+
+  @Get('availability/tables')
+  getFreeTables(
+    @Query('date') date: string,
+    @Query('time') time: string,
+    @Query('branchId') branchId?: string,
+    @Query('durationMinutes') durationMinutes?: string,
+  ) {
+    const window = this.partyWindow(date, time, durationMinutes);
+    return this.scheduleService.getFreeTables(
+      branchId,
+      window.date,
+      window.startTime,
+      window.endTime,
+    );
+  }
+
+  @Get('availability/quests')
+  getFreeQuests(
+    @Query('date') date: string,
+    @Query('time') time: string,
+    @Query('branchId') branchId?: string,
+    @Query('durationMinutes') durationMinutes?: string,
+  ) {
+    const window = this.partyWindow(date, time, durationMinutes);
+    return this.questScheduleService.getFreeQuests(
+      branchId,
+      window.date,
+      window.startTime,
+      window.endTime,
+    );
+  }
 
   @Get('branches')
   findAllBranches() {
@@ -119,7 +172,9 @@ export class PublicController {
           questId: quest.questId,
           startTime: s.startTime,
           finalPrice: s.finalPrice,
-          isBooked: !!s.reservation,
+          // Пересечение с любой активной бронью — слот недоступен, даже если
+          // бронь началась не по сетке слотов (например, в 15:30 при слоте 15:00)
+          isBooked: !!s.reservation || !!s.conflict,
         })),
     }));
   }

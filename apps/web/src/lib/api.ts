@@ -1,5 +1,11 @@
 export const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/public'
 
+async function apiErrorMessage(res: Response): Promise<string> {
+  const detail = (await res.json().catch(() => null)) as { message?: string | string[] } | null
+  const message = Array.isArray(detail?.message) ? detail.message.join(', ') : detail?.message
+  return message || `API Error: ${res.status} ${res.statusText}`
+}
+
 export async function fetchApi(endpoint: string) {
   const res = await fetch(`${BASE_API_URL}${endpoint}`, {
     cache: 'no-store',
@@ -12,6 +18,14 @@ export async function fetchApi(endpoint: string) {
   return res.json()
 }
 
+export async function getApi<T>(endpoint: string): Promise<T> {
+  const res = await fetch(`${BASE_API_URL}${endpoint}`, { cache: 'no-store' })
+  if (!res.ok) {
+    throw new Error(await apiErrorMessage(res))
+  }
+  return res.json() as Promise<T>
+}
+
 export async function postApi<T>(endpoint: string, body: unknown): Promise<T> {
   const res = await fetch(`${BASE_API_URL}${endpoint}`, {
     method: 'POST',
@@ -20,12 +34,24 @@ export async function postApi<T>(endpoint: string, body: unknown): Promise<T> {
   })
 
   if (!res.ok) {
-    const detail = (await res.json().catch(() => null)) as { message?: string | string[] } | null
-    const message = Array.isArray(detail?.message) ? detail.message.join(', ') : detail?.message
-    throw new Error(message || `API Error: ${res.status} ${res.statusText}`)
+    throw new Error(await apiErrorMessage(res))
   }
 
   return res.json() as Promise<T>
+}
+
+export interface FreeQuest {
+  questId: string
+  questName: string
+  durationMinutes: number
+  minPlayers: number
+  maxPlayers: number
+  slotTimes: string[]
+}
+
+export interface PartyAvailability {
+  tables: TableZonePublic[]
+  quests: FreeQuest[]
 }
 
 export interface HolidayLeadRequest {

@@ -27,12 +27,39 @@ import {
   QuickTableBookingDto,
   QuickQuestBookingDto,
 } from './dto/quick-booking.dto';
+import { AvailabilityQueryDto } from './dto/availability-query.dto';
+import { QuestScheduleService } from '../quest-schedule/quest-schedule.service';
 
 @Controller('api/admin/schedule')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(EmployeeRole.ADMIN, EmployeeRole.MANAGER)
 export class ScheduleController {
-  constructor(private scheduleService: ScheduleService) {}
+  constructor(
+    private scheduleService: ScheduleService,
+    private questScheduleService: QuestScheduleService,
+  ) {}
+
+  // ==================== AVAILABILITY ====================
+
+  @Get('availability/tables')
+  getFreeTables(@Query() query: AvailabilityQueryDto) {
+    return this.scheduleService.getFreeTables(
+      query.branchId,
+      query.date,
+      query.startTime,
+      query.endTime,
+    );
+  }
+
+  @Get('availability/quests')
+  getFreeQuests(@Query() query: AvailabilityQueryDto) {
+    return this.questScheduleService.getFreeQuests(
+      query.branchId,
+      query.date,
+      query.startTime,
+      query.endTime,
+    );
+  }
 
   // ==================== TABLE SCHEDULE ====================
 

@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizePhone } from '../client-auth/phone';
+import { parseDateOnly } from '../common/slot-time';
 import { ReservationStatus, BookingStatus } from '@prisma/client';
 import { WaitlistService } from '../waitlist/waitlist.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -81,6 +82,76 @@ export class ScheduleService {
     });
 
     return { zones, tables, reservations: formattedReservations };
+  }
+
+  /**
+   * Свободные столы на интервал. Занятость считаем так же, как при создании
+   * брони: резервация перекрывает стол вместе с буфером уборки, отменённые не
+   * блокируют. Форма ответа совпадает с публичным каталогом столов, поэтому
+   * витрина может подменить список без изменений в разметке.
+   */
+  async getFreeTables(branchId: string | undefined, date: string, startTime: string, endTime: string) {
+    const eventDate = parseDateOnly(date);
+    const startMinutes = this.parseTime(startTime).totalMinutes;
+    const endMinutes = this.parseTime(endTime).totalMinutes;
+    if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes) || startMinutes >= endMinutes) {
+      throw new BadRequestException('Некорректный интервал времени');
+    }
+
+    const [zones, reservations] = await Promise.all([
+      this.prisma.tableZone.findMany({
+        where: { isActive: true, ...(branchId ? { branchId } : {}) },
+        orderBy: { sortOrder: 'asc' },
+        include: {
+          tables: {
+            where: { isActive: true, ...(branchId ? { branchId } : {}) },
+            orderBy: { sortOrder: 'asc' },
+            include: { image: true },
+          },
+        },
+      }),
+      this.prisma.tableReservation.findMany({
+        where: {
+          eventDate,
+          status: { not: ReservationStatus.canceled },
+          ...(branchId ? { branchId } : {}),
+        },
+      }),
+    ]);
+
+    const blocked = new Map<string, { start: number; blockedUntil: number }[]>();
+    for (const r of reservations) {
+      const list = blocked.get(r.tableId) ?? [];
+      list.push({
+        start: this.timeToMinutes(r.startTime),
+        blockedUntil: this.timeToMinutes(r.endTime) + r.cleaningBufferMinutes,
+      });
+      blocked.set(r.tableId, list);
+    }
+
+    return zones
+      .map((zone) => ({
+        id: zone.id,
+        branchId: zone.branchId,
+        key: zone.key,
+        name: zone.name,
+        recommendedMaxAge: zone.recommendedMaxAge,
+        tables: zone.tables
+          .filter(
+            (table) =>
+              !(blocked.get(table.id) ?? []).some(
+                (o) => startMinutes < o.blockedUntil && endMinutes > o.start,
+              ),
+          )
+          .map((table) => ({
+            id: table.id,
+            title: table.title,
+            capacity: table.capacity,
+            imageUrl: table.image?.url ?? null,
+            imageAlt: table.image?.altText ?? null,
+          })),
+      }))
+      .filter((zone) => zone.tables.length > 0);
   }
 
   async createTableReservation(dto: CreateTableReservationDto): Promise<TableReservationResponseDto> {

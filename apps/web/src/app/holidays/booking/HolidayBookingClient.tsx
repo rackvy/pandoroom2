@@ -8,6 +8,8 @@ import {
   IikoMenuItemPublic,
   HolidayLead,
   HolidayLeadRequest,
+  FreeQuest,
+  getApi,
   postApi,
 } from '@/lib/api'
 import { formatPhone, isPhoneComplete } from '@/lib/phone'
@@ -187,6 +189,11 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
   const [lead, setLead] = useState<HolidayLead | null>(null)
   const [showBreakdown, setShowBreakdown] = useState(false)
 
+  // ---- занятость на выбранную дату и время: null = ещё не проверяли, показываем весь каталог ----
+  const [freeTableIds, setFreeTableIds] = useState<Set<string> | null>(null)
+  const [freeQuestIds, setFreeQuestIds] = useState<Set<string> | null>(null)
+  const [availabilityFailed, setAvailabilityFailed] = useState(false)
+
   // ---- section 1: tables ----
   const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set())
 
@@ -260,9 +267,10 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
         (q) =>
           (genreFilter === 'all' || q.genre === genreFilter) &&
           (diffFilter === 'all' || q.difficulty === diffFilter) &&
-          (!actorsOnly || q.hasActors),
+          (!actorsOnly || q.hasActors) &&
+          (!freeQuestIds || freeQuestIds.has(q.id)),
       ),
-    [quests, genreFilter, diffFilter, actorsOnly],
+    [quests, genreFilter, diffFilter, actorsOnly, freeQuestIds],
   )
 
   const toggleInSet = (setter: (v: Set<string>) => void, current: Set<string>, id: string) => {
@@ -284,14 +292,33 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
   )
   const hiddenZonesCount = zones.length - visibleZones.length
 
+  // ---- плюс фильтр по занятости на выбранную дату и время ----
+  const shownZones = useMemo(
+    () =>
+      visibleZones
+        .map((zone) => ({
+          ...zone,
+          tables: freeTableIds ? zone.tables.filter((t) => freeTableIds.has(t.id)) : zone.tables,
+        }))
+        .filter((zone) => zone.tables.length > 0),
+    [visibleZones, freeTableIds],
+  )
+
   useEffect(() => {
-    if (hiddenZonesCount === 0) return
-    const visibleTableIds = new Set(visibleZones.flatMap((z) => z.tables.map((t) => t.id)))
+    const shownTableIds = new Set(shownZones.flatMap((z) => z.tables.map((t) => t.id)))
     setSelectedTables((prev) => {
-      const next = new Set(Array.from(prev).filter((id) => visibleTableIds.has(id)))
+      const next = new Set(Array.from(prev).filter((id) => shownTableIds.has(id)))
       return next.size === prev.size ? prev : next
     })
-  }, [visibleZones, hiddenZonesCount])
+  }, [shownZones])
+
+  useEffect(() => {
+    if (!freeQuestIds) return
+    setSelectedQuests((prev) => {
+      const next = new Set(Array.from(prev).filter((id) => freeQuestIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+  }, [freeQuestIds])
 
   const changeQty =
     (setter: React.Dispatch<React.SetStateAction<Record<string, number>>>) =>
@@ -358,9 +385,46 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
   const FOOD_LEVELS = ['Маловато еды', 'Впритык', 'Наесться от души']
   const meterFill = Math.min(100, Math.round((portionsPerGuest / 2.2) * 100))
 
-  const tablesCount = visibleZones.reduce((sum, z) => sum + z.tables.length, 0)
+  const tablesCount = shownZones.reduce((sum, z) => sum + z.tables.length, 0)
 
-  // Подсказка для поля «Дата»: сегодня+ — вычисляем после монтирования, чтобы не разъехалась гидрация
+  // ---- подписи к фильтру по занятости ----
+  const availabilityChecked = Boolean(freeTableIds) && Boolean(freeQuestIds)
+  const windowLabel = date && time ? `${formatDateRu(date)} в ${time}` : ''
+  const busyTablesCount = visibleZones.reduce((sum, z) => sum + z.tables.length, 0) - tablesCount
+
+  // Занятость спрашиваем только когда есть и дата, и время: без времени показываем весь каталог
+  useEffect(() => {
+    if (!date || !time) {
+      setFreeTableIds(null)
+      setFreeQuestIds(null)
+      setAvailabilityFailed(false)
+      return
+    }
+    let cancelled = false
+    const query = `?date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`
+    Promise.all([
+      getApi<TableZonePublic[]>(`/availability/tables${query}`),
+      getApi<FreeQuest[]>(`/availability/quests${query}`),
+    ])
+      .then(([tables, quests]) => {
+        if (cancelled) return
+        setFreeTableIds(new Set(tables.flatMap((z) => z.tables.map((t) => t.id))))
+        setFreeQuestIds(new Set(quests.map((q) => q.questId)))
+        setAvailabilityFailed(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        // Занятость не получена — показываем весь каталог и честно пишем об этом подсказку
+        setFreeTableIds(null)
+        setFreeQuestIds(null)
+        setAvailabilityFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [date, time])
+
+  // Подсказка для поля «Дата»: сегодня+ — вычисляем после монтирования, чтобы не разъехалась гидратация
   const [minDate, setMinDate] = useState('')
   useEffect(() => {
     const now = new Date()
@@ -631,9 +695,27 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                 .
               </p>
             )}
+            {availabilityFailed && (
+              <p className={styles.ageHint}>
+                Не удалось проверить занятость — показываем все столы, а свободные подтвердит менеджер.
+              </p>
+            )}
+            {availabilityChecked && tablesCount > 0 && busyTablesCount > 0 && (
+              <p className={styles.ageHint}>Показываем свободные столы на {windowLabel} — часть уже занята.</p>
+            )}
+            {availabilityChecked && tablesCount === 0 && (
+              <p className={styles.sectionNote}>
+                На {windowLabel} свободных столов не осталось. Попробуйте другое время начала или позвоните —
+                предложим варианты:{' '}
+                <a href="tel:+74232022696" className={styles.noticeLink}>
+                  8 (423) 202-26-96
+                </a>
+                .
+              </p>
+            )}
             {tablesCount > 0 && (
               <div className={styles.tableSlider} ref={tablesSliderRef}>
-                {visibleZones.flatMap((zone) =>
+                {shownZones.flatMap((zone) =>
                   zone.tables.map((table) => {
                     const active = selectedTables.has(table.id)
                     return (
@@ -758,6 +840,16 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                     </button>
                   ))}
                 </div>
+
+                {availabilityChecked && filteredQuests.length === 0 && (
+                  <p className={styles.sectionNote}>
+                    На {windowLabel} все квесты заняты — попробуйте другое время начала или позвоните,
+                    подскажем свободные окна.
+                  </p>
+                )}
+                {availabilityChecked && filteredQuests.length > 0 && (
+                  <p className={styles.sectionNote}>Показываем квесты, свободные на {windowLabel}.</p>
+                )}
 
                 <div className={styles.questGrid}>
                   {filteredQuests.slice(0, questsVisible).map((quest) => {

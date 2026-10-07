@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { hhmmToMinutes, parseDateOnly } from '../common/slot-time';
 
 interface CreateSlotDto {
   questId: string;
@@ -357,6 +358,17 @@ export class QuestScheduleService {
       return `${h}:${m}`;
     };
 
+    // Minutes from midnight for a @db.Time value (server runs in UTC, so local === stored)
+    const toMinutes = (time: Date) => time.getHours() * 60 + time.getMinutes();
+
+    const summarize = (r: (typeof questReservations)[0]) => ({
+      id: r.id,
+      bookingId: r.bookingId,
+      clientName: r.booking.clientName,
+      status: r.booking.status,
+      startTime: reservationTimeStr(r),
+    });
+
     // Track which reservations get matched to template slots
     const matchedReservationIds = new Set<string>();
 
@@ -372,6 +384,18 @@ export class QuestScheduleService {
           r => r.questId === quest.id && reservationTimeStr(r) === slot.startTime,
         );
 
+        // Бронь может начинаться не по сетке слотов (например, 15:30 при слоте
+        // 15:00) — тогда слот всё равно нельзя предлагать: квест в бою.
+        const slotStart = hhmmToMinutes(slot.startTime);
+        const slotEnd = slotStart + quest.durationMinutes;
+        const conflict = questReservations.find(
+          r =>
+            r.questId === quest.id &&
+            r.id !== reservation?.id &&
+            toMinutes(r.startTime) < slotEnd &&
+            toMinutes(r.endTime) > slotStart,
+        );
+
         if (reservation) {
           matchedReservationIds.add(reservation.id);
         }
@@ -384,12 +408,8 @@ export class QuestScheduleService {
           hasSpecialPrice: !!specialPrice,
           isAvailable,
           maintenanceNote: specialPrice?.maintenanceNote || null,
-          reservation: reservation ? {
-            id: reservation.id,
-            bookingId: reservation.bookingId,
-            clientName: reservation.booking.clientName,
-            status: reservation.booking.status,
-          } : null,
+          reservation: reservation ? summarize(reservation) : null,
+          conflict: conflict ? summarize(conflict) : null,
         };
       });
 
@@ -408,12 +428,8 @@ export class QuestScheduleService {
           hasSpecialPrice: false,
           isAvailable: true,
           maintenanceNote: null,
-          reservation: {
-            id: r.id,
-            bookingId: r.bookingId,
-            clientName: r.booking.clientName,
-            status: r.booking.status,
-          },
+          reservation: summarize(r),
+          conflict: null,
         });
       }
 
@@ -459,12 +475,8 @@ export class QuestScheduleService {
         hasSpecialPrice: false,
         isAvailable: true,
         maintenanceNote: null,
-        reservation: {
-          id: r.id,
-          bookingId: r.bookingId,
-          clientName: r.booking.clientName,
-          status: r.booking.status,
-        },
+        reservation: summarize(r),
+        conflict: null,
       }));
       slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
 
@@ -484,5 +496,79 @@ export class QuestScheduleService {
 
     // Filter out quests with no slots
     return questsWithSlots.filter(q => q.slots.length > 0);
+  }
+
+  /**
+   * Квесты, которые можно вписать в окно праздника: рабочий слот этого дня
+   * начинается внутри интервала и не пересекается с подтверждённой занятостью.
+   * Длительность слота — durationMinutes квеста, буфера уборки у квестов нет.
+   */
+  async getFreeQuests(
+    branchId: string | undefined,
+    date: string,
+    startTime: string,
+    endTime: string,
+  ) {
+    const eventDate = parseDateOnly(date);
+    const windowStart = hhmmToMinutes(startTime);
+    const windowEnd = hhmmToMinutes(endTime);
+    if (windowStart >= windowEnd) {
+      throw new BadRequestException('Некорректный интервал времени');
+    }
+    const dayOfWeek = eventDate.getDay() === 0 ? 6 : eventDate.getDay() - 1;
+
+    const [quests, reservations] = await Promise.all([
+      this.prisma.quest.findMany({
+        where: branchId ? { branchId } : undefined,
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        include: {
+          scheduleSlots: {
+            where: { dayOfWeek, isActive: true },
+            include: { specialPrices: { where: { specialDate: eventDate } } },
+          },
+        },
+      }),
+      this.prisma.questReservation.findMany({
+        where: {
+          eventDate,
+          status: { not: 'canceled' },
+          ...(branchId ? { branchId } : {}),
+        },
+      }),
+    ]);
+
+    const takenMinutes = (time: Date) => time.getHours() * 60 + time.getMinutes();
+    const taken = new Map<string, { start: number; end: number }[]>();
+    for (const r of reservations) {
+      const list = taken.get(r.questId) ?? [];
+      list.push({ start: takenMinutes(r.startTime), end: takenMinutes(r.endTime) });
+      taken.set(r.questId, list);
+    }
+
+    return quests.flatMap(quest => {
+      const slotTimes: string[] = [];
+      for (const slot of quest.scheduleSlots) {
+        const specialPrice = slot.specialPrices[0];
+        if (specialPrice && !specialPrice.isAvailable) continue;
+        const start = hhmmToMinutes(slot.startTime);
+        if (start < windowStart || start >= windowEnd) continue;
+        const end = start + quest.durationMinutes;
+        const conflicts = (taken.get(quest.id) ?? []).some(
+          o => start < o.end && end > o.start,
+        );
+        if (!conflicts) slotTimes.push(slot.startTime);
+      }
+      if (slotTimes.length === 0) return [];
+      return [
+        {
+          questId: quest.id,
+          questName: quest.name,
+          durationMinutes: quest.durationMinutes,
+          minPlayers: quest.minPlayers,
+          maxPlayers: quest.maxPlayers,
+          slotTimes,
+        },
+      ];
+    });
   }
 }
