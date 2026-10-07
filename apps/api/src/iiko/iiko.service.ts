@@ -71,7 +71,9 @@ export class IikoService {
       where: { isActive: true },
       orderBy: { category: 'asc' },
     });
-    if (items.length > 0) return items;
+    // Decimal сериализуется в JSON строкой, а цену читают как число:
+    // карточка брони сохраняет её снапшотом в BookingFoodItem.priceRub.
+    if (items.length > 0) return items.map((item) => ({ ...item, price: Number(item.price) }));
 
     // If no cache, return stub data
     return [

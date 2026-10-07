@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsIn, IsDateString } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsIn, IsDateString, IsUUID } from 'class-validator';
 
 export class CreateVRReservationDto {
   @IsString()
@@ -39,6 +39,11 @@ export class CreateVRReservationDto {
   @IsOptional()
   @IsString()
   clientPhone?: string;
+
+  /** Клиент из справочника: сервис отдаёт приоритет ему, а не поиску по телефону. */
+  @IsOptional()
+  @IsUUID()
+  clientId?: string;
 
   @IsOptional()
   @IsNumber()

@@ -66,6 +66,20 @@ export class BookingService {
         bookingCakes: { include: { cake: true } },
         decorationItems: { include: { decoration: true } },
         foodItems: true,
+        // Реестр показывает занятость, а не только состав заявки: без этих
+        // отношений колонки «время / зал / стол / квест / VR» пустые.
+        tableReservations: {
+          include: { table: { include: { zone: true } } },
+          orderBy: { startTime: 'asc' },
+        },
+        questReservations: {
+          include: { quest: true },
+          orderBy: { startTime: 'asc' },
+        },
+        vrReservations: {
+          include: { hall: true },
+          orderBy: { startTime: 'asc' },
+        },
       },
     });
   }
@@ -298,12 +312,21 @@ export class BookingService {
         manager: {
           select: { id: true, fullName: true, email: true },
         },
+        tableSlots: {
+          include: { table: { include: { zone: true } } },
+          orderBy: { startTime: 'asc' },
+        },
+        questSlots: { include: { quest: true }, orderBy: { startTime: 'asc' } },
         tableReservations: {
           include: { table: { include: { zone: true } } },
           orderBy: { startTime: 'asc' },
         },
         questReservations: {
           include: { quest: true },
+          orderBy: { startTime: 'asc' },
+        },
+        vrReservations: {
+          include: { hall: true },
           orderBy: { startTime: 'asc' },
         },
         extraSlots: true,
@@ -315,12 +338,15 @@ export class BookingService {
 
     if (!booking) throw new NotFoundException('Бронирование не найдено');
 
-    // Format times as HH:MM strings
-    const formatTime = (date: Date) => date.toTimeString().slice(0, 5);
+    // Колонки @db.Time хранят только время, поэтому читаем его в UTC: локальный
+    // часовой пояс процесса сдвинул бы все слоты на разницу с UTC.
+    const formatTime = (date: Date) => date.toISOString().slice(11, 16);
+    const optionalTime = (date: Date | null) => (date ? formatTime(date) : null);
 
     return {
       id: booking.id,
       status: booking.status,
+      type: booking.type,
       eventDate: booking.eventDate.toISOString().split('T')[0],
       clientId: booking.clientId,
       clientName: booking.clientName,
@@ -335,6 +361,26 @@ export class BookingService {
       managerId: booking.managerId,
       manager: booking.manager,
       branch: booking.branch,
+      googleEventId: booking.googleEventId,
+      iikoOrderId: booking.iikoOrderId,
+      iikoOrderStatus: booking.iikoOrderStatus,
+      // Запрошенный состав заявки: подтверждение переносит его в занятость.
+      tableSlots: booking.tableSlots.map((slot) => ({
+        id: slot.id,
+        tableId: slot.tableId,
+        tableTitle: slot.table?.title ?? null,
+        zoneName: slot.table?.zone?.name ?? null,
+        title: slot.title,
+        startTime: formatTime(slot.startTime),
+        endTime: formatTime(slot.endTime),
+      })),
+      questSlots: booking.questSlots.map((slot) => ({
+        id: slot.id,
+        questId: slot.questId,
+        questName: slot.quest?.name ?? null,
+        title: slot.title,
+        startTime: formatTime(slot.startTime),
+      })),
       tableReservations: booking.tableReservations.map(r => ({
         id: r.id,
         tableId: r.tableId,
@@ -357,10 +403,53 @@ export class BookingService {
         extraPlayers: r.extraPlayers,
         extraPlayersPrice: r.extraPlayersPrice,
       })),
-      extraSlots: booking.extraSlots,
-      bookingCakes: booking.bookingCakes,
-      decorationItems: booking.decorationItems,
-      foodItems: booking.foodItems,
+      vrReservations: booking.vrReservations.map((r) => ({
+        id: r.id,
+        hallId: r.hallId,
+        hallName: r.hall?.name ?? null,
+        startTime: formatTime(r.startTime),
+        endTime: formatTime(r.endTime),
+        type: r.type,
+        status: r.status,
+        title: r.title,
+        guestsCount: r.guestsCount,
+      })),
+      extraSlots: booking.extraSlots.map((slot) => ({
+        id: slot.id,
+        type: slot.type,
+        title: slot.title,
+        priceRub: slot.priceRub,
+        startTime: optionalTime(slot.startTime),
+        endTime: optionalTime(slot.endTime),
+        comment: slot.comment,
+      })),
+      bookingCakes: booking.bookingCakes.map((item) => ({
+        id: item.id,
+        cakeId: item.cakeId,
+        cakeName: item.cake?.name ?? item.title,
+        weightKg: item.cake ? Math.round(item.cake.weightGrams / 100) / 10 : null,
+        inscription: item.inscription,
+        priceRub: item.priceRub,
+        comment: item.comment,
+      })),
+      decorationItems: booking.decorationItems.map((item) => ({
+        id: item.id,
+        decorationId: item.decorationId,
+        decorationName: item.decoration?.name ?? item.title,
+        quantity: item.qty,
+        priceRub: item.priceRub,
+        comment: item.comment,
+      })),
+      foodItems: booking.foodItems.map((item) => ({
+        id: item.id,
+        menuItemId: item.iikoItemId,
+        menuItemName: item.title,
+        quantity: item.qty,
+        priceRub: item.priceRub,
+        servingTime: optionalTime(item.serveAt),
+        department: item.department,
+        comment: item.comment,
+      })),
     };
   }
 
@@ -386,6 +475,13 @@ export class BookingService {
     }
 
     // Update booking
+    const optionalNumber = (value: unknown) => {
+      if (value === undefined) return undefined;
+      if (value === null || value === '') return null;
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? Math.trunc(parsed) : null;
+    };
+
     const updated = await this.prisma.booking.update({
       where: { id },
       data: {
@@ -394,6 +490,10 @@ export class BookingService {
         clientId: clientId,
         depositRub: data.depositRub,
         status: data.status,
+        birthdayPersonName: data.birthdayPersonName,
+        birthdayPersonAge: optionalNumber(data.birthdayPersonAge),
+        guestsKids: optionalNumber(data.guestsKids),
+        guestsAdults: optionalNumber(data.guestsAdults),
         commentClient: data.commentClient,
         commentInternal: data.commentInternal,
         managerId: data.managerId,
@@ -880,6 +980,7 @@ export class BookingService {
     const { BookingExtraType } = await import('@prisma/client');
     let type: typeof BookingExtraType.show_program | typeof BookingExtraType.pinata | typeof BookingExtraType.other = BookingExtraType.other;
     let title = 'Доп. услуга';
+    let catalogPrice: number | null = null;
     
     if (data.showProgramId) {
       type = BookingExtraType.show_program;
@@ -887,6 +988,7 @@ export class BookingService {
         where: { id: data.showProgramId },
       });
       title = show?.name || 'Шоу-программа';
+      catalogPrice = show?.priceRub ?? null;
     } else if (data.supplierId) {
       const supplier = await this.prisma.supplier.findUnique({
         where: { id: data.supplierId },
@@ -916,7 +1018,8 @@ export class BookingService {
         title,
         startTime,
         endTime,
-        priceRub: data.priceRub || 0,
+        // Цену берём из справочника, когда заявка пришла без неё
+        priceRub: data.priceRub ?? catalogPrice ?? 0,
         comment: data.comment || null,
       },
     });
@@ -942,7 +1045,7 @@ export class BookingService {
         cakeId: data.cakeId || null,
         title,
         inscription: data.inscription || null,
-        priceRub: data.priceRub || 0,
+        priceRub: data.priceRub ?? cake?.priceRub ?? 0,
         comment: data.comment || null,
       },
       include: { cake: true },
@@ -969,7 +1072,7 @@ export class BookingService {
         decorationId: data.decorationId || null,
         title,
         qty: data.quantity || data.qty || 1,
-        priceRub: data.priceRub || 0,
+        priceRub: data.priceRub ?? decoration?.priceRub ?? 0,
         comment: data.comment || null,
       },
       include: { decoration: true },
@@ -983,9 +1086,19 @@ export class BookingService {
 
   // ==================== FOOD ====================
   async addFoodItem(bookingId: string, data: any) {
-    // Title comes from frontend or use default
-    const title = data.title || data.menuItemName || 'Блюдо';
-    
+    const iikoItemId = data.iikoItemId || data.menuItemId || null;
+    // Выбор из каталога приходит только с iikoId позиции: название, цену и цех
+    // сохраняем снапшотом, чтобы строка осталась читаемой после обновления меню.
+    const catalogItem = iikoItemId
+      ? await this.prisma.iikoMenuItem.findFirst({
+          where: { OR: [{ iikoId: iikoItemId }, { id: iikoItemId }] },
+        })
+      : null;
+
+    const title = data.title || data.menuItemName || catalogItem?.name || 'Блюдо';
+    const priceRub = Number(data.priceRub ?? catalogItem?.price ?? 0) || 0;
+    const department = data.department || catalogItem?.department || null;
+
     // Parse serving time
     let serveAt: Date | null = null;
     if (data.servingTime || data.serveAt) {
@@ -999,10 +1112,12 @@ export class BookingService {
       data: {
         bookingId,
         title,
+        iikoItemId,
         qty: data.quantity || data.qty || 1,
         serveAt,
         serveMode: data.serveMode || null,
-        priceRub: data.priceRub || 0,
+        department,
+        priceRub,
         comment: data.comment || null,
       },
     });
