@@ -1,8 +1,72 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
+import { isValidPhone, normalizePhone } from '../client-auth/phone';
 import { ClientsService } from '../clients/clients.service';
+import {
+  DEFAULT_PARTY_DURATION_MINUTES,
+  addMinutesToSlotDate,
+  slotDateToHHMM,
+  slotDateToMinutes,
+  stringToSlotDate,
+} from '../common/slot-time';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+
+/** Сколько минут считаем отправку той же заявки повтором (двойной клик, «Назад» в браузере). */
+const LEAD_DEDUPE_WINDOW_MS = 10 * 60 * 1000;
+
+export interface HolidayBookingRequest {
+  name: string;
+  phone: string;
+  date: string;
+  time: string;
+  adults?: string | number;
+  children?: string | number;
+  birthdayName?: string;
+  birthdayAge?: string | number;
+  comment?: string;
+  tableIds?: string[];
+  questIds?: string[];
+  cakeIds?: string[];
+  showIds?: string[];
+  cakeDecorIds?: Record<string, number>;
+  decorIds?: Record<string, number>;
+  menuIds?: Record<string, number>;
+}
+
+function distinctIds(ids?: string[]): string[] {
+  return Array.from(new Set((ids || []).map((id) => String(id).trim()).filter(Boolean)));
+}
+
+function positiveQuantities(qty?: Record<string, number>): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [rawId, value] of Object.entries(qty || {})) {
+    const id = String(rawId).trim();
+    const count = Math.floor(Number(value) || 0);
+    if (id && count > 0) result[id] = count;
+  }
+  return result;
+}
+
+function toOptionalInt(value?: string | number): number | null {
+  const num = Math.floor(Number(value));
+  return Number.isFinite(num) && num >= 0 ? num : null;
+}
+
+function compositionKey(tableIds: string[], questIds: string[]): string {
+  return `${distinctIds(tableIds).sort().join(',')}|${distinctIds(questIds).sort().join(',')}`;
+}
+
+type CatalogItem = {
+  name: string;
+  price: string | number | { toNumber(): number } | null;
+  iikoId: string;
+  department: string | null;
+};
+
+function priceRub(item: CatalogItem): number {
+  return Math.round(convertDecimalToNumber(item.price) ?? 0);
+}
 
 // Convert Prisma Decimal (or string) to plain number for JSON serialization
 function convertDecimalToNumber(val: any): number | null {
@@ -319,6 +383,280 @@ export class PublicService {
       animatorPrice,
       totalPrice,
       clientName: booking.clientName,
+    };
+  }
+
+  /**
+   * Заявка на праздник с витрины. Состав сохраняется как запрошенный:
+   * TableReservation/QuestReservation появляются только после подтверждения
+   * менеджером в реестре, поэтому заявка не блокирует столы и квесты.
+   */
+  async createHolidayBooking(data: HolidayBookingRequest) {
+    const clientName = (data.name || '').trim();
+    const phone = normalizePhone(data.phone || '');
+    if (!clientName) throw new BadRequestException('Укажите имя');
+    if (!isValidPhone(phone)) throw new BadRequestException('Укажите корректный номер телефона');
+    if (!data.date || !data.time) throw new BadRequestException('Укажите дату и время праздника');
+
+    const eventDate = new Date(data.date);
+    if (Number.isNaN(eventDate.getTime())) throw new BadRequestException('Некорректная дата');
+    eventDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (eventDate.getTime() < today.getTime()) {
+      throw new BadRequestException('Эта дата уже прошла — выберите будущий день');
+    }
+
+    let startTime: Date;
+    try {
+      startTime = stringToSlotDate(data.time);
+    } catch {
+      throw new BadRequestException('Некорректное время, нужен формат ЧЧ:ММ');
+    }
+    const endTime = addMinutesToSlotDate(startTime, DEFAULT_PARTY_DURATION_MINUTES);
+
+    const tableIds = distinctIds(data.tableIds);
+    const questIds = distinctIds(data.questIds);
+    const cakeIds = distinctIds(data.cakeIds);
+    const showIds = distinctIds(data.showIds);
+    const cakeDecorQty = positiveQuantities(data.cakeDecorIds);
+    const decorQty = positiveQuantities(data.decorIds);
+    const menuQty = positiveQuantities(data.menuIds);
+
+    const catalogIds = distinctIds([
+      ...cakeIds,
+      ...showIds,
+      ...Object.keys(cakeDecorQty),
+      ...Object.keys(decorQty),
+      ...Object.keys(menuQty),
+    ]);
+    const catalogItems = catalogIds.length
+      ? await this.prisma.iikoMenuItem.findMany({ where: { id: { in: catalogIds }, isActive: true } })
+      : [];
+    const catalog = new Map(catalogItems.map((item) => [item.id, item]));
+    if (catalogIds.some((id) => !catalog.has(id))) {
+      throw new BadRequestException('Часть выбранных позиций больше недоступна — обновите страницу и повторите');
+    }
+
+    const tables = tableIds.length
+      ? await this.prisma.table.findMany({
+          where: { id: { in: tableIds }, isActive: true },
+          include: { zone: true },
+        })
+      : [];
+    if (tables.length !== tableIds.length) {
+      throw new BadRequestException('Выбранные столы больше недоступны — обновите страницу и повторите');
+    }
+
+    const quests = questIds.length
+      ? await this.prisma.quest.findMany({ where: { id: { in: questIds } } })
+      : [];
+    if (quests.length !== questIds.length) {
+      throw new BadRequestException('Выбранные квесты больше недоступны — обновите страницу и повторите');
+    }
+
+    const fallbackZone = tables.length || quests.length
+      ? null
+      : await this.prisma.tableZone.findFirst({
+          where: { isActive: true },
+          orderBy: { sortOrder: 'asc' },
+          select: { branchId: true },
+        });
+    const branchId = tables[0]?.branchId ?? quests[0]?.branchId ?? fallbackZone?.branchId;
+    if (!branchId) throw new BadRequestException('Не удалось определить филиал — напишите нам по телефону');
+
+    const foreignQuest = quests.find((quest) => quest.branchId !== branchId);
+    if (foreignQuest) {
+      throw new BadRequestException(
+        `Квест «${foreignQuest.name}» в другом филиале — стол и квест нужно выбрать в одном филиале`,
+      );
+    }
+
+    // Двойная отправка (второй клик, «Назад» в браузере) не плодит повторную заявку
+    const requestedKey = compositionKey(tables.map((t) => t.id), quests.map((q) => q.id));
+    const recentLeads = await this.prisma.booking.findMany({
+      where: {
+        clientPhone: phone,
+        type: 'party',
+        status: 'draft',
+        eventDate,
+        createdAt: { gte: new Date(Date.now() - LEAD_DEDUPE_WINDOW_MS) },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      include: { tableSlots: true, questSlots: true },
+    });
+    for (const lead of recentLeads) {
+      const slots = lead.tableSlots.length ? lead.tableSlots : lead.questSlots;
+      const sameTime = slots.some((slot) => slotDateToMinutes(slot.startTime) === slotDateToMinutes(startTime));
+      const sameComposition =
+        compositionKey(
+          lead.tableSlots.map((slot) => slot.tableId).filter((id): id is string => Boolean(id)),
+          lead.questSlots.map((slot) => slot.questId).filter((id): id is string => Boolean(id)),
+        ) === requestedKey;
+      if (sameTime && sameComposition) {
+        return { ...(await this.buildLeadResponse(lead.id)), clientLinked: 'existing', duplicated: true };
+      }
+    }
+
+    const knownClient = await this.clientsService.findByPhone(phone);
+    const client = await this.clientsService.getOrCreate(phone, clientName);
+
+    // Как в детализированном счёте на сайте: считаем порции, а не строки
+    const sumQty = (map: Record<string, number>) => Object.values(map).reduce((sum, qty) => sum + qty, 0);
+    const positionsCount =
+      tables.length +
+      quests.length +
+      cakeIds.length +
+      showIds.length +
+      sumQty(cakeDecorQty) +
+      sumQty(decorQty) +
+      sumQty(menuQty);
+
+    const booking = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.booking.create({
+        data: {
+          branchId,
+          clientId: client.id,
+          eventDate,
+          clientName,
+          clientPhone: phone,
+          birthdayPersonName: (data.birthdayName || '').trim() || null,
+          birthdayPersonAge: toOptionalInt(data.birthdayAge),
+          guestsAdults: toOptionalInt(data.adults),
+          guestsKids: toOptionalInt(data.children),
+          commentClient: (data.comment || '').trim() || null,
+          status: 'draft',
+          type: 'party',
+          depositRub: 0,
+        },
+      });
+
+      for (const table of tables) {
+        await tx.bookingTableSlot.create({
+          data: {
+            bookingId: created.id,
+            tableId: table.id,
+            title: `${table.zone?.name || ''} ${table.title}`.trim(),
+            startTime,
+            endTime,
+          },
+        });
+      }
+
+      for (const quest of quests) {
+        await tx.bookingQuestSlot.create({
+          data: {
+            bookingId: created.id,
+            questId: quest.id,
+            title: quest.name,
+            startTime,
+          },
+        });
+      }
+
+      for (const id of cakeIds) {
+        const item = catalog.get(id)!;
+        await tx.bookingCake.create({
+          data: { bookingId: created.id, title: item.name, priceRub: priceRub(item) },
+        });
+      }
+
+      for (const [id, qty] of Object.entries(cakeDecorQty)) {
+        const item = catalog.get(id)!;
+        await tx.bookingDecorationItem.create({
+          data: { bookingId: created.id, title: `Оформление торта: ${item.name}`, qty, priceRub: priceRub(item) },
+        });
+      }
+
+      for (const [id, qty] of Object.entries(decorQty)) {
+        const item = catalog.get(id)!;
+        await tx.bookingDecorationItem.create({
+          data: { bookingId: created.id, title: item.name, qty, priceRub: priceRub(item) },
+        });
+      }
+
+      for (const id of showIds) {
+        const item = catalog.get(id)!;
+        await tx.bookingExtraSlot.create({
+          data: { bookingId: created.id, type: 'show_program', title: item.name, priceRub: priceRub(item) },
+        });
+      }
+
+      for (const [id, qty] of Object.entries(menuQty)) {
+        const item = catalog.get(id)!;
+        await tx.bookingFoodItem.create({
+          data: {
+            bookingId: created.id,
+            iikoItemId: item.iikoId,
+            title: item.name,
+            qty,
+            priceRub: priceRub(item),
+            department: item.department,
+          },
+        });
+      }
+
+      if (positionsCount > 0) {
+        await tx.chatMessage.create({
+          data: {
+            clientId: client.id,
+            bookingId: created.id,
+            sender: 'system',
+            text:
+              `Заявка на праздник принята: ${eventDate.toLocaleDateString('ru-RU')}, ${slotDateToHHMM(startTime)}. ` +
+              `Позиций: ${positionsCount}. Менеджер уточнит детали и стоимость в этом чате.`,
+          },
+        });
+      }
+
+      return created;
+    });
+
+    return {
+      ...(await this.buildLeadResponse(booking.id)),
+      clientLinked: knownClient ? 'existing' : ('created' as const),
+      duplicated: false,
+    };
+  }
+
+  /** Ответ витрине и реестру: что именно записано по заявке. */
+  private async buildLeadResponse(bookingId: string) {
+    const lead = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        branch: true,
+        tableSlots: true,
+        questSlots: true,
+        bookingCakes: true,
+        decorationItems: true,
+        extraSlots: true,
+        foodItems: true,
+      },
+    });
+    if (!lead) throw new NotFoundException('Заявка не найдена');
+
+    const timeSlot = lead.tableSlots[0] ?? lead.questSlots[0];
+    const catalogPositions =
+      lead.bookingCakes.length +
+      lead.decorationItems.reduce((sum, item) => sum + item.qty, 0) +
+      lead.extraSlots.length +
+      lead.foodItems.reduce((sum, item) => sum + item.qty, 0);
+
+    return {
+      id: lead.id,
+      status: lead.status,
+      type: lead.type,
+      date: lead.eventDate,
+      time: timeSlot ? slotDateToHHMM(timeSlot.startTime) : '',
+      durationMinutes: DEFAULT_PARTY_DURATION_MINUTES,
+      branchName: lead.branch?.name ?? '',
+      positions: lead.tableSlots.length + lead.questSlots.length + catalogPositions,
+      totalRub:
+        lead.bookingCakes.reduce((sum, item) => sum + item.priceRub, 0) +
+        lead.decorationItems.reduce((sum, item) => sum + item.priceRub * item.qty, 0) +
+        lead.extraSlots.reduce((sum, item) => sum + item.priceRub, 0) +
+        lead.foodItems.reduce((sum, item) => sum + item.priceRub * item.qty, 0),
     };
   }
 

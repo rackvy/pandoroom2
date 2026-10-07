@@ -328,6 +328,7 @@ export class BookingService {
     return this.prisma.bookingTableSlot.create({
       data: {
         bookingId,
+        tableId: table?.id ?? null,
         title,
         startTime,
         endTime,

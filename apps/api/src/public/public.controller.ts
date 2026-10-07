@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Param, Query, BadRequestException } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
-import { PublicService } from './public.service';
+import { PublicService, HolidayBookingRequest } from './public.service';
 import { Public } from '../common/decorators/public.decorator';
 import { QuestScheduleService } from '../quest-schedule/quest-schedule.service';
 import { WaitlistService } from '../waitlist/waitlist.service';
@@ -142,6 +142,12 @@ export class PublicController {
       throw new BadRequestException('Заполните все поля');
     }
     return this.publicService.createPublicBooking(body);
+  }
+
+  /** Заявка на праздник: состав сохраняется, занятость появляется после подтверждения менеджером. */
+  @Post('holiday-bookings')
+  createHolidayBooking(@Body() body: HolidayBookingRequest) {
+    return this.publicService.createHolidayBooking(body);
   }
 
   // ==================== PUBLIC WAITLIST ====================
