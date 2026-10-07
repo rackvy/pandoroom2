@@ -37,6 +37,15 @@ enum BookingStatus {
   confirmed
   canceled
   done
+  paid
+}
+
+enum BookingType {
+  party
+  quest
+  vr
+  hall
+  other
 }
 
 enum ReservationStatus {
@@ -492,6 +501,7 @@ model Booking {
   commentClient        String?       @db.Text
   commentInternal      String?       @db.Text
   status               BookingStatus @default(draft)
+  type                 BookingType   @default(party)
   managerId            String?
   depositRub           Int           @default(0)
   paymentMethod        PaymentMethod?
@@ -524,20 +534,26 @@ model Booking {
   @@index([eventDate])
   @@index([branchId])
   @@index([status])
+  @@index([type])
   @@index([clientId])
 }
 
 model BookingTableSlot {
   id        String   @id @default(uuid())
   bookingId String
+  // Ссылка на конкретный стол: presence позволяет подтвердить заявку и создать TableReservation.
+  // title остаётся снапшотом названия на момент выбора.
+  tableId   String?
   title     String
   startTime DateTime @db.Time
   endTime   DateTime @db.Time
   comment   String?  @db.Text
 
   booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  table     Table?   @relation(fields: [tableId], references: [id], onDelete: SetNull)
 
   @@index([bookingId])
+  @@index([tableId])
 }
 
 model BookingQuestSlot {
@@ -606,6 +622,8 @@ model BookingDecorationItem {
 model BookingFoodItem {
   id         String     @id @default(uuid())
   bookingId  String
+  // iikoId позиции из каталога iiko (внешний id, не UUID нашей таблицы). title/priceRub — снапшот.
+  iikoItemId String?
   title      String
   qty        Int        @default(1)
   serveAt    DateTime?  @db.Time
@@ -653,6 +671,7 @@ model Table {
   zone          TableZone          @relation(fields: [zoneId], references: [id], onDelete: Cascade)
   image         Media?             @relation("TableImage", fields: [imageId], references: [id], onDelete: SetNull)
   reservations  TableReservation[]
+  requestedBy   BookingTableSlot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
