@@ -4,6 +4,7 @@ import PrivateRoute from './components/PrivateRoute'
 import LoginPage from './pages/LoginPage'
 import Layout from './components/Layout'
 import RegistryPage from './pages/RegistryPage'
+import RegistryNewPage from './pages/RegistryNewPage'
 import BookingEditPage from './pages/BookingEditPage'
 import TablesSchedulePage from './pages/schedule/TablesSchedulePage'
 import QuestsSchedulePage from './pages/schedule/QuestsSchedulePage'
@@ -69,6 +70,7 @@ function AppRoutes() {
       >
         <Route index element={<Navigate to="/registry" replace />} />
         <Route path="registry" element={<RegistryPage />} />
+        <Route path="registry/new" element={<RegistryNewPage />} />
         <Route path="registry/:id" element={<BookingEditPage />} />
         <Route path="table-grid" element={<TablesSchedulePage />} />
         <Route path="quest-grid" element={<QuestsSchedulePage />} />

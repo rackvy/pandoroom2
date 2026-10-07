@@ -1,0 +1,240 @@
+.container {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a18;
+  margin: 12px 0 0;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.backBtn:hover {
+  color: #1a1a18;
+}
+
+.headerActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.branchSelect {
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+  min-width: 200px;
+}
+
+.section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.section h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a18;
+  margin: 0 0 16px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 180px;
+  flex: 1;
+  margin-bottom: 12px;
+}
+
+.row .field {
+  margin-bottom: 0;
+}
+
+.smallField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 110px;
+}
+
+.field label,
+.smallField label {
+  font-size: 12px;
+  color: #666;
+}
+
+.field input,
+.field select,
+.field textarea,
+.smallField input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  background: white;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.smallField input:focus {
+  outline: none;
+  border-color: #a0bf39;
+}
+
+.hint {
+  font-size: 13px;
+  color: #666;
+  flex: 2;
+  min-width: 220px;
+}
+
+.note {
+  font-size: 13px;
+  color: #777;
+  margin: 0 0 12px;
+}
+
+.zoneGroup {
+  margin-bottom: 16px;
+}
+
+.zoneTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.ageBadge {
+  font-size: 11px;
+  font-weight: 500;
+  color: #1d7a4f;
+  background: #e3f4ea;
+  border-radius: 10px;
+  padding: 2px 8px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip,
+.chipActive {
+  padding: 8px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chip {
+  background: white;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.chip:hover {
+  border-color: #a0bf39;
+}
+
+.chipActive {
+  background: #a0bf39;
+  border: 1px solid #a0bf39;
+  color: white;
+  font-weight: 500;
+}
+
+.summary {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+.summary li {
+  margin-bottom: 4px;
+}
+
+.footer {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-bottom: 40px;
+}
+
+.submitBtn {
+  padding: 12px 24px;
+  background: #a0bf39;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #8fa832;
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cancelBtn {
+  padding: 12px 20px;
+  background: white;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  color: #1a1a18;
+  border-color: #bbb;
+}
