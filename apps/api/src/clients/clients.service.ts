@@ -90,8 +90,23 @@ export class ClientsService {
   async findByPhone(rawPhone: string) {
     const phone = normalizePhone(rawPhone || '');
     if (!isValidPhone(phone)) return null;
-    return this.prisma.client.findUnique({
-      where: { phone },
+    return this.findAnyByPhone(phone);
+  }
+
+  /**
+   * Номера в базе записаны по-разному: «+7999…», «7999…», «8999…». Канон
+   * нормализует ввод, но старые карточки остаются в своём формате, поэтому
+   * после точного поиска добавляется совпадение по последним 10 цифрам —
+   * иначе заявка с тем же номером заводит второго клиента.
+   */
+  private async findAnyByPhone(phone: string) {
+    const exact = await this.prisma.client.findUnique({ where: { phone } });
+    if (exact) return exact;
+    if (phone.length < 10) return null;
+
+    return this.prisma.client.findFirst({
+      where: { phone: { endsWith: phone.slice(-10) } },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
@@ -102,9 +117,7 @@ export class ClientsService {
     }
 
     // Check if phone already exists
-    const existing = await this.prisma.client.findUnique({
-      where: { phone },
-    });
+    const existing = await this.findAnyByPhone(phone);
 
     if (existing) {
       throw new ConflictException('Клиент с таким телефоном уже существует');
@@ -129,9 +142,7 @@ export class ClientsService {
       if (!isValidPhone(phone)) {
         throw new BadRequestException('Некорректный номер телефона');
       }
-      const existing = await this.prisma.client.findUnique({
-        where: { phone },
-      });
+      const existing = await this.findAnyByPhone(phone);
 
       if (existing && existing.id !== id) {
         throw new ConflictException('Клиент с таким телефоном уже существует');
@@ -162,9 +173,7 @@ export class ClientsService {
     }
 
     const trimmedName = (name || '').trim();
-    const existing = await this.prisma.client.findUnique({
-      where: { phone },
-    });
+    const existing = await this.findAnyByPhone(phone);
 
     if (existing) {
       // Имя из новой заявки важнее сохранённого: гость мог указать другого ответственного
