@@ -12,6 +12,55 @@ export async function fetchApi(endpoint: string) {
   return res.json()
 }
 
+export async function postApi<T>(endpoint: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE_API_URL}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const detail = (await res.json().catch(() => null)) as { message?: string | string[] } | null
+    const message = Array.isArray(detail?.message) ? detail.message.join(', ') : detail?.message
+    throw new Error(message || `API Error: ${res.status} ${res.statusText}`)
+  }
+
+  return res.json() as Promise<T>
+}
+
+export interface HolidayLeadRequest {
+  name: string
+  phone: string
+  date: string
+  time: string
+  adults?: string
+  children?: string
+  birthdayName?: string
+  birthdayAge?: string
+  comment?: string
+  tableIds: string[]
+  questIds: string[]
+  cakeIds: string[]
+  showIds: string[]
+  cakeDecorIds: Record<string, number>
+  decorIds: Record<string, number>
+  menuIds: Record<string, number>
+}
+
+export interface HolidayLead {
+  id: string
+  status: string
+  type: string
+  date: string
+  time: string
+  durationMinutes: number
+  branchName: string
+  positions: number
+  totalRub: number
+  clientLinked: 'existing' | 'created'
+  duplicated: boolean
+}
+
 // Types
 export interface Quest {
   id: string

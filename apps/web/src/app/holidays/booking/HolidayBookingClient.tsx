@@ -1,8 +1,16 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import Image from 'next/image'
-import { Quest, TableZonePublic, IikoMenuItemPublic } from '@/lib/api'
+import {
+  Quest,
+  TableZonePublic,
+  IikoMenuItemPublic,
+  HolidayLead,
+  HolidayLeadRequest,
+  postApi,
+} from '@/lib/api'
+import { formatPhone, isPhoneComplete } from '@/lib/phone'
 import styles from './holiday-booking.module.css'
 
 interface Props {
@@ -35,6 +43,19 @@ const PAGE_SIZE = 4
 function formatPrice(price: number | null | undefined): string {
   if (price === null || price === undefined) return ''
   return `${String(Math.round(price)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} руб.`
+}
+
+function formatDateRu(iso: string): string {
+  const [year, month, day] = iso.slice(0, 10).split('-')
+  if (!year || !month || !day) return iso
+  return `${day}.${month}.${year}`
+}
+
+function slotEndTime(startTime: string, durationMinutes: number): string {
+  const [hours, minutes] = startTime.split(':').map(Number)
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return startTime
+  const end = (hours * 60 + minutes + durationMinutes) % (24 * 60)
+  return `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}`
 }
 
 function byCategory(menu: IikoMenuItemPublic[], categories: string[]): IikoMenuItemPublic[] {
@@ -161,7 +182,9 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
   const [birthdayName, setBirthdayName] = useState('')
   const [birthdayAge, setBirthdayAge] = useState('')
   const [comment, setComment] = useState('')
-  const [showNotice, setShowNotice] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [lead, setLead] = useState<HolidayLead | null>(null)
   const [showBreakdown, setShowBreakdown] = useState(false)
 
   // ---- section 1: tables ----
@@ -337,6 +360,58 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
 
   const tablesCount = visibleZones.reduce((sum, z) => sum + z.tables.length, 0)
 
+  // Подсказка для поля «Дата»: сегодня+ — вычисляем после монтирования, чтобы не разъехалась гидрация
+  const [minDate, setMinDate] = useState('')
+  useEffect(() => {
+    const now = new Date()
+    setMinDate(
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
+    )
+  }, [])
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (submitting) return
+
+    if (!name.trim()) return setSubmitError('Напишите, как к вам обращаться')
+    if (!isPhoneComplete(phone)) return setSubmitError('Укажите номер телефона полностью')
+    if (!date) return setSubmitError('Выберите дату праздника')
+    if (!time) return setSubmitError('Выберите время начала')
+
+    const cakeIds = Object.values(cakeChoice)
+    if (cakeOwn && ownCakeFee && !cakeIds.includes(ownCakeFee.id)) cakeIds.push(ownCakeFee.id)
+
+    const payload: HolidayLeadRequest = {
+      name: name.trim(),
+      phone,
+      date,
+      time,
+      adults,
+      children,
+      birthdayName: birthdayName.trim(),
+      birthdayAge,
+      comment: comment.trim(),
+      tableIds: Array.from(selectedTables),
+      questIds: Array.from(selectedQuests),
+      cakeIds,
+      showIds: Array.from(selectedShows),
+      cakeDecorIds: cakeDecorQty,
+      decorIds: decorQty,
+      menuIds: menuQty,
+    }
+
+    setSubmitting(true)
+    setSubmitError('')
+    setLead(null)
+    try {
+      setLead(await postApi<HolidayLead>('/holiday-bookings', payload))
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Не удалось отправить заявку')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
     <main className={styles.page}>
       {/* ==================== HERO + TOP FORM ==================== */}
@@ -350,7 +425,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
             <span className={styles.heroTitlePlain}>в Pandoroom прямо сейчас</span>
           </h1>
 
-          <div className={styles.heroGrid}>
+          <form className={styles.heroGrid} onSubmit={handleSubmit}>
             <div className={styles.heroForm}>
               <h2 className={styles.formTitle}>Общая информация</h2>
               <div className={styles.formRow}>
@@ -361,6 +436,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Елена Петровна"
+                    autoComplete="name"
                   />
                 </label>
                 <label className={styles.field}>
@@ -369,8 +445,10 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                     className={styles.input}
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+7 984 123 54 68"
+                    onChange={(e) => setPhone(formatPhone(e.target.value))}
+                    placeholder="+7 (984) 123-54-68"
+                    autoComplete="tel"
+                    inputMode="tel"
                   />
                 </label>
               </div>
@@ -382,6 +460,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
+                    min={minDate}
                   />
                 </label>
                 <label className={styles.field}>
@@ -453,8 +532,8 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
               <p className={styles.heroNote}>
                 Бронирование мероприятия осуществляется только лицами старше 18 лет
               </p>
-              <button type="button" className={styles.submitBtn} onClick={() => setShowNotice(true)}>
-                Забронировать
+              <button type="submit" className={styles.submitBtn} disabled={submitting}>
+                {submitting ? 'Отправляем…' : 'Забронировать'}
               </button>
               <p className={styles.heroNote}>
                 Бронирование праздника осуществляется поэтапно. Без заполнения предыдущего этапа
@@ -493,17 +572,35 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                   </ul>
                 )}
               </div>
-              {showNotice && (
+              {lead && (
                 <div className={styles.notice}>
-                  Онлайн-бронирование скоро заработает! Пока оставьте заявку по телефону{' '}
-                  <a href="tel:+74232022696" className={styles.noticeLink}>
-                    8 (423) 202-26-96
-                  </a>{' '}
-                  — мы всё соберём за вас.
+                  <p className={styles.noticeTitle}>Заявка принята</p>
+                  Менеджер свяжется с вами в течение рабочего дня, уточнит детали и подтвердит
+                  бронирование.
+                  <ul className={styles.leadMeta}>
+                    <li>
+                      {formatDateRu(lead.date)} · {lead.time}–{slotEndTime(lead.time, lead.durationMinutes)}
+                    </li>
+                    <li>{lead.branchName}</li>
+                    <li>
+                      Позиций: {lead.positions} · Предварительно {formatPrice(lead.totalRub)}
+                    </li>
+                  </ul>
+                </div>
+              )}
+              {submitError && (
+                <div className={`${styles.notice} ${styles.noticeError}`}>
+                  {submitError}
+                  <p className={styles.noticeHint}>
+                    Можно оставить заявку по телефону{' '}
+                    <a href="tel:+74232022696" className={styles.noticeLink}>
+                      8 (423) 202-26-96
+                    </a>
+                  </p>
                 </div>
               )}
             </div>
-          </div>
+          </form>
         </div>
       </section>
 
