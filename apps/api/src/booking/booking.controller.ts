@@ -25,8 +25,13 @@ export class BookingController {
   constructor(private bookingService: BookingService) {}
 
   @Get()
-  findAll(@Query('branchId') branchId?: string, @Query('dateFrom') dateFrom?: string, @Query('dateTo') dateTo?: string) {
-    return this.bookingService.findAll({ branchId, dateFrom, dateTo });
+  findAll(
+    @Query('branchId') branchId?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('type') type?: string,
+  ) {
+    return this.bookingService.findAll({ branchId, dateFrom, dateTo, type });
   }
 
   @Get('by-date')
@@ -96,6 +101,18 @@ export class BookingController {
   @Delete('quest-reservations/:resId')
   removeQuestReservation(@Param('resId') id: string) {
     return this.bookingService.removeQuestReservation(id);
+  }
+
+  // ==================== TABLE RESERVATIONS ====================
+  @Post(':id/table-reservations')
+  addTableReservation(@Param('id') bookingId: string, @Body() data: any) {
+    return this.bookingService.addTableReservation(bookingId, data);
+  }
+
+  // ==================== CONFIRM LEAD ====================
+  @Post(':id/confirm')
+  confirm(@Param('id') bookingId: string) {
+    return this.bookingService.confirm(bookingId);
   }
 
   // ==================== EXTRA SLOTS ====================

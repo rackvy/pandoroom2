@@ -1,9 +1,22 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { ReservationStatus, BookingType } from '@prisma/client';
 import { normalizePhone } from '../client-auth/phone';
+import {
+  DEFAULT_PARTY_DURATION_MINUTES,
+  DAY_END_MINUTES,
+  addMinutesToSlotDate,
+  endMinutesOfDay,
+  slotDateToHHMM,
+  slotDateToMinutes,
+  stringToSlotDate,
+} from '../common/slot-time';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClientsService } from '../clients/clients.service';
 import { WaitlistService } from '../waitlist/waitlist.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { CreateBookingDto } from './dto/create-booking.dto';
+
+const BOOKING_TYPES = Object.values(BookingType);
 
 @Injectable()
 export class BookingService {
@@ -16,13 +29,19 @@ export class BookingService {
     private notifications: NotificationsService,
   ) {}
 
-  async findAll(filters?: { branchId?: string; dateFrom?: string; dateTo?: string }) {
+  async findAll(filters?: { branchId?: string; dateFrom?: string; dateTo?: string; type?: string }) {
     const where: any = {};
-    
+
     if (filters?.branchId) {
       where.branchId = filters.branchId;
     }
-    
+
+    if (filters?.type) {
+      if (!BOOKING_TYPES.includes(filters.type as BookingType)) {
+        throw new BadRequestException(`Неизвестный тип брони: ${filters.type}`);
+      }
+      where.type = filters.type;
+    }
     if (filters?.dateFrom || filters?.dateTo) {
       where.eventDate = {};
       if (filters.dateFrom) {
@@ -113,32 +132,136 @@ export class BookingService {
     });
   }
 
-  async create(data: any) {
-    // Link client: explicit clientId wins, otherwise get-or-create by phone
-    let clientId: string | null = null;
-    if (data.clientId) {
-      clientId = data.clientId;
-    } else if (data.clientPhone && data.clientName) {
-      const client = await this.clientsService.getOrCreate(
-        data.clientPhone,
-        data.clientName,
-      );
+  async create(data: CreateBookingDto) {
+    const eventDate = new Date(data.eventDate);
+    if (Number.isNaN(eventDate.getTime())) throw new BadRequestException('Некорректная дата');
+    eventDate.setHours(0, 0, 0, 0);
+
+    const clientPhone = data.clientPhone ? normalizePhone(data.clientPhone) : '';
+    const clientName = (data.clientName || '').trim();
+
+    const tables = await this.resolveRequestedTables(data.tableIds, data.branchId);
+    const quests = await this.resolveRequestedQuests(data.questIds, data.branchId);
+    if ((tables.length || quests.length) && !data.startTime) {
+      throw new BadRequestException('Укажите время начала — по нему подобраны столы и квесты');
+    }
+
+    let clientId: string | null = data.clientId ?? null;
+    if (!clientId && clientPhone && clientName) {
+      const client = await this.clientsService.getOrCreate(clientPhone, clientName);
       clientId = client.id;
     }
 
-    const prismaData = {
-      ...data,
-      clientId,
-      clientPhone: data.clientPhone ? normalizePhone(data.clientPhone) : data.clientPhone,
-      eventDate: new Date(data.eventDate),
-    };
-    return this.prisma.booking.create({
-      data: prismaData,
+    let eventWindow: { startTime: Date; endTime: Date } | null = null;
+    if (data.startTime) {
+      try {
+        const startTime = stringToSlotDate(data.startTime);
+        eventWindow = {
+          startTime,
+          endTime: addMinutesToSlotDate(startTime, DEFAULT_PARTY_DURATION_MINUTES),
+        };
+      } catch {
+        throw new BadRequestException('Некорректное время, нужен формат ЧЧ:ММ');
+      }
+    }
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.create({
+        data: {
+          branchId: data.branchId,
+          clientId,
+          eventDate,
+          clientName,
+          clientPhone,
+          type: data.type ?? 'party',
+          status: data.status ?? 'draft',
+          depositRub: data.depositRub ?? 0,
+          paymentMethod: data.paymentMethod ?? null,
+          birthdayPersonName: (data.birthdayPersonName || '').trim() || null,
+          birthdayPersonAge: data.birthdayPersonAge ?? null,
+          guestsKids: data.guestsKids ?? null,
+          guestsAdults: data.guestsAdults ?? null,
+          commentClient: (data.commentClient || '').trim() || null,
+          commentInternal: (data.commentInternal || '').trim() || null,
+        },
+      });
+
+      if (eventWindow) {
+        for (const table of tables) {
+          await tx.bookingTableSlot.create({
+            data: {
+              bookingId: booking.id,
+              tableId: table.id,
+              title: `${table.zone?.name || ''} ${table.title}`.trim(),
+              startTime: eventWindow.startTime,
+              endTime: eventWindow.endTime,
+            },
+          });
+        }
+
+        for (const quest of quests) {
+          await tx.bookingQuestSlot.create({
+            data: {
+              bookingId: booking.id,
+              questId: quest.id,
+              title: quest.name,
+              startTime: eventWindow.startTime,
+            },
+          });
+        }
+      }
+
+      return booking;
+    });
+
+    return this.prisma.booking.findUnique({
+      where: { id: created.id },
       include: {
         branch: true,
         manager: { select: { id: true, fullName: true, email: true } },
+        tableSlots: true,
+        questSlots: { include: { quest: true } },
       },
     });
+  }
+
+  private async resolveRequestedTables(tableIds?: string[], branchId?: string) {
+    const ids = [...new Set((tableIds ?? []).filter(Boolean))];
+    if (!ids.length) return [];
+
+    const found = await this.prisma.table.findMany({
+      where: { id: { in: ids }, isActive: true },
+      include: { zone: true },
+    });
+    if (found.length !== ids.length) {
+      throw new BadRequestException('Часть выбранных столов больше недоступна — обновите список');
+    }
+
+    const foreign = found.find((table) => table.branchId !== branchId);
+    if (foreign) {
+      throw new BadRequestException('Стол выбран в другом филиале — бронь оформляется на один филиал');
+    }
+
+    return ids.map((id) => found.find((table) => table.id === id)!);
+  }
+
+  private async resolveRequestedQuests(questIds?: string[], branchId?: string) {
+    const ids = [...new Set((questIds ?? []).filter(Boolean))];
+    if (!ids.length) return [];
+
+    const found = await this.prisma.quest.findMany({ where: { id: { in: ids } } });
+    if (found.length !== ids.length) {
+      throw new BadRequestException('Часть выбранных квестов больше недоступна — обновите список');
+    }
+
+    const foreign = found.find((quest) => quest.branchId !== branchId);
+    if (foreign) {
+      throw new BadRequestException(
+        `Квест «${foreign.name}» в другом филиале — стол и квест нужно выбрать в одном филиале`,
+      );
+    }
+
+    return ids.map((id) => found.find((quest) => quest.id === id)!);
   }
 
   async update(id: string, data: any) {
@@ -464,6 +587,291 @@ export class BookingService {
     }
 
     return { message: 'Резервация квеста удалена' };
+  }
+
+  // ==================== TABLE RESERVATIONS ====================
+  /**
+   * Стол к уже созданной брони: занятость появляется сразу, с проверкой
+   * пересечений и буфера уборки — как в быстрой брони сетки столов.
+   */
+  async addTableReservation(
+    bookingId: string,
+    data: { tableId: string; startTime: string; endTime?: string; comment?: string },
+  ) {
+    const booking = await this.prisma.booking.findUnique({ where: { id: bookingId } });
+    if (!booking) throw new NotFoundException('Бронирование не найдено');
+
+    const table = await this.prisma.table.findUnique({
+      where: { id: data.tableId },
+      include: { zone: true },
+    });
+    if (!table) throw new NotFoundException('Стол не найден');
+
+    let startTime: Date;
+    let endTime: Date;
+    try {
+      startTime = stringToSlotDate(data.startTime);
+      endTime = data.endTime
+        ? stringToSlotDate(data.endTime)
+        : addMinutesToSlotDate(startTime, DEFAULT_PARTY_DURATION_MINUTES);
+    } catch {
+      throw new BadRequestException('Некорректное время, нужен формат ЧЧ:ММ');
+    }
+    if (data.endTime && slotDateToMinutes(endTime) < slotDateToMinutes(startTime)) {
+      throw new BadRequestException('Время окончания должно быть позже начала');
+    }
+
+    const eventDate = new Date(booking.eventDate);
+    eventDate.setHours(0, 0, 0, 0);
+
+    const conflicts = await this.tableConflictMessages(eventDate, [
+      {
+        tableId: table.id,
+        title: `${table.zone?.name || ''} ${table.title}`.trim(),
+        startMinutes: slotDateToMinutes(startTime),
+        endMinutes: endMinutesOfDay(endTime, startTime),
+      },
+    ]);
+    if (conflicts.length) throw new BadRequestException(conflicts.join('; '));
+
+    return this.prisma.tableReservation.create({
+      data: {
+        bookingId,
+        branchId: booking.branchId,
+        tableId: table.id,
+        eventDate,
+        startTime,
+        endTime,
+        title: `${table.zone?.name || ''} ${table.title}`.trim() || 'Стол',
+        comment: data.comment || null,
+        status: 'confirmed',
+      },
+      include: { table: { include: { zone: true } } },
+    });
+  }
+
+  // ==================== CONFIRM LEAD ====================
+  /**
+   * Подтверждение заявки: запрошенные столы и квесты становятся занятостью.
+   * Пересечения проверяются для всего состава заранее — при конфликте не
+   * создаётся ни одной записи, и менеджер видит, что именно занято.
+   */
+  async confirm(bookingId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        tableSlots: { where: { tableId: { not: null } } },
+        questSlots: { where: { questId: { not: null } }, include: { quest: true } },
+        tableReservations: true,
+        questReservations: true,
+      },
+    });
+    if (!booking) throw new NotFoundException('Бронирование не найдено');
+    if (booking.status === 'canceled') throw new BadRequestException('Отменённую бронь нельзя подтвердить');
+
+    const eventDate = new Date(booking.eventDate);
+    eventDate.setHours(0, 0, 0, 0);
+
+    const tableWindows = this.uniqueWindows(
+      booking.tableSlots
+        .filter(
+          (slot) =>
+            !booking.tableReservations.some(
+              (r) =>
+                r.tableId === slot.tableId &&
+                r.status !== 'canceled' &&
+                slotDateToMinutes(r.startTime) === slotDateToMinutes(slot.startTime),
+            ),
+        )
+        .map((slot) => ({
+          tableId: slot.tableId!,
+          title: slot.title,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          startMinutes: slotDateToMinutes(slot.startTime),
+          endMinutes: endMinutesOfDay(slot.endTime, slot.startTime),
+        })),
+      (item) => `${item.tableId}@${item.startMinutes}`,
+    );
+
+    const questWindows = this.uniqueWindows(
+      booking.questSlots
+        .filter(
+          (slot) =>
+            !booking.questReservations.some(
+              (r) =>
+                r.questId === slot.questId &&
+                r.status !== 'canceled' &&
+                slotDateToMinutes(r.startTime) === slotDateToMinutes(slot.startTime),
+            ),
+        )
+        .map((slot) => {
+          const duration = slot.quest?.durationMinutes ?? DEFAULT_PARTY_DURATION_MINUTES;
+          const startMinutes = slotDateToMinutes(slot.startTime);
+          return {
+            questId: slot.questId!,
+            branchId: slot.quest?.branchId ?? booking.branchId,
+            title: slot.title,
+            animatorName: slot.animatorName,
+            startTime: slot.startTime,
+            endTime: addMinutesToSlotDate(slot.startTime, duration),
+            startMinutes,
+            endMinutes: Math.min(DAY_END_MINUTES, startMinutes + duration),
+          };
+        }),
+      (item) => `${item.questId}@${item.startMinutes}`,
+    );
+
+    const conflicts = [
+      ...this.selfOverlapMessages(tableWindows, (item) => item.tableId),
+      ...this.selfOverlapMessages(questWindows, (item) => item.questId),
+      ...(await this.tableConflictMessages(eventDate, tableWindows)),
+      ...(await this.questConflictMessages(eventDate, questWindows)),
+    ];
+    if (conflicts.length) throw new BadRequestException(conflicts.join('; '));
+
+    return this.prisma.$transaction(async (tx) => {
+      for (const item of tableWindows) {
+        await tx.tableReservation.create({
+          data: {
+            bookingId,
+            branchId: booking.branchId,
+            tableId: item.tableId,
+            eventDate,
+            startTime: item.startTime,
+            endTime: item.endTime,
+            title: item.title || 'Стол',
+            status: 'confirmed',
+          },
+        });
+      }
+
+      for (const item of questWindows) {
+        await tx.questReservation.create({
+          data: {
+            bookingId,
+            clientId: booking.clientId,
+            branchId: item.branchId,
+            questId: item.questId,
+            eventDate,
+            startTime: item.startTime,
+            endTime: item.endTime,
+            title: item.title || 'Квест',
+            animatorName: item.animatorName,
+            status: 'confirmed',
+          },
+        });
+      }
+
+      return tx.booking.update({
+        where: { id: bookingId },
+        data: { status: 'confirmed' },
+        include: {
+          branch: true,
+          tableSlots: true,
+          questSlots: { include: { quest: true } },
+          tableReservations: { include: { table: { include: { zone: true } } }, orderBy: { startTime: 'asc' } },
+          questReservations: { include: { quest: true }, orderBy: { startTime: 'asc' } },
+        },
+      });
+    });
+  }
+
+  /** Убирает дубли: одна и та же позиция в заявке — это одно занятие. */
+  private uniqueWindows<T>(items: T[], key: (item: T) => string): T[] {
+    const byKey = new Map<string, T>();
+    for (const item of items) {
+      const windowKey = key(item);
+      if (!byKey.has(windowKey)) byKey.set(windowKey, item);
+    }
+    return [...byKey.values()];
+  }
+
+  /**
+   * Пересечения внутри самой заявки: в базе таких записей ещё нет, поэтому
+   * проверка по занятым слотам их не видит, а подтверждение создало бы два
+   * занятия на один стол или квест.
+   */
+  private selfOverlapMessages<T extends { title: string; startMinutes: number; endMinutes: number }>(
+    items: T[],
+    resourceId: (item: T) => string,
+  ): string[] {
+    const messages: string[] = [];
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const first = items[i];
+        const second = items[j];
+        if (resourceId(first) !== resourceId(second)) continue;
+        if (first.startMinutes < second.endMinutes && first.endMinutes > second.startMinutes) {
+          messages.push(`«${first.title}» в заявке повторяется в пересекающееся время — оставьте одно время`);
+        }
+      }
+    }
+    return messages;
+  }
+
+  private async tableConflictMessages(
+    eventDate: Date,
+    requested: { tableId: string; title: string; startMinutes: number; endMinutes: number }[],
+  ): Promise<string[]> {
+    if (!requested.length) return [];
+
+    const existing = await this.prisma.tableReservation.findMany({
+      where: {
+        tableId: { in: requested.map((item) => item.tableId) },
+        eventDate,
+        status: { not: ReservationStatus.canceled },
+      },
+    });
+
+    const messages: string[] = [];
+    for (const item of requested) {
+      const clash = existing.find(
+        (r) =>
+          r.tableId === item.tableId &&
+          item.startMinutes < endMinutesOfDay(r.endTime, r.startTime) + r.cleaningBufferMinutes &&
+          item.endMinutes > slotDateToMinutes(r.startTime),
+      );
+      if (clash) {
+        messages.push(
+          `Стол «${item.title}» занят с ${slotDateToHHMM(clash.startTime)} до ${slotDateToHHMM(clash.endTime)} — ` +
+            'выберите другое время или уберите стол из заявки',
+        );
+      }
+    }
+    return messages;
+  }
+
+  private async questConflictMessages(
+    eventDate: Date,
+    requested: { questId: string; title: string; startMinutes: number; endMinutes: number }[],
+  ): Promise<string[]> {
+    if (!requested.length) return [];
+
+    const existing = await this.prisma.questReservation.findMany({
+      where: {
+        questId: { in: requested.map((item) => item.questId) },
+        eventDate,
+        status: { not: ReservationStatus.canceled },
+      },
+    });
+
+    const messages: string[] = [];
+    for (const item of requested) {
+      const clash = existing.find(
+        (r) =>
+          r.questId === item.questId &&
+          item.startMinutes < endMinutesOfDay(r.endTime, r.startTime) &&
+          item.endMinutes > slotDateToMinutes(r.startTime),
+      );
+      if (clash) {
+        messages.push(
+          `Квест «${item.title}» занят с ${slotDateToHHMM(clash.startTime)} до ${slotDateToHHMM(clash.endTime)} — ` +
+            'выберите другое время или уберите квест из заявки',
+        );
+      }
+    }
+    return messages;
   }
 
   // ==================== EXTRA SLOTS ====================

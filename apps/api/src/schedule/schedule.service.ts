@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizePhone } from '../client-auth/phone';
-import { parseDateOnly } from '../common/slot-time';
+import { parseDateOnly, endMinutesOfDay } from '../common/slot-time';
 import { ReservationStatus, BookingStatus } from '@prisma/client';
 import { WaitlistService } from '../waitlist/waitlist.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -124,7 +124,7 @@ export class ScheduleService {
       const list = blocked.get(r.tableId) ?? [];
       list.push({
         start: this.timeToMinutes(r.startTime),
-        blockedUntil: this.timeToMinutes(r.endTime) + r.cleaningBufferMinutes,
+        blockedUntil: endMinutesOfDay(r.endTime, r.startTime) + r.cleaningBufferMinutes,
       });
       blocked.set(r.tableId, list);
     }
@@ -587,11 +587,11 @@ export class ScheduleService {
     });
 
     const newStart = this.timeToMinutes(startTime);
-    const newEnd = this.timeToMinutes(endTime);
+    const newEnd = endMinutesOfDay(endTime, startTime);
 
     for (const existing of existingReservations) {
       const existingStart = this.timeToMinutes(existing.startTime);
-      const existingEnd = this.timeToMinutes(existing.endTime);
+      const existingEnd = endMinutesOfDay(existing.endTime, existing.startTime);
       const existingBlockedUntil = existingEnd + existing.cleaningBufferMinutes;
 
       // Check if new reservation overlaps with [existingStart, existingBlockedUntil]
@@ -620,11 +620,11 @@ export class ScheduleService {
     });
 
     const newStart = this.timeToMinutes(startTime);
-    const newEnd = this.timeToMinutes(endTime);
+    const newEnd = endMinutesOfDay(endTime, startTime);
 
     for (const existing of existingReservations) {
       const existingStart = this.timeToMinutes(existing.startTime);
-      const existingEnd = this.timeToMinutes(existing.endTime);
+      const existingEnd = endMinutesOfDay(existing.endTime, existing.startTime);
 
       // Quests don't have cleaning buffer
       if (newStart < existingEnd && newEnd > existingStart) {

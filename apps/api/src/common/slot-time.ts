@@ -63,3 +63,15 @@ export function parseDateOnly(date: string): Date {
 export function partyEndHHMM(startTime: string, durationMinutes: number): string {
   return minutesToHHMM(Math.min(DAY_END_MINUTES, hhmmToMinutes(startTime) + durationMinutes));
 }
+
+/**
+ * Колонка `time` хранит только часть времени, поэтому занятие, ушедшее за
+ * полуночь, записывается с концом раньше начала (начало 23:00, конец 01:00).
+ * В пределах суток такой конец означает «до конца дня» — иначе стол с поздней
+ * бронью выглядел бы свободным в оставшийся вечер этого же дня.
+ */
+export function endMinutesOfDay(endTime: Date, startTime: Date): number {
+  const end = slotDateToMinutes(endTime);
+  const start = slotDateToMinutes(startTime);
+  return end <= start ? DAY_END_MINUTES : end;
+}
