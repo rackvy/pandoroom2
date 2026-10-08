@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { lkFetch, type ClientProfile, type ChatMessage } from '@/lib/lk-api'
+import { lkFetch, type ChatFeed, type ClientProfile, type ChatMessage } from '@/lib/lk-api'
 import styles from './page.module.css'
 
 type Tab = 'bookings' | 'quests' | 'chat' | 'photos' | 'bonuses' | 'passport' | 'profile'
@@ -34,13 +34,19 @@ function formatTime(timeStr: string) {
   return `${parts[0].padStart(2, '0')}:${parts[1].padStart(2, '0')}`
 }
 
+function chatPreviewText(msg: ChatMessage | null) {
+  if (!msg) return 'Написать сообщение'
+  if (msg.direction === 'INBOUND') return `Вы: ${msg.text}`
+  if (msg.direction === 'SYSTEM') return `🔔 ${msg.text}`
+  return msg.text
+}
+
 export default function DashboardPage() {
   const { client, isLoading: authLoading, logout, updateClient } = useAuth()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('bookings')
   const [profile, setProfile] = useState<ClientProfile | null>(null)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
-  const [bookingChats, setBookingChats] = useState<any[]>([])
+  const [lastChatMessage, setLastChatMessage] = useState<ChatMessage | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [isEditingName, setIsEditingName] = useState(false)
@@ -61,16 +67,16 @@ export default function DashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [profileData, messages, unread, bookingChatsData] = await Promise.all([
-        lkFetch('/profile'),
-        lkFetch('/chat').catch(() => []),
-        lkFetch('/chat/unread').catch(() => ({ unread: 0 })),
-        lkFetch('/chat/bookings').catch(() => []),
+      // Карточка чата берёт последнее сообщение из ленты: прежний GET /chat
+      // помечал всю переписку прочитанной, и счётчик гас ещё на главной.
+      const [profileData, feed, unread] = await Promise.all([
+        lkFetch<ClientProfile>('/profile'),
+        lkFetch<ChatFeed>('/chat/feed?limit=1').catch(() => ({ messages: [], nextCursor: null })),
+        lkFetch<{ unread: number }>('/chat/unread').catch(() => ({ unread: 0 })),
       ])
       setProfile(profileData)
-      setChatMessages(messages)
+      setLastChatMessage(feed.messages[feed.messages.length - 1] ?? null)
       setUnreadCount(unread.unread)
-      setBookingChats(bookingChatsData)
     } catch (err) {
       console.error('Failed to load ЛК data:', err)
     } finally {
@@ -89,7 +95,6 @@ export default function DashboardPage() {
   const bookings = profile?.bookings || []
   const questReservations = profile?.questReservations || []
   const vrReservations = profile?.vrReservations || []
-  const lastMessage = chatMessages.length > 0 ? chatMessages[chatMessages.length - 1] : null
 
   const startEditName = () => {
     setEditName(client.name)
@@ -109,7 +114,7 @@ export default function DashboardPage() {
     }
     setSavingName(true)
     try {
-      const updated = await lkFetch('/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: trimmed }) })
+      const updated = await lkFetch<{ name: string }>('/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: trimmed }) })
       updateClient({ name: updated.name })
       setIsEditingName(false)
     } catch (err) {
@@ -186,7 +191,7 @@ export default function DashboardPage() {
                         className={styles.cardChatBtn}
                         onClick={(e) => {
                           e.stopPropagation()
-                          router.push(`/lk/chat?bookingId=${booking.id}`)
+                          router.push('/lk/chat')
                         }}
                       >
                         💬 Чат
@@ -262,54 +267,19 @@ export default function DashboardPage() {
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Чат</h2>
 
-            {/* General chat */}
             <div
               className={styles.chatPreview}
               onClick={() => router.push('/lk/chat')}
             >
               <div className={styles.chatIcon}>💬</div>
               <div className={styles.chatInfo}>
-                <p className={styles.chatTitle}>Общий чат с Pandoroom</p>
-                <p className={styles.chatLastMessage}>
-                  {lastMessage ? lastMessage.text : 'Написать общий вопрос'}
-                </p>
+                <p className={styles.chatTitle}>Переписка с Pandoroom</p>
+                <p className={styles.chatLastMessage}>{chatPreviewText(lastChatMessage)}</p>
               </div>
               {unreadCount > 0 && (
                 <span className={styles.chatBadge}>{unreadCount}</span>
               )}
             </div>
-
-            {/* Per-booking chats */}
-            {bookingChats.length > 0 && (
-              <div className={styles.bookingChatsList}>
-                <h3 className={styles.bookingChatsTitle}>Чаты по бронированиям</h3>
-                {bookingChats.map((item: any) => (
-                  <div
-                    key={item.booking.id}
-                    className={styles.bookingChatItem}
-                    onClick={() => router.push(`/lk/chat?bookingId=${item.booking.id}`)}
-                  >
-                    <div className={styles.bookingChatInfo}>
-                      <p className={styles.bookingChatName}>
-                        {item.booking.clientName}
-                      </p>
-                      <p className={styles.bookingChatDate}>
-                        {new Date(item.booking.eventDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
-                      </p>
-                      {item.lastMessage && (
-                        <p className={styles.bookingChatPreview}>
-                          {item.lastMessage.sender === 'client' ? 'Вы: ' : item.lastMessage.sender === 'system' ? '🔔 ' : ''}
-                          {item.lastMessage.text}
-                        </p>
-                      )}
-                    </div>
-                    {item.unreadCount > 0 && (
-                      <span className={styles.chatBadge}>{item.unreadCount}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 

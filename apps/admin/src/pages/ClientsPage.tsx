@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getClients, deleteClient, Client } from '../api/clients';
+import PhoneWithChannels from '../components/shared/PhoneWithChannels';
 import { confirm } from '../components/ui/ConfirmDialog';
 import { toast } from '../components/ui/Toast';
 import styles from './ClientsPage.module.css';
@@ -62,15 +63,6 @@ export default function ClientsPage() {
     }
   };
 
-  const formatPhone = (phone: string) => {
-    // Format: +7 (999) 123-45-67
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 11 && cleaned.startsWith('7')) {
-      return `+7 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7, 9)}-${cleaned.slice(9, 11)}`;
-    }
-    return phone;
-  };
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -121,7 +113,9 @@ export default function ClientsPage() {
                     className={styles.row}
                   >
                     <td className={styles.nameCell}>{client.name}</td>
-                    <td>{formatPhone(client.phone)}</td>
+                    <td>
+                      <PhoneWithChannels clientId={client.id} phone={client.phone} />
+                    </td>
                     <td>{client.email || '—'}</td>
                     <td>{client._count?.bookings || 0}</td>
                     <td>{client._count?.questReservations || 0}</td>

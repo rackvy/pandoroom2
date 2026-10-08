@@ -47,8 +47,8 @@ export default function LoginPage() {
 
   // Какие каналы доставки реально настроены на сервере
   useEffect(() => {
-    lkFetch('/auth/channels')
-      .then((data: { channels?: Channel[] }) => {
+    lkFetch<{ channels?: Channel[] }>('/auth/channels')
+      .then((data) => {
         const available = data?.channels || []
         if (!available.length) return
         setChannels(available)
@@ -87,7 +87,7 @@ export default function LoginPage() {
     setError('')
     setSending(true)
     try {
-      const res = await lkFetch('/auth/send-code', {
+      const res = await lkFetch<{ expiresInSec?: number; retryAfterSec?: number }>('/auth/send-code', {
         method: 'POST',
         body: JSON.stringify({ phone, channel }),
       })

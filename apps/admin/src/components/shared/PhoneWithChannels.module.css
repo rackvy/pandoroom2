@@ -1,0 +1,31 @@
+/* Номер с чипами живёт в ячейке таблицы и в строке карточки — поэтому
+   перенос разрешён только чипам, а не самому номеру. */
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.phone {
+  white-space: nowrap;
+}
+
+.chip {
+  border: 1px solid #a0bf39;
+  background: #fff;
+  color: #5c7318;
+  border-radius: 20px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  line-height: 18px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: #a0bf39;
+  color: #1a1a18;
+  font-weight: 600;
+}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getClients, type Client } from '../../api/clients';
+import PhoneWithChannels from '../shared/PhoneWithChannels';
 import styles from './ClientPicker.module.css';
 
 export interface ClientPickerValue {
@@ -120,6 +121,7 @@ export default function ClientPicker({ value, onChange, disabled }: ClientPicker
       {value.clientId && (
         <div className={styles.matched}>
           <span className={styles.matchedText}>✓ Клиент найден в базе</span>
+          <PhoneWithChannels clientId={value.clientId} showPhone={false} />
           <button type="button" className={styles.clearBtn} onClick={handleClear} disabled={disabled}>
             Очистить
           </button>

@@ -22,7 +22,7 @@ import { ReportsModule } from './reports/reports.module';
 import { IikoModule } from './iiko/iiko.module';
 import { WaitlistModule } from './waitlist/waitlist.module';
 import { ClientAuthModule } from './client-auth/client-auth.module';
-import { ClientChatModule } from './client-chat/client-chat.module';
+import { ChatModule } from './chat/chat.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -52,7 +52,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     IikoModule,
     WaitlistModule,
     ClientAuthModule,
-    ClientChatModule,
+    ChatModule,
   ],
   providers: [
     {

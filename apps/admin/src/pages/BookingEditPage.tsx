@@ -10,6 +10,7 @@ import {
   type QuestSlot,
 } from '../api/schedule';
 import TableSelector from '../components/booking/TableSelector';
+import PhoneWithChannels from '../components/shared/PhoneWithChannels';
 import QuestSelector from '../components/booking/QuestSelector';
 import ItemSelectorModal, { type SelectableItem } from '../components/schedule/ItemSelectorModal';
 import {
@@ -30,7 +31,7 @@ import { sendNotification } from '../api/notifications';
 import { createPaymentLink, getPaymentStatus } from '../api/payments';
 import { syncBookingToCalendar } from '../api/googleCalendar';
 import { createIikoOrder, getIikoOrderStatus } from '../api/iiko';
-import BookingChat from '../components/booking/BookingChat';
+import { useChatOverlay } from '../contexts/ChatOverlayContext';
 import styles from './BookingEditPage.module.css';
 
 type CatalogKind = 'cake' | 'decoration' | 'food' | 'show';
@@ -46,6 +47,7 @@ type ExtraSlot = BookingFullDetails['extraSlots'][number];
 export default function BookingEditPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { openChat } = useChatOverlay();
   const [booking, setBooking] = useState<BookingFullDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -809,6 +811,13 @@ export default function BookingEditPage() {
                   value={formData.clientPhone}
                   onChange={(e) => setFormData({...formData, clientPhone: e.target.value})}
                 />
+                {booking?.clientId && (
+                  <PhoneWithChannels
+                    clientId={booking.clientId}
+                    bookingId={booking.id}
+                    showPhone={false}
+                  />
+                )}
               </div>
             </div>
 
@@ -1346,12 +1355,26 @@ export default function BookingEditPage() {
         </div>
       </div>
 
-      {/* Booking Chat */}
-      <BookingChat
-        bookingId={booking.id}
-        clientId={booking.clientId}
-        clientName={booking.clientName}
-      />
+      {/* Переписка: общий плавающий чат, бронь подставляется тегом */}
+      <div className={styles.chatRow}>
+        <button
+          className={styles.smsBtn}
+          onClick={() =>
+            openChat({
+              clientId: booking.clientId,
+              phone: booking.clientPhone,
+              bookingId: booking.id,
+            })
+          }
+        >
+          💬 Открыть чат с клиентом
+        </button>
+        {!booking.clientId && (
+          <span className={styles.chatHint}>
+            Клиент к броне не привязан — чат откроется поиском по номеру.
+          </span>
+        )}
+      </div>
 
       {/* Footer Actions */}
       <div className={styles.footer}>

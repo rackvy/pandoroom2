@@ -45,7 +45,7 @@ import ClientsPage from './pages/ClientsPage'
 import ClientDetailPage from './pages/ClientDetailPage'
 import ClientCreatePage from './pages/ClientCreatePage'
 import ReportsPage from './pages/ReportsPage'
-import ChatPage from './pages/ChatPage'
+import { ChatOverlayProvider } from './contexts/ChatOverlayContext'
 
 function AppRoutes() {
   const { isAuthenticated } = useAuth()
@@ -122,7 +122,6 @@ function AppRoutes() {
           <Route path="review-sources" element={<ReviewSourcesPage />} />
         </Route>
         <Route path="employees" element={<EmployeesPage />} />
-        <Route path="chat" element={<ChatPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
@@ -133,7 +132,9 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <ChatOverlayProvider>
+        <AppRoutes />
+      </ChatOverlayProvider>
     </AuthProvider>
   )
 }

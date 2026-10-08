@@ -1,0 +1,6 @@
+{
+  "event": "message.status",
+  "externalId": "{{EXTERNAL_ID}}",
+  "channelId": "wa-instance-1",
+  "status": "delivered"
+}

@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   getIntegrations,
+  getWazzupDriver,
   getZvonokStatus,
   patchIntegration,
   type IntegrationGroup,
   type IntegrationProvider,
   type ZvonokStatus,
 } from '../api/integrations';
+import type { ChatDriverMode } from '../api/chat';
 import { toast } from './ui/Toast';
 import styles from './SettingsIntegrations.module.css';
 
-/** Интеграции, за которыми пока нет бизнес-логики. */
-const STORAGE_ONLY: IntegrationProvider[] = ['whatsapp', 'yandex_disk', 'google_calendar'];
+/**
+ * Интеграции, за которыми пока нет бизнес-логики. Wazzup сюда больше не
+ * относится: его настройки реально управляют отправкой сообщений.
+ */
+const STORAGE_ONLY: IntegrationProvider[] = ['yandex_disk', 'google_calendar'];
 
 const SOURCE_LABELS: Record<string, string> = {
   db: 'из настроек',
@@ -46,18 +51,28 @@ export default function SettingsIntegrations() {
   const [saving, setSaving] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [zvonok, setZvonok] = useState<ZvonokStatus | null>(null);
+  const [wazzup, setWazzup] = useState<ChatDriverMode | null>(null);
+
+  const loadDriver = useCallback(async () => {
+    try {
+      setWazzup(await getWazzupDriver());
+    } catch {
+      setWazzup(null);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     try {
       const data = await getIntegrations();
       setGroups(data);
       setDrafts(toDrafts(data));
+      loadDriver();
     } catch (err) {
       toast.error(errorMessage(err, 'Не удалось загрузить интеграции'));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadDriver]);
 
   useEffect(() => {
     load();
@@ -77,6 +92,7 @@ export default function SettingsIntegrations() {
       setGroups((prev) => prev.map((item) => (item.provider === updated.provider ? updated : item)));
       setDrafts((prev) => ({ ...prev, [updated.provider]: toDrafts([updated])[updated.provider] }));
       toast.success(`${group.label}: сохранено`);
+      if (group.provider === 'wazzup') loadDriver();
     } catch (err) {
       toast.error(errorMessage(err, 'Не удалось сохранить'));
     } finally {
@@ -109,12 +125,25 @@ export default function SettingsIntegrations() {
 
       {groups.map((group) => {
         const isZvonok = group.provider === 'zvonok';
+        const isWazzup = group.provider === 'wazzup';
         return (
           <section className={styles.card} key={group.provider}>
             <div className={styles.cardHeader}>
               <h4 className={styles.cardTitle}>{group.label}</h4>
               {STORAGE_ONLY.includes(group.provider) && (
                 <span className={styles.badgeNeutral}>только хранение</span>
+              )}
+              {isWazzup && (
+                <span
+                  className={wazzup?.kind === 'wazzup' ? styles.badgeOk : styles.badgeWarn}
+                  title={wazzup?.reason || 'Сервер не ответил'}
+                >
+                  {wazzup === null
+                    ? 'драйвер не проверен'
+                    : wazzup.kind === 'wazzup'
+                      ? 'боевой драйвер'
+                      : 'тестовый драйвер'}
+                </span>
               )}
               {isZvonok && (
                 <span className={zvonok?.configured ? styles.badgeOk : styles.badgeWarn}>

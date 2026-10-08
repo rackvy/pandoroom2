@@ -7,7 +7,7 @@ function getToken(): string | null {
   return localStorage.getItem('lk_token')
 }
 
-export async function lkFetch(endpoint: string, options?: RequestInit) {
+export async function lkFetch<T = unknown>(endpoint: string, options?: RequestInit): Promise<T> {
   const token = getToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -33,11 +33,18 @@ export async function lkFetch(endpoint: string, options?: RequestInit) {
 }
 
 // Chat types
+export type MessageDirection = 'INBOUND' | 'OUTBOUND' | 'SYSTEM'
+
+export type MessageChannel = 'INTERNAL' | 'WHATSAPP' | 'TELEGRAM' | 'MAX'
+
 export interface ChatMessage {
   id: string
   clientId: string
+  // Контекст-тег «по поводу какой брони», лента при этом одна.
   bookingId: string | null
-  sender: 'client' | 'admin' | 'system'
+  direction: MessageDirection
+  channel: MessageChannel
+  authorName: string | null
   text: string
   isRead: boolean
   createdAt: string
@@ -47,6 +54,11 @@ export interface ChatMessage {
     clientName: string
     status: string
   } | null
+}
+
+export interface ChatFeed {
+  messages: ChatMessage[]
+  nextCursor: string | null
 }
 
 export interface ClientBooking {

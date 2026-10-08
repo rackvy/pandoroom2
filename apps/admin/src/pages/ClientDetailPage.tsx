@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getClient, updateClient, ClientWithHistory } from '../api/clients';
+import PhoneWithChannels from '../components/shared/PhoneWithChannels';
 import { toast } from '../components/ui/Toast';
 import styles from './ClientDetailPage.module.css';
 
@@ -62,14 +63,6 @@ export default function ClientDetailPage() {
     }
   };
 
-  const formatPhone = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 11 && cleaned.startsWith('7')) {
-      return `+7 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7, 9)}-${cleaned.slice(9, 11)}`;
-    }
-    return phone;
-  };
-
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('ru-RU');
@@ -127,6 +120,8 @@ export default function ClientDetailPage() {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />
+              {/* Номер в поле менять — каналы показать: они привязаны к карточке. */}
+              <PhoneWithChannels clientId={client.id} showPhone={false} />
             </div>
             <div className={styles.field}>
               <label>Email</label>
@@ -187,7 +182,9 @@ export default function ClientDetailPage() {
           <div className={styles.info}>
             <div className={styles.infoRow}>
               <span className={styles.label}>Телефон:</span>
-              <span className={styles.value}>{formatPhone(client.phone)}</span>
+              <span className={styles.value}>
+                <PhoneWithChannels clientId={client.id} phone={client.phone} />
+              </span>
             </div>
             {client.email && (
               <div className={styles.infoRow}>

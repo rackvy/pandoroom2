@@ -1,0 +1,14 @@
+{
+  "event": "message.created",
+  "externalId": "{{EXTERNAL_ID}}",
+  "channelId": "wa-instance-1",
+  "direction": "incoming",
+  "contact": {
+    "phone": "89000000088",
+    "name": "Незнакомый номер"
+  },
+  "message": {
+    "text": "{{TEXT}}",
+    "createdAt": "2026-10-08T04:10:00.000Z"
+  }
+}

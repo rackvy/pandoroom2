@@ -90,6 +90,38 @@ enum VRSplitSide {
   B
 }
 
+/// Канал, в котором ведётся переписка. INTERNAL — чат личного кабинета и админки.
+enum ChannelKind {
+  WHATSAPP
+  TELEGRAM
+  MAX
+  INTERNAL
+}
+
+/// Заменяет прежнее текстовое поле sender: кто инициировал сообщение.
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+  SYSTEM
+}
+
+/// Состояние доставки исходящего сообщения.
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+/// Откуда мы узнали, что канал клиента доступен.
+enum ChannelSource {
+  PROBE
+  WEBHOOK
+  MANUAL
+  LEGACY
+}
+
 // ==================== MODELS ====================
 
 model Branch {
@@ -480,6 +512,7 @@ model Client {
   questReservations QuestReservation[]
   vrReservations    VRReservation[]
   chatMessages      ChatMessage[]
+  channels          ClientChannel[]
 
   @@index([phone])
   @@index([name])
@@ -952,18 +985,54 @@ model IikoMenuItem {
 model ChatMessage {
   id        String   @id @default(uuid())
   clientId  String
+  /// Контекст-тег «по поводу какой брони», а не ключ разбиения: лента у клиента одна.
   bookingId String?
+  /// Устаревшее поле, читается только миграцией. Удаляется отдельной миграцией.
   sender    String   // 'client' | 'admin' | 'system'
+  direction MessageDirection
+  channel   ChannelKind    @default(INTERNAL)
+  status    MessageStatus
+  /// Кто отправил со стороны команды: id сотрудника и снапшот имени, как в Booking.clientName.
+  authorId   String?
+  authorName String?
   text      String   @db.Text
+  /// Идемпотентность вебхуков: провайдер ретраит события.
+  externalId String?
+  errorText  String?  @db.Text
+  /// Для INBOUND — прочитано командой, для OUTBOUND/SYSTEM — прочитано клиентом.
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
-  @@index([clientId])
+  @@unique([channel, externalId])
+  @@index([clientId, createdAt])
   @@index([bookingId])
   @@index([isRead])
+  @@index([status])
+}
+
+/// Каналы, по которым клиенту реально можно написать, и кэш проверки номера.
+/// available=false означает «мы не уверены, что доставим», а не «номер не существует».
+model ClientChannel {
+  id          String        @id @default(uuid())
+  clientId    String
+  channel     ChannelKind
+  /// Номер для WhatsApp, chatId для Telegram и MAX.
+  externalId  String?
+  available   Boolean       @default(false)
+  source      ChannelSource @default(MANUAL)
+  checkedAt   DateTime?
+  note        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  client      Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, channel])
+  @@index([clientId])
 }
 
 // ==================== ИНТЕГРАЦИИ ====================
@@ -971,7 +1040,7 @@ model ChatMessage {
 /// Ключи внешних сервисов. Значения читаются через IntegrationsService,
 /// секретные поля в API отдаются замаскированными.
 model IntegrationSetting {
-  provider  String   // tbank | zvonok | whatsapp | yandex_disk | google_calendar
+  provider  String   // tbank | zvonok | wazzup | yandex_disk | google_calendar
   key       String
   value     String   @db.Text
   isSecret  Boolean  @default(false)

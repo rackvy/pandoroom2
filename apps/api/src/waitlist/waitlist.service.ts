@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { normalizePhone } from '../client-auth/phone';
+import { UnifiedChatService } from '../chat/unified-chat.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -10,6 +11,7 @@ export class WaitlistService {
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
+    private chat: UnifiedChatService,
   ) {}
 
   /** Add a client to the waitlist for a specific quest */
@@ -140,13 +142,10 @@ export class WaitlistService {
       });
       if (clientRecord) {
         const chatText = `Время ${timeStr} на квест «${quest.name}» ${eventDateStr} освободилось! Успейте забронировать.`;
-        await this.prisma.chatMessage.create({
-          data: {
-            clientId: clientRecord.id,
-            sender: 'system',
-            text: chatText,
-            isRead: false,
-          },
+        await this.chat.appendMessage({
+          clientId: clientRecord.id,
+          direction: 'SYSTEM',
+          text: chatText,
         });
         this.logger.log(`Chat notification sent to client ${clientRecord.id} about freed slot`);
       }

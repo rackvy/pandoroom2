@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PageKey } from '@prisma/client';
 import { isValidPhone, normalizePhone } from '../client-auth/phone';
 import { ClientsService } from '../clients/clients.service';
+import { UnifiedChatService } from '../chat/unified-chat.service';
 import {
   DEFAULT_PARTY_DURATION_MINUTES,
   addMinutesToSlotDate,
@@ -105,10 +106,13 @@ function convertQuestsResult(result: any): any {
 
 @Injectable()
 export class PublicService {
+  private readonly logger = new Logger(PublicService.name);
+
   constructor(
     private prisma: PrismaService,
     private notifications: NotificationsService,
     private clientsService: ClientsService,
+    private chat: UnifiedChatService,
   ) {}
 
   async findAllBranches() {
@@ -602,21 +606,26 @@ export class PublicService {
         });
       }
 
-      if (positionsCount > 0) {
-        await tx.chatMessage.create({
-          data: {
-            clientId: client.id,
-            bookingId: created.id,
-            sender: 'system',
-            text:
-              `Заявка на праздник принята: ${eventDate.toLocaleDateString('ru-RU')}, ${slotDateToHHMM(startTime)}. ` +
-              `Позиций: ${positionsCount}. Менеджер уточнит детали и стоимость в этом чате.`,
-          },
-        });
-      }
-
       return created;
     });
+
+    // Уведомление пишем после коммита: изнутри транзакции событие в сокет уходит
+    // раньше, чем заявка записана, и при откате клиент видит сообщение о брони,
+    // которой не существует.
+    if (positionsCount > 0) {
+      try {
+        await this.chat.appendMessage({
+          clientId: client.id,
+          bookingId: booking.id,
+          direction: 'SYSTEM',
+          text:
+            `Заявка на праздник принята: ${eventDate.toLocaleDateString('ru-RU')}, ${slotDateToHHMM(startTime)}. ` +
+            `Позиций: ${positionsCount}. Менеджер уточнит детали и стоимость в этом чате.`,
+        });
+      } catch (chatErr) {
+        this.logger.error(`Не удалось поставить заявку в чат клиента ${client.id}`, chatErr);
+      }
+    }
 
     return {
       ...(await this.buildLeadResponse(booking.id)),

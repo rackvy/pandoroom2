@@ -387,6 +387,19 @@
   background: #e0e0e0;
 }
 
+.chatRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 24px 24px;
+}
+
+.chatHint {
+  font-size: 12px;
+  color: #8a6d3b;
+}
+
 .deleteBookingBtn {
   padding: 12px 24px;
   background: #ffebee;

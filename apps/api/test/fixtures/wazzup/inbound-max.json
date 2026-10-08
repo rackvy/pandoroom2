@@ -1,0 +1,14 @@
+{
+  "event": "message.created",
+  "externalId": "{{EXTERNAL_ID}}",
+  "channelId": "max-instance-1",
+  "direction": "incoming",
+  "contact": {
+    "phone": "79000000001",
+    "name": "Тест Клиент Один"
+  },
+  "message": {
+    "text": "{{TEXT}}",
+    "createdAt": "2026-10-08T04:15:00.000Z"
+  }
+}

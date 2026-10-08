@@ -14,6 +14,7 @@ import {
   type VRReservation,
 } from '../../api/vrSchedule';
 import { getVRGames, type VRGame } from '../../api/catalog';
+import PhoneWithChannels from '../../components/shared/PhoneWithChannels';
 import {
   formatDateForApi,
   addDays,
@@ -59,17 +60,6 @@ function formatApiTime(value: string): string {
   } catch {
     return value.substring(0, 5);
   }
-}
-
-function formatPhone(value: string): string {
-  const digits = value.replace(/\D/g, '');
-  if (digits.length === 11 && digits.startsWith('7')) {
-    return `+7 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 9)}-${digits.slice(9, 11)}`;
-  }
-  if (digits.length === 11 && digits.startsWith('8')) {
-    return `8 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 9)}-${digits.slice(9, 11)}`;
-  }
-  return value;
 }
 
 function getStatusLabel(status: string): string {
@@ -1222,7 +1212,13 @@ export default function VRSchedulePage() {
               {r.clientPhone && (
                 <div className={styles.detailsRow}>
                   <span className={styles.detailsLabel}>Телефон</span>
-                  <span className={styles.detailsValue}>{formatPhone(r.clientPhone)}</span>
+                  <span className={styles.detailsValue}>
+                    <PhoneWithChannels
+                      clientId={r.clientId}
+                      phone={r.clientPhone}
+                      bookingId={r.bookingId}
+                    />
+                  </span>
                 </div>
               )}
               {r.client && (

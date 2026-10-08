@@ -1,9 +1,10 @@
 import api from '../lib/axios';
+import type { ChatDriverMode } from './chat';
 
 export type IntegrationProvider =
   | 'tbank'
   | 'zvonok'
-  | 'whatsapp'
+  | 'wazzup'
   | 'yandex_disk'
   | 'google_calendar';
 
@@ -57,5 +58,11 @@ export const patchIntegration = async (
 
 export const getZvonokStatus = async (): Promise<ZvonokStatus> => {
   const response = await api.get('/api/admin/zvonok/status');
+  return response.data;
+};
+
+/** Чем сейчас работают каналы: боевой Wazzup или заглушка. */
+export const getWazzupDriver = async (): Promise<ChatDriverMode> => {
+  const response = await api.get('/api/admin/integrations/wazzup/driver');
   return response.data;
 };

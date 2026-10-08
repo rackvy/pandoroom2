@@ -3,7 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 export type IntegrationProviderId =
   | 'tbank'
   | 'zvonok'
-  | 'whatsapp'
+  | 'wazzup'
   | 'yandex_disk'
   | 'google_calendar';
 
@@ -74,14 +74,53 @@ export const INTEGRATIONS: IntegrationGroupDef[] = [
     ],
   },
   {
-    provider: 'whatsapp',
-    label: 'WhatsApp',
-    note: 'Пока только хранилище: логика отправки не подключена',
+    provider: 'wazzup',
+    label: 'Wazzup',
+    note: 'WhatsApp, Telegram и MAX одним коннектором: входящие и исходящие переписки',
     fields: [
-      { key: 'phoneNumber', label: 'Номер отправителя' },
-      { key: 'apiUrl', label: 'URL API', env: 'WHATSAPP_API_URL' },
-      { key: 'accessToken', label: 'Токен API', secret: true, env: 'WHATSAPP_ACCESS_TOKEN' },
-      { key: 'templateName', label: 'Имя шаблона', env: 'WHATSAPP_TEMPLATE_NAME' },
+      {
+        key: 'apiBaseUrl',
+        label: 'URL API',
+        env: 'WAZZUP_API_URL',
+        hint: 'https://wazzup.me/api',
+      },
+      { key: 'apiKey', label: 'Ключ API', secret: true, env: 'WAZZUP_API_KEY' },
+      {
+        key: 'webhookSecret',
+        label: 'Секрет подписи вебхука',
+        secret: true,
+        env: 'WAZZUP_WEBHOOK_SECRET',
+        hint: 'HMAC-SHA256 от сырого тела, заголовок x-wazzup-signature',
+      },
+      {
+        key: 'whatsappChannelId',
+        label: 'ID канала WhatsApp',
+        env: 'WAZZUP_WHATSAPP_CHANNEL_ID',
+      },
+      {
+        key: 'telegramChannelId',
+        label: 'ID канала Telegram',
+        env: 'WAZZUP_TELEGRAM_CHANNEL_ID',
+      },
+      { key: 'maxChannelId', label: 'ID канала MAX', env: 'WAZZUP_MAX_CHANNEL_ID' },
+      {
+        key: 'probePath',
+        label: 'Путь проверки номера',
+        env: 'WAZZUP_PROBE_PATH',
+        hint: 'Сверить с документацией аккаунта — фаза 6',
+      },
+      {
+        key: 'driverMode',
+        label: 'Драйвер',
+        env: 'WAZZUP_DRIVER_MODE',
+        hint: 'wazzup — боевой, stub — тестовый без ключа',
+      },
+      {
+        key: 'stubFailPhone',
+        label: 'Телефон для ошибки (только stub)',
+        env: 'WAZZUP_STUB_FAIL_PHONE',
+        hint: 'Отправка на этот номер возвращает FAILED',
+      },
     ],
   },
   {

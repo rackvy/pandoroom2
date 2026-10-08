@@ -10,6 +10,7 @@ import {
   type BookingListRow,
 } from '../api/bookings';
 import { toast } from '../components/ui/Toast';
+import PhoneWithChannels from '../components/shared/PhoneWithChannels';
 import api from '../lib/axios';
 import styles from './RegistryPage.module.css';
 
@@ -493,7 +494,13 @@ export default function RegistryPage() {
                           <td>{itemsTotal(booking).toLocaleString()}</td>
                           <td>{booking.depositRub.toLocaleString()}</td>
                           <td>{booking.clientName}</td>
-                          <td>{booking.clientPhone}</td>
+                          <td>
+                            <PhoneWithChannels
+                              clientId={booking.clientId}
+                              phone={booking.clientPhone}
+                              bookingId={booking.id}
+                            />
+                          </td>
                           <td>{booking.birthdayPersonName || '-'}</td>
                           <td>{view.zoneNames || '-'}</td>
                           <td>{view.tableNames || '-'}</td>
