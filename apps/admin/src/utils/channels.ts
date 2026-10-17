@@ -13,7 +13,7 @@ export const EXTERNAL_CHANNEL_ORDER: MessageChannel[] = ['WHATSAPP', 'TELEGRAM',
 
 /** Откуда взялась пометка о канале — менеджеру важно знать, насколько ей верить. */
 export const CHANNEL_SOURCE_NAMES: Record<ClientChannelInfo['source'], string> = {
-  PROBE: 'проверка номера у провайдера',
+  PROBE: 'проверка канала у провайдера',
   WEBHOOK: 'клиент отсюда уже писал',
   MANUAL: 'пометку поставил менеджер',
   LEGACY: 'осталось из прежних переписок',

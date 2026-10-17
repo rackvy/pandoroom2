@@ -285,11 +285,12 @@ export class UnifiedChatService {
   }
 
   /**
-   * Входящее из мессенджера. Провайдер ретраит вебхуки, поэтому повтор того же
-   * externalId не создаёт вторую строку — иначе счётчик непрочитанного рос бы
-   * на каждую повторную доставку.
+   * Сообщение из ленты провайдера: входящее от клиента или эхо ответа
+   * сотрудника. Провайдер ретраит вебхуки, поэтому повтор того же externalId не
+   * создаёт вторую строку — иначе счётчик непрочитанного рос бы на каждую
+   * повторную доставку.
    */
-  async appendInbound(
+  async appendFromProvider(
     input: AppendMessageInput & { externalId: string },
   ): Promise<{ message: ChatMessageWithBooking; created: boolean }> {
     const channel = input.channel ?? ChannelKind.INTERNAL;
@@ -319,17 +320,25 @@ export class UnifiedChatService {
   /**
    * Статус доставки от провайдера. Сообщения, которого мы не отправляли, здесь
    * быть не может — возвращаем null, и вызывающий не выдаёт это за ошибку.
+   * Канал известен не всегда: вебхук статусов его не несёт, тогда ищем по
+   * одному externalId.
    */
   async applyDeliveryStatus(
-    channel: ChannelKind,
+    channel: ChannelKind | undefined,
     externalId: string,
     status: MessageStatus,
     errorText?: string,
   ): Promise<ChatMessageWithBooking | null> {
-    const found = await this.prisma.chatMessage.findUnique({
-      where: { channel_externalId: { channel, externalId } },
-      select: { id: true },
-    });
+    const found = channel
+      ? await this.prisma.chatMessage.findUnique({
+          where: { channel_externalId: { channel, externalId } },
+          select: { id: true },
+        })
+      : await this.prisma.chatMessage.findFirst({
+          where: { externalId },
+          orderBy: { createdAt: 'desc' },
+          select: { id: true },
+        });
     if (!found) return null;
     return this.transition(found.id, status, { errorText });
   }

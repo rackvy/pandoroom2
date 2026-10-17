@@ -82,15 +82,15 @@ export const INTEGRATIONS: IntegrationGroupDef[] = [
         key: 'apiBaseUrl',
         label: 'URL API',
         env: 'WAZZUP_API_URL',
-        hint: 'https://wazzup.me/api',
+        hint: 'https://api.wazzup24.com',
       },
       { key: 'apiKey', label: 'Ключ API', secret: true, env: 'WAZZUP_API_KEY' },
       {
         key: 'webhookSecret',
-        label: 'Секрет подписи вебхука',
+        label: 'Ключ доступа вебхука',
         secret: true,
         env: 'WAZZUP_WEBHOOK_SECRET',
-        hint: 'HMAC-SHA256 от сырого тела, заголовок x-wazzup-signature',
+        hint: 'Придумываем сами и вставляем в адрес вебхука как ?key= — им же сверяется заголовок Authorization',
       },
       {
         key: 'whatsappChannelId',
@@ -103,12 +103,6 @@ export const INTEGRATIONS: IntegrationGroupDef[] = [
         env: 'WAZZUP_TELEGRAM_CHANNEL_ID',
       },
       { key: 'maxChannelId', label: 'ID канала MAX', env: 'WAZZUP_MAX_CHANNEL_ID' },
-      {
-        key: 'probePath',
-        label: 'Путь проверки номера',
-        env: 'WAZZUP_PROBE_PATH',
-        hint: 'Сверить с документацией аккаунта — фаза 6',
-      },
       {
         key: 'driverMode',
         label: 'Драйвер',

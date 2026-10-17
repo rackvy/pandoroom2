@@ -192,6 +192,19 @@ export class ChannelProbeService {
       return;
     }
 
+    if (result.inconclusive) {
+      // Провайдер про номер ничего не сказал: понижать подтверждённый канал
+      // таким ответом нельзя, а строку «неизвестно» не заводим — её отсутствие
+      // интерфейс и так рисует как «нет данных».
+      if (row?.source === ChannelSource.PROBE) {
+        await this.prisma.clientChannel.update({
+          where: { id: row.id },
+          data: { note: result.reason ?? null },
+        });
+      }
+      return;
+    }
+
     await this.prisma.clientChannel.upsert({
       where: { clientId_channel: { clientId, channel } },
       create: {

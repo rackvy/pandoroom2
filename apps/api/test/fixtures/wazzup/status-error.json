@@ -1,0 +1,13 @@
+{
+  "statuses": [
+    {
+      "messageId": "{{MESSAGE_ID}}",
+      "timestamp": "2026-10-08T04:31:07.499Z",
+      "status": "error",
+      "error": {
+        "error": "RECIPIENT_NOT_REGISTERED",
+        "description": "Получатель не зарегистрирован в мессенджере"
+      }
+    }
+  ]
+}

@@ -1,14 +1,16 @@
 {
-  "event": "message.created",
-  "externalId": "{{EXTERNAL_ID}}",
-  "channelId": "max-instance-1",
-  "direction": "incoming",
-  "contact": {
-    "phone": "79000000001",
-    "name": "Тест Клиент Один"
-  },
-  "message": {
-    "text": "{{TEXT}}",
-    "createdAt": "2026-10-08T04:15:00.000Z"
-  }
+  "messages": [
+    {
+      "messageId": "{{MESSAGE_ID}}",
+      "channelId": "33333333-3333-4333-8333-333333333333",
+      "chatType": "max",
+      "chatId": "79000000001",
+      "dateTime": "2026-10-08T04:15:00.000Z",
+      "type": "text",
+      "isEcho": false,
+      "contact": { "name": "Тест Клиент Один", "phone": "79000000001" },
+      "text": "{{TEXT}}",
+      "status": "inbound"
+    }
+  ]
 }

@@ -1,6 +1,9 @@
 {
-  "event": "message.status",
-  "externalId": "{{EXTERNAL_ID}}",
-  "channelId": "wa-instance-1",
-  "status": "delivered"
+  "statuses": [
+    {
+      "messageId": "{{MESSAGE_ID}}",
+      "timestamp": "2026-10-08T04:30:07.499Z",
+      "status": "delivered"
+    }
+  ]
 }

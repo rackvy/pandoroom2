@@ -1,14 +1,16 @@
 {
-  "event": "message.created",
-  "externalId": "{{EXTERNAL_ID}}",
-  "channelId": "tg-instance-1",
-  "direction": "incoming",
-  "contact": {
-    "phone": "79000000001",
-    "name": "Тест Клиент Один"
-  },
-  "message": {
-    "text": "{{TEXT}}",
-    "createdAt": "2026-10-08T04:05:00.000Z"
-  }
+  "messages": [
+    {
+      "messageId": "{{MESSAGE_ID}}",
+      "channelId": "22222222-2222-4222-8222-222222222222",
+      "chatType": "telegram",
+      "chatId": "779064031",
+      "dateTime": "2026-10-08T04:05:00.000Z",
+      "type": "text",
+      "isEcho": false,
+      "contact": { "name": "79000000001", "phone": "79000000001" },
+      "text": "{{TEXT}}",
+      "status": "inbound"
+    }
+  ]
 }

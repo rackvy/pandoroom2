@@ -30,7 +30,6 @@ export class ChannelRegistry {
       webhookSecret: values.webhookSecret || '',
       driverMode: (values.driverMode || '').trim().toLowerCase(),
       channelIds,
-      probePath: values.probePath || '',
       stubFailPhone: values.stubFailPhone || '',
     };
   }
@@ -52,12 +51,12 @@ export class ChannelRegistry {
     return { kind: 'stub', reason: this.stubReason(config) };
   }
 
-  /** Секрет наружу не отдаём, но он нужен и для подписи фикстуры. */
+  /** Ключ доступа вебхука наружу не отдаём, но он нужен, чтобы собрать пробный запрос. */
   async webhookSecret(): Promise<string> {
     return (await this.config()).webhookSecret;
   }
 
-  /** Без секрета вебхук принимать нечем: отличаем «не настроен» от «подпись неверна». */
+  /** Без ключа сверять нечего: отличаем «не настроен» от «ключ не совпал». */
   async webhookSecretConfigured(): Promise<boolean> {
     return Boolean(await this.webhookSecret());
   }

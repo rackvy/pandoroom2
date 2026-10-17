@@ -13,7 +13,7 @@ import {
 import { WazzupDriver } from './wazzup.driver';
 
 /**
- * Заглушка на случай, когда ключа провайдера ещё нет. Разбор вебхука и подпись
+ * Заглушка на случай, когда ключа провайдера ещё нет. Разбор вебхука и допуск
  * не подделываются — они общие с боевым драйвером, иначе проверка вебхука
  * доказывалась бы на коде, который в бою не участвует. Подменён только
  * транспорт наружу: отправка и проба номера.
@@ -55,8 +55,8 @@ export class StubDriver implements ChannelDriver {
     return { available: true, externalId: phone, reason: undefined };
   }
 
-  verifyWebhookSignature(ctx: WebhookContext, header: string | undefined): boolean {
-    return this.transport.verifyWebhookSignature(ctx, header);
+  verifyWebhookAuth(ctx: WebhookContext): boolean {
+    return this.transport.verifyWebhookAuth(ctx);
   }
 
   parseWebhook(ctx: WebhookContext): Promise<Array<InboundEvent | StatusEvent>> {

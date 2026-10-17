@@ -10,10 +10,7 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // rawBody нужен подписи вебхука: после body-parser тело уже не восстановить
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    rawBody: true,
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // За Traefik иначе request.ip — адрес docker-шлюза для всех посетителей
   app.set('trust proxy', 1);

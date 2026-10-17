@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ChannelKind, MessageStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClientsService } from '../clients/clients.service';
 import { isValidPhone, normalizePhone } from '../client-auth/phone';
 import { ChannelRegistry } from '../integrations/channels/channel-registry';
 import {
+  InboundEvent,
   WebhookContext,
   isInboundEvent,
 } from '../integrations/channels/channel-driver.interface';
@@ -21,6 +22,12 @@ export interface WebhookOutcome {
   statuses: number;
   /** Незнакомое событие или статус для сообщения, которое мы не отправляли. */
   ignored: number;
+  /**
+   * Сообщение, которое не к кому привязать: мессенджер не прислал телефон, а по
+   * идентификатору собеседника клиента нет. Не ошибка — карточку заводим только
+   * по номеру, иначе в базу попадут строки без способа связаться с человеком.
+   */
+  noClient: number;
   /** Клиент заведён автоматически: по нему видно, сколько незнакомых номеров пришло. */
   newClients: number;
 }
@@ -59,20 +66,33 @@ export class ChannelService {
       duplicated: 0,
       statuses: 0,
       ignored: 0,
+      noClient: 0,
       newClients: 0,
     };
 
     for (const event of events) {
       if (isInboundEvent(event)) {
-        const client = await this.clientByPhone(event.from, event.contactName);
+        const client = await this.clientForEvent(event);
+        if (!client) {
+          outcome.noClient += 1;
+          this.logger.warn(
+            `Сообщение в ${event.channel} не к кому привязать: номер не прислан, chatId «${
+              event.chatId ?? 'пустой'
+            }» не известен`,
+          );
+          continue;
+        }
         if (client.created) outcome.newClients += 1;
 
-        const { created } = await this.chat.appendInbound({
+        // Эхо провайдера — ответ сотрудника, отправленный не через нас
+        // (из виджета Wazzup или с телефона): в ленте он тоже исходящее.
+        const { created } = await this.chat.appendFromProvider({
           clientId: client.id,
           text: event.text,
-          direction: 'INBOUND',
+          direction: event.fromStaff ? 'OUTBOUND' : 'INBOUND',
           channel: event.channel,
           externalId: event.externalId,
+          authorName: event.authorName ?? null,
           createdAt: event.at,
         });
         if (created) {
@@ -81,8 +101,8 @@ export class ChannelService {
           outcome.duplicated += 1;
         }
 
-        // Сам факт входящего подтверждает канал надёжнее любой пробы номера.
-        await this.probes.registerInbound(client.id, event.channel, normalizePhone(event.from));
+        // Сам факт сообщения подтверждает канал надёжнее любой пробы номера.
+        await this.probes.registerInbound(client.id, event.channel, this.recipientId(event));
         continue;
       }
 
@@ -150,28 +170,43 @@ export class ChannelService {
     return row?.externalId || normalizePhone(phone);
   }
 
-  private async clientByPhone(rawPhone: string, contactName?: string) {
-    const phone = normalizePhone(rawPhone);
-    if (!isValidPhone(phone)) {
-      throw new BadRequestException(`Входящее с номером «${rawPhone}» не в формате 7XXXXXXXXXX`);
-    }
+  /**
+   * Клиент по входящему. Номер — единственный надёжный ключ карточки; если
+   * мессенджер его не прислал, остаётся искать по сохранённому идентификатору
+   * собеседника — он появляется после первого сообщения с этим номером.
+   */
+  private async clientForEvent(event: InboundEvent) {
+    const phone = normalizePhone(event.from);
+    if (isValidPhone(phone)) {
+      const existing = await this.clients.findByPhone(phone);
+      if (existing) return { id: existing.id, created: false };
 
-    const existing = await this.clients.findByPhone(phone);
-    if (existing) return { id: existing.id, created: false };
-
-    try {
-      const client = await this.prisma.client.create({
-        data: { phone, name: (contactName || '').trim() },
-      });
-      this.logger.log(`Клиент ${phone} заведён из входящего сообщения`);
-      return { id: client.id, created: true };
-    } catch (error) {
-      // Два первых сообщения от незнакомца приходят почти одновременно.
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        const raced = await this.clients.findByPhone(phone);
-        if (raced) return { id: raced.id, created: false };
+      try {
+        const client = await this.prisma.client.create({
+          data: { phone, name: (event.contactName || '').trim() },
+        });
+        this.logger.log(`Клиент ${phone} заведён из входящего сообщения`);
+        return { id: client.id, created: true };
+      } catch (error) {
+        // Два первых сообщения от незнакомца приходят почти одновременно.
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          const raced = await this.clients.findByPhone(phone);
+          if (raced) return { id: raced.id, created: false };
+        }
+        throw error;
       }
-      throw error;
     }
+
+    if (!event.chatId) return null;
+    const known = await this.prisma.clientChannel.findFirst({
+      where: { channel: event.channel, externalId: event.chatId },
+      select: { clientId: true },
+    });
+    return known ? { id: known.clientId, created: false } : null;
+  }
+
+  /** Адрес для ответа: идентификатор собеседника в мессенджере, иначе номер. */
+  private recipientId(event: InboundEvent): string {
+    return event.chatId || normalizePhone(event.from);
   }
 }

@@ -6,18 +6,32 @@ export type DigitsPhone = string;
 export interface InboundEvent {
   externalId: string;
   channel: ChannelKind;
-  /** Номер отправителя в том виде, как его прислал провайдер. */
+  /**
+   * Номер отправителя. Пустой — если мессенджер не раскрыл телефон контакта
+   * (в Telegram это нормально), тогда привязка идёт по chatId.
+   */
   from: string;
-  /** Имя контакта из адресной книги провайдера, если оно там есть. */
+  /** Идентификатор собеседника в мессенджере: он же адресат для ответа. */
+  chatId?: string;
   contactName?: string;
   text: string;
   at?: Date;
+  /**
+   * Сообщение отправил сотрудник (эхо провайдера): оно живёт в нашей ленте как
+   * исходящее, иначе ответ из виджета Wazzup был бы виден только там.
+   */
+  fromStaff?: boolean;
+  authorName?: string;
 }
 
 export interface StatusEvent {
   /** Идентификатор, который драйвер вернул при отправке. */
   externalId: string;
-  channel: ChannelKind;
+  /**
+   * Канал известен не всегда: вебхук статусов приходит без него, и тогда
+   * сообщение ищется по одному externalId.
+   */
+  channel?: ChannelKind;
   status: 'sent' | 'delivered' | 'read' | 'failed';
   errorText?: string;
 }
@@ -28,24 +42,30 @@ export interface ProbeResult {
   externalId?: string;
   /** Почему нельзя написать — показываем менеджеру как подсказку. */
   reason?: string;
+  /**
+   * Провайдер про конкретный номер ничего не сказал (такого API у него нет).
+   * По такому ответу нельзя понижать канал, подтверждённый входящим сообщением.
+   */
+  inconclusive?: boolean;
 }
 
 export interface WebhookContext {
-  rawBody: Buffer;
   body: unknown;
   headers: Record<string, string | undefined>;
+  /** Строка запроса вебхука: ключ доступа приезжает именно в ней. */
+  query: Record<string, string | undefined>;
 }
 
 /** Значения группы `wazzup` из каталога интеграций. */
 export interface ChannelConfig {
   apiBaseUrl: string;
   apiKey: string;
+  /** Ключ доступа вебхука: подставляется в адрес как ?key= и сверяется с заголовком. */
   webhookSecret: string;
   /** Какое бы ни было «stub», живой ключ игнорируется: нужно же что-то тестировать. */
   driverMode: string;
   /** Какой из трёх мессенджеров какому экземпляру канала соответствует. */
   channelIds: Partial<Record<ChannelKind, string>>;
-  probePath: string;
   stubFailPhone: string;
 }
 
@@ -66,10 +86,10 @@ export interface ChannelDriver {
   probe(channel: ChannelKind, phone: DigitsPhone): Promise<ProbeResult>;
 
   /**
-   * Подпись сырого тела. Проверяется до разбора: событие от непонятного
-   * источника не должно ни создавать клиента, ни писать в ленту.
+   * Допуск вебхука. Проверяется до разбора: событие от непонятного источника
+   * не должно ни создавать клиента, ни писать в ленту.
    */
-  verifyWebhookSignature(ctx: WebhookContext, header: string | undefined): boolean;
+  verifyWebhookAuth(ctx: WebhookContext): boolean;
 
   /**
    * Что пришло от провайдера: новое сообщение или изменение статуса
@@ -80,7 +100,7 @@ export interface ChannelDriver {
 }
 
 export function isInboundEvent(event: InboundEvent | StatusEvent): event is InboundEvent {
-  return (event as InboundEvent).from !== undefined;
+  return typeof (event as InboundEvent).from === 'string';
 }
 
 /** Каналы, которые умеем носить наружу. INTERNAL — переписка внутри продукта. */

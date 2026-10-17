@@ -1,0 +1,16 @@
+{
+  "messages": [
+    {
+      "messageId": "{{MESSAGE_ID}}",
+      "channelId": "11111111-1111-4111-8111-111111111111",
+      "chatType": "whatsapp",
+      "chatId": "998901112233",
+      "dateTime": "2026-10-08T04:10:00.000Z",
+      "type": "text",
+      "isEcho": false,
+      "contact": { "name": "Номер не из РФ", "phone": "998901112233" },
+      "text": "{{TEXT}}",
+      "status": "inbound"
+    }
+  ]
+}
