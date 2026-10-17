@@ -407,9 +407,11 @@ export class ScheduleService {
     let clientIdForTable: string | null = null;
     if (dto.clientId) {
       clientIdForTable = dto.clientId;
-    } else if (dto.clientPhone && dto.clientName) {
-      const client = await this.clientsService.getOrCreate(dto.clientPhone, dto.clientName);
-      clientIdForTable = client.id;
+    } else if (dto.clientPhone) {
+      clientIdForTable = await this.clientsService.resolveForBooking(
+        dto.clientPhone,
+        dto.clientName,
+      );
     }
 
     const booking = await this.prisma.booking.create({
@@ -503,9 +505,11 @@ export class ScheduleService {
     let clientIdForQuest: string | null = null;
     if (dto.clientId) {
       clientIdForQuest = dto.clientId;
-    } else if (dto.clientPhone && dto.clientName) {
-      const client = await this.clientsService.getOrCreate(dto.clientPhone, dto.clientName);
-      clientIdForQuest = client.id;
+    } else if (dto.clientPhone) {
+      clientIdForQuest = await this.clientsService.resolveForBooking(
+        dto.clientPhone,
+        dto.clientName,
+      );
     }
 
     const booking = await this.prisma.booking.create({

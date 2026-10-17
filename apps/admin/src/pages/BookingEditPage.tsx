@@ -32,6 +32,8 @@ import { createPaymentLink, getPaymentStatus } from '../api/payments';
 import { syncBookingToCalendar } from '../api/googleCalendar';
 import { createIikoOrder, getIikoOrderStatus } from '../api/iiko';
 import { useChatOverlay } from '../contexts/ChatOverlayContext';
+import PhoneInput from '../components/shared/PhoneInput';
+import { formatPhone, phoneToDigits } from '../utils/phone';
 import styles from './BookingEditPage.module.css';
 
 type CatalogKind = 'cake' | 'decoration' | 'food' | 'show';
@@ -135,7 +137,7 @@ export default function BookingEditPage() {
       setBooking(data);
       setFormData({
         clientName: data.clientName || '',
-        clientPhone: data.clientPhone || '',
+        clientPhone: formatPhone(data.clientPhone || ''),
         birthdayPersonName: data.birthdayPersonName || '',
         birthdayPersonAge: data.birthdayPersonAge?.toString() || '',
         guestsKids: data.guestsKids?.toString() || '',
@@ -298,7 +300,7 @@ export default function BookingEditPage() {
     try {
       await updateBookingBasic(id, {
         clientName: formData.clientName,
-        clientPhone: formData.clientPhone,
+        clientPhone: phoneToDigits(formData.clientPhone),
         depositRub: Number(formData.depositRub) || 0,
         birthdayPersonName: formData.birthdayPersonName,
         birthdayPersonAge: formData.birthdayPersonAge === '' ? null : Number(formData.birthdayPersonAge),
@@ -806,10 +808,9 @@ export default function BookingEditPage() {
               </div>
               <div className={styles.formGroup}>
                 <label>телефон</label>
-                <input 
-                  type="text"
+                <PhoneInput
                   value={formData.clientPhone}
-                  onChange={(e) => setFormData({...formData, clientPhone: e.target.value})}
+                  onChange={(clientPhone) => setFormData({ ...formData, clientPhone })}
                 />
                 {booking?.clientId && (
                   <PhoneWithChannels

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import api from '../lib/axios';
 import { toast } from '../components/ui/Toast';
 import { confirm } from '../components/ui/ConfirmDialog';
+import { formatPhoneDisplay, phoneToStored } from '../utils/phone';
+import PhoneInput from '../components/shared/PhoneInput';
 import styles from './EmployeesPage.module.css';
 
 interface Employee {
@@ -68,13 +70,13 @@ export default function EmployeesPage() {
         await api.patch(`/api/admin/employees/${editingEmployee.id}`, {
           fullName: formData.fullName,
           email: formData.email,
-          phone: formData.phone || null,
+          phone: phoneToStored(formData.phone) || null,
           role: formData.role,
         });
       } else {
         await api.post('/api/admin/employees', {
           ...formData,
-          phone: formData.phone || '',
+          phone: phoneToStored(formData.phone),
           position: ROLE_LABELS[formData.role],
         });
       }
@@ -93,7 +95,7 @@ export default function EmployeesPage() {
     setFormData({
       fullName: employee.fullName,
       email: employee.email,
-      phone: employee.phone || '',
+      phone: formatPhoneDisplay(employee.phone),
       role: employee.role,
       password: '',
     });
@@ -217,11 +219,10 @@ export default function EmployeesPage() {
             <div className={styles.formRow}>
               <div className={styles.formGroup}>
                 <label>Телефон</label>
-                <input
-                  type="text"
+                <PhoneInput
+                  strict={false}
                   value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  placeholder="+7 999 123 45 67"
+                  onChange={(phone) => setFormData({...formData, phone})}
                 />
               </div>
               <div className={styles.formGroup}>
@@ -285,7 +286,7 @@ export default function EmployeesPage() {
                 <tr key={employee.id} className={!employee.isActive ? styles.inactive : ''}>
                   <td className={styles.nameCell}>{employee.fullName}</td>
                   <td>{employee.email}</td>
-                  <td>{employee.phone || '—'}</td>
+                  <td>{formatPhoneDisplay(employee.phone) || '—'}</td>
                   <td>
                     <span 
                       className={styles.roleBadge}

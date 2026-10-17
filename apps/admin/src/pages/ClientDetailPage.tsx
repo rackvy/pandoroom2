@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getClient, updateClient, ClientWithHistory } from '../api/clients';
 import PhoneWithChannels from '../components/shared/PhoneWithChannels';
+import PhoneInput from '../components/shared/PhoneInput';
+import { formatPhone, phoneToDigits } from '../utils/phone';
 import { toast } from '../components/ui/Toast';
 import styles from './ClientDetailPage.module.css';
 
@@ -35,7 +37,7 @@ export default function ClientDetailPage() {
       setClient(data);
       setFormData({
         name: data.name,
-        phone: data.phone,
+        phone: formatPhone(data.phone),
         email: data.email || '',
         birthday: data.birthday || '',
         notes: data.notes || '',
@@ -53,7 +55,7 @@ export default function ClientDetailPage() {
 
   const handleSave = async () => {
     try {
-      await updateClient(id!, formData);
+      await updateClient(id!, { ...formData, phone: phoneToDigits(formData.phone) });
       toast.success('Клиент обновлен');
       setEditing(false);
       loadClient();
@@ -115,10 +117,9 @@ export default function ClientDetailPage() {
             </div>
             <div className={styles.field}>
               <label>Телефон</label>
-              <input
-                type="text"
+              <PhoneInput
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(phone) => setFormData({ ...formData, phone })}
               />
               {/* Номер в поле менять — каналы показать: они привязаны к карточке. */}
               <PhoneWithChannels clientId={client.id} showPhone={false} />

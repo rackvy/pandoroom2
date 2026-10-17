@@ -77,18 +77,49 @@ function normalizeVariables(variables: Record<string, string>): Record<string, s
 }
 
 /**
+ * Номер филиала в базе хранится цифрами, а в тексте сообщения печатается маской.
+ * Короткий городской или добавочный возвращаем как есть — цифры не выдумываем.
+ */
+export function formatPhoneForText(raw: string | null | undefined): string {
+  const value = (raw ?? '').trim();
+  const digits = value.replace(/\D/g, '');
+  if (!digits || /[^\d\s()+\-.]/.test(value)) return value;
+
+  let national: string;
+  if (digits.length === 11) {
+    if (digits[0] !== '7' && digits[0] !== '8') return value;
+    national = digits.slice(1);
+  } else if (digits.length === 10) {
+    national = digits;
+  } else {
+    return value;
+  }
+
+  return `+7 (${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6, 8)}-${national.slice(8, 10)}`;
+}
+
+/** branchPhone приходит из БД цифрами — в подстановку уходит маска. */
+function withFormattedBranchPhone(variables: Record<string, string>): Record<string, string> {
+  const raw = variables.branchPhone ?? variables['#BRANCH_PHONE#'];
+  if (raw === undefined) return variables;
+  const formatted = formatPhoneForText(raw);
+  return { ...variables, branchPhone: formatted, '#BRANCH_PHONE#': formatted };
+}
+
+/**
  * Render a template with variables.
  * Replaces all #KEY# placeholders with the corresponding variable values.
  * Accepts both legacy camelCase keys ({clientName}) and #KEY# style.
  */
 export function renderTemplate(templateText: string, variables: Record<string, string>): string {
-  const normalized = normalizeVariables(variables);
+  const phoneSafe = withFormattedBranchPhone(variables);
+  const normalized = normalizeVariables(phoneSafe);
   let text = templateText;
   for (const [key, value] of Object.entries(normalized)) {
     text = text.replace(new RegExp(escapeRegex(key), 'g'), value);
   }
   // Also replace any leftover {key} patterns for backwards compat
-  for (const [key, value] of Object.entries(variables)) {
+  for (const [key, value] of Object.entries(phoneSafe)) {
     if (!key.startsWith('#') && !key.startsWith('{')) {
       text = text.replace(new RegExp(`\\{${escapeRegex(key)}\\}`, 'g'), value);
     }

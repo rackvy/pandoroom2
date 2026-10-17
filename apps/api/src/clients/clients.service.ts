@@ -1,8 +1,30 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Client, Prisma } from '@prisma/client';
 import { isValidPhone, normalizePhone } from '../client-auth/phone';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+
+/** Что доводка сделала с одной броней. */
+export interface BookingLinkItem {
+  bookingId: string;
+  phone: string;
+  action: 'linked' | 'client-created' | 'skipped-invalid';
+  clientId: string | null;
+}
+
+export interface BookingLinkReport {
+  dryRun: boolean;
+  scanned: number;
+  linked: number;
+  clientCreated: number;
+  skippedInvalid: number;
+  /** Брони без телефона — привязывать нечем, их видно только здесь. */
+  skippedNoPhone: number;
+  /** Карточки с одинаковыми последними 10 цифрами: отчёт, склейка не здесь. */
+  duplicateGroups: { key: string; clients: { id: string; phone: string; name: string }[] }[];
+  items: BookingLinkItem[];
+}
 
 @Injectable()
 export class ClientsService {
@@ -165,11 +187,21 @@ export class ClientsService {
     return { message: 'Клиент удален' };
   }
 
-  // Get or create client by phone (used when creating bookings)
-  async getOrCreate(rawPhone: string, name: string) {
+  /**
+   * Карточка клиента по номеру: точное совпадение с каноном, затем последние
+   * 10 цифр, при промахе — создание. `strict` нужен публичной форме, где
+   * невалидный номер — ошибка пользователя. Брони он ни к чему: городской или
+   * добавочный номер не повод отменять заявку.
+   */
+  private async clientForPhone(
+    rawPhone: string,
+    name: string | undefined,
+    strict: boolean,
+  ): Promise<Client | null> {
     const phone = normalizePhone(rawPhone || '');
     if (!isValidPhone(phone)) {
-      throw new BadRequestException('Некорректный номер телефона');
+      if (strict) throw new BadRequestException('Некорректный номер телефона');
+      return null;
     }
 
     const trimmedName = (name || '').trim();
@@ -186,8 +218,140 @@ export class ClientsService {
       return existing;
     }
 
-    return this.prisma.client.create({
-      data: { phone, name: trimmedName || 'Новый клиент' },
+    try {
+      return await this.prisma.client.create({
+        data: { phone, name: trimmedName || 'Новый клиент' },
+      });
+    } catch (error) {
+      // Заявка и первое входящее сообщение могут заводить карточку одновременно.
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return this.findAnyByPhone(phone);
+      }
+      throw error;
+    }
+  }
+
+  // Get or create client by phone (used when creating bookings)
+  async getOrCreate(rawPhone: string, name: string) {
+    const client = await this.clientForPhone(rawPhone, name, true);
+    if (!client) throw new BadRequestException('Некорректный номер телефона');
+    return client;
+  }
+
+  /**
+   * То же правило совпадения, что у новой брони, но без падения на мусорном
+   * номере: null означает «привязывать не к чему», а не «ошибка в данных».
+   */
+  async resolveForBooking(rawPhone: string, name?: string): Promise<string | null> {
+    const client = await this.clientForPhone(rawPhone, name, false);
+    return client?.id ?? null;
+  }
+
+  /**
+   * Доводка старых броней: привязать карточку клиента по номеру. Совпадение
+   * ищется тем же правилом, что при создании брони, иначе прогон и рантайм
+   * разъедутся. Имена существующих карточек не перезаписываем — в отличие от
+   * новой заявки здесь нет человека, который подтвердил бы другое имя.
+   * Флаг dryRun ничего не пишет, но отчёт даёт тот же.
+   */
+  async backfillBookingLinks(
+    options: { dryRun?: boolean; take?: number } = {},
+  ): Promise<BookingLinkReport> {
+    const dryRun = options.dryRun ?? true;
+    const take = options.take ?? 500;
+
+    const candidates = await this.prisma.booking.findMany({
+      where: { clientId: null, NOT: { clientPhone: '' } },
+      select: { id: true, clientPhone: true, clientName: true },
+      orderBy: { id: 'asc' },
+      take,
     });
+    const skippedNoPhone = await this.prisma.booking.count({
+      where: { clientId: null, clientPhone: '' },
+    });
+
+    const items: BookingLinkItem[] = [];
+    let linked = 0;
+    let clientCreated = 0;
+    let skippedInvalid = 0;
+
+    for (const booking of candidates) {
+      const phone = normalizePhone(booking.clientPhone || '');
+      if (!isValidPhone(phone)) {
+        skippedInvalid += 1;
+        items.push({
+          bookingId: booking.id,
+          phone: booking.clientPhone,
+          action: 'skipped-invalid',
+          clientId: null,
+        });
+        continue;
+      }
+
+      const found = await this.findAnyByPhone(phone);
+      let clientId = found?.id ?? null;
+      if (found) linked += 1;
+      else clientCreated += 1;
+
+      if (!found && !dryRun) {
+        try {
+          const created = await this.prisma.client.create({
+            data: { phone, name: (booking.clientName || '').trim() || 'Новый клиент' },
+          });
+          clientId = created.id;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+            clientId = (await this.findAnyByPhone(phone))?.id ?? null;
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      if (clientId && !dryRun) {
+        await this.prisma.booking.update({ where: { id: booking.id }, data: { clientId } });
+      }
+
+      items.push({
+        bookingId: booking.id,
+        phone,
+        action: found ? 'linked' : 'client-created',
+        // При пробном прогоне карточки ещё нет — не показываем id, которого не существует.
+        clientId: dryRun && !found ? null : clientId,
+      });
+    }
+
+    return {
+      dryRun,
+      scanned: candidates.length,
+      linked,
+      clientCreated,
+      skippedInvalid,
+      skippedNoPhone,
+      duplicateGroups: await this.duplicatePhoneGroups(),
+      items,
+    };
+  }
+
+  /** Клиенты с одинаковыми последними 10 цифрами. Только отчёт, ничего не склеиваем. */
+  async duplicatePhoneGroups(): Promise<BookingLinkReport['duplicateGroups']> {
+    const rows = await this.prisma.client.findMany({
+      select: { id: true, phone: true, name: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const byTail = new Map<string, { id: string; phone: string; name: string }[]>();
+    for (const row of rows) {
+      const canon = normalizePhone(row.phone || '');
+      if (!isValidPhone(canon)) continue;
+      const tail = canon.slice(-10);
+      const list = byTail.get(tail) ?? [];
+      list.push({ id: row.id, phone: row.phone, name: row.name });
+      byTail.set(tail, list);
+    }
+
+    return [...byTail.entries()]
+      .filter(([, list]) => list.length > 1)
+      .map(([key, clients]) => ({ key, clients }));
   }
 }

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { getClients, type Client } from '../../api/clients';
+import { formatPhone, formatPhoneDisplay } from '../../utils/phone';
 import PhoneWithChannels from '../shared/PhoneWithChannels';
+import PhoneInput from '../shared/PhoneInput';
 import styles from './ClientPicker.module.css';
 
 export interface ClientPickerValue {
@@ -69,7 +71,7 @@ export default function ClientPicker({ value, onChange, disabled }: ClientPicker
   }, []);
 
   const handleSelect = (client: Client) => {
-    onChange({ clientId: client.id, clientName: client.name, clientPhone: client.phone });
+    onChange({ clientId: client.id, clientName: client.name, clientPhone: formatPhone(client.phone) });
     setIsOpen(false);
   };
 
@@ -93,16 +95,14 @@ export default function ClientPicker({ value, onChange, disabled }: ClientPicker
       <div className={styles.row}>
         <div className={styles.field}>
           <label className={styles.label}>Телефон</label>
-          <input
-            type="tel"
-            className={styles.input}
+          <PhoneInput
             value={value.clientPhone}
-            onChange={(e) => handlePhoneChange(e.target.value)}
+            onChange={handlePhoneChange}
             onFocus={() => {
               if (results.length > 0 && !value.clientId) setIsOpen(true);
             }}
-            placeholder="Введите телефон"
             disabled={disabled}
+            className={styles.input}
           />
         </div>
         <div className={styles.field}>
@@ -138,7 +138,7 @@ export default function ClientPicker({ value, onChange, disabled }: ClientPicker
             results.map((c) => (
               <button key={c.id} type="button" className={styles.dropdownItem} onClick={() => handleSelect(c)}>
                 <span className={styles.dropdownName}>{c.name}</span>
-                <span className={styles.dropdownPhone}>{c.phone}</span>
+                <span className={styles.dropdownPhone}>{formatPhoneDisplay(c.phone)}</span>
               </button>
             ))}
         </div>

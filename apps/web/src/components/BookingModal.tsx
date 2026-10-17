@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef, type FormEvent, type ChangeEvent } from 'react'
+import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import PhoneInput from '@/components/PhoneInput'
 import { formatPhone, isPhoneComplete, phoneToDigits } from '@/lib/phone'
 import styles from './BookingModal.module.css'
 
@@ -83,12 +84,6 @@ export default function BookingModal({ open, slotData, onClose, onSuccess }: Boo
       document.body.style.overflow = ''
     }
   }, [open, handleKeyDown])
-
-  // Phone mask handler
-  function handlePhoneChange(e: ChangeEvent<HTMLInputElement>) {
-    setPhone(formatPhone(e.target.value))
-    setError('')
-  }
 
   // Calculate total price
   const basePrice = slotData?.price ?? 0
@@ -199,16 +194,12 @@ export default function BookingModal({ open, slotData, onClose, onSuccess }: Boo
                 required
                 disabled={loading}
               />
-              <input
-                type="tel"
+              <PhoneInput
                 className={styles.input}
-                name="phone"
-                placeholder="+7 (___) ___-__-__"
                 value={phone}
-                onChange={handlePhoneChange}
+                onChange={(value) => { setPhone(value); setError('') }}
                 required
                 disabled={loading}
-                inputMode="numeric"
               />
 
               {/* ==================== EXTRAS ==================== */}

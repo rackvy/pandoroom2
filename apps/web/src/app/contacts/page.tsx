@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { fetchApi, type Branch } from '@/lib/api'
+import { formatPhoneDisplay, telHref } from '@/lib/phone'
 import styles from './contacts.module.css'
 
 export const dynamic = 'force-dynamic'
@@ -60,7 +61,8 @@ function PinIcon() {
 /* ── Single branch card ── */
 function BranchCard({ branch }: { branch: Branch }) {
   const hasCoords = branch.geoLat != null && branch.geoLng != null
-  const phoneClean = branch.phone?.replace(/[\s()-]/g, '') ?? ''
+  const phoneHref = telHref(branch.phone ?? '')
+  const phoneLabel = formatPhoneDisplay(branch.phone)
 
   return (
     <div className={styles.card}>
@@ -102,11 +104,11 @@ function BranchCard({ branch }: { branch: Branch }) {
         )}
 
         {branch.phone && (
-          <a href={`tel:${phoneClean}`} className={styles.cardPhone}>
+          <a href={phoneHref} className={styles.cardPhone}>
             <span className={styles.phoneIcon}>
               <PhoneIcon />
             </span>
-            {branch.phone}
+            {phoneLabel}
           </a>
         )}
 

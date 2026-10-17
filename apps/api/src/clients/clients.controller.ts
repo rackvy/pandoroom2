@@ -42,14 +42,27 @@ export class ClientsController {
     return this.clientsService.findAll(search, pageNum, limitNum);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clientsService.findOne(id);
-  }
-
   @Get('by-phone/:phone')
   findByPhone(@Param('phone') phone: string) {
     return this.clientsService.findByPhone(phone);
+  }
+
+  /**
+   * Доводка броней, у которых нет клиента, но есть номер. По умолчанию только
+   * отчёт: записи начинаются явно — с «?dryRun=false».
+   */
+  @Post('backfill-booking-links')
+  backfillBookingLinks(@Query('dryRun') dryRun?: string, @Query('take') take?: string) {
+    const limit = Number(take);
+    return this.clientsService.backfillBookingLinks({
+      dryRun: dryRun !== 'false',
+      take: Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : undefined,
+    });
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.clientsService.findOne(id);
   }
 
   @Post()

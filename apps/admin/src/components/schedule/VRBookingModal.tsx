@@ -3,6 +3,7 @@ import { createVRReservation, updateVRReservation, getVRSchedule, getVRPrice, ty
 import { formatDateForApi } from './timeUtils';
 import { toast } from '../ui/Toast';
 import ClientPicker, { type ClientPickerValue } from '../booking/ClientPicker';
+import { formatPhone, phoneToDigits } from '../../utils/phone';
 import styles from './VRBookingModal.module.css';
 
 type BookingType = 'open_slot' | 'full_hall' | 'blocked';
@@ -76,7 +77,7 @@ export default function VRBookingModal({
       setClient({
         clientId: reservation.clientId,
         clientName: reservation.clientName || '',
-        clientPhone: reservation.clientPhone || '',
+        clientPhone: formatPhone(reservation.clientPhone),
       });
       setGuestsCount(String(reservation.guestsCount || 1));
       setDescription(reservation.description || '');
@@ -174,7 +175,7 @@ export default function VRBookingModal({
         data.title = blockReason.trim() || undefined;
       } else {
         data.clientName = client.clientName.trim() || undefined;
-        data.clientPhone = client.clientPhone.trim() || undefined;
+        data.clientPhone = phoneToDigits(client.clientPhone) || undefined;
         data.clientId = client.clientId || undefined;
         if (type === 'open_slot') {
           data.guestsCount = Math.max(1, parseInt(guestsCount) || 1);

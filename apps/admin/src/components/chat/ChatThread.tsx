@@ -16,7 +16,7 @@ import {
 import { useChatOverlay } from '../../contexts/ChatOverlayContext';
 import { putChannelsCache } from '../../hooks/useBulkChannels';
 import { CHANNEL_NAMES, CHANNEL_SOURCE_NAMES } from '../../utils/channels';
-import { formatPhone } from '../../utils/phone';
+import { formatPhoneDisplay } from '../../utils/phone';
 import styles from './ChatOverlay.module.css';
 
 const PAGE_SIZE = 50;
@@ -304,7 +304,7 @@ export default function ChatThread({ onBack }: { onBack: () => void }) {
         </button>
         <div className={styles.clientIdent}>
           <div className={styles.clientName}>{card?.name || 'Клиент без имени'}</div>
-          <div className={styles.clientPhone}>{formatPhone(card?.phone)}</div>
+          <div className={styles.clientPhone}>{formatPhoneDisplay(card?.phone)}</div>
         </div>
       </div>
 

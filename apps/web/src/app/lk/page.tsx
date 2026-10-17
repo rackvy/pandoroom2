@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { lkFetch, type ChatFeed, type ClientProfile, type ChatMessage } from '@/lib/lk-api'
+import { formatPhoneDisplay } from '@/lib/phone'
 import styles from './page.module.css'
 
 type Tab = 'bookings' | 'quests' | 'chat' | 'photos' | 'bonuses' | 'passport' | 'profile'
@@ -353,7 +354,7 @@ export default function DashboardPage() {
               </div>
               <div className={styles.profileRow}>
                 <span className={styles.profileLabel}>Телефон</span>
-                <span className={styles.profileValue}>{client.phone}</span>
+                <span className={styles.profileValue}>{formatPhoneDisplay(client.phone)}</span>
               </div>
               {client.email && (
                 <div className={styles.profileRow}>

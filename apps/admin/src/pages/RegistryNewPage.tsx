@@ -15,6 +15,7 @@ import {
   type FreeTableZone,
 } from '../api/bookings';
 import { toast } from '../components/ui/Toast';
+import { isPhoneComplete, phoneToDigits } from '../utils/phone';
 import styles from './RegistryNewPage.module.css';
 
 function todayISO(): string {
@@ -113,7 +114,7 @@ export default function RegistryNewPage() {
       toast.error('Выберите филиал');
       return;
     }
-    if (!client.clientName.trim() || !client.clientPhone.trim()) {
+    if (!client.clientName.trim() || !isPhoneComplete(client.clientPhone)) {
       toast.error('Укажите имя и телефон клиента');
       return;
     }
@@ -133,7 +134,7 @@ export default function RegistryNewPage() {
         eventDate,
         type,
         clientName: client.clientName.trim(),
-        clientPhone: client.clientPhone.trim(),
+        clientPhone: phoneToDigits(client.clientPhone),
         clientId: client.clientId ?? undefined,
         startTime: startTime || undefined,
         tableIds: selectedTableIds.length ? selectedTableIds : undefined,

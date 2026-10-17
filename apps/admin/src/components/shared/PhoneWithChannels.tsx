@@ -1,7 +1,7 @@
 import { useChatOverlay } from '../../contexts/ChatOverlayContext';
 import { useClientChannels } from '../../hooks/useBulkChannels';
 import { channelHint, channelLabel, compareChannels } from '../../utils/channels';
-import { formatPhone } from '../../utils/phone';
+import { formatPhoneDisplay } from '../../utils/phone';
 import styles from './PhoneWithChannels.module.css';
 
 interface PhoneWithChannelsProps {
@@ -37,7 +37,7 @@ export default function PhoneWithChannels({
 
   return (
     <span className={`${styles.wrap}${className ? ` ${className}` : ''}`}>
-      {showPhone && <span className={styles.phone}>{formatPhone(phone)}</span>}
+      {showPhone && <span className={styles.phone}>{formatPhoneDisplay(phone)}</span>}
       {ready.map((c) => (
         <button
           key={c.channel}

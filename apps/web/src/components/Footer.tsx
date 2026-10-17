@@ -81,11 +81,11 @@ export default function Footer() {
           <div className={styles.contacts}>
             <div className={styles.addressBlock}>
               <span className={styles.addressLabel}>Нижнепортовая, 1 / Посьетская, 27 стр. 2</span>
-              <a href="tel:+74232022696" className={styles.phone}>8 423 202 26 96</a>
+              <a href="tel:+74232022696" className={styles.phone}>+7 (423) 202-26-96</a>
             </div>
             <div className={styles.addressBlock}>
               <span className={styles.addressLabel}>Алеутская 17а</span>
-              <a href="tel:+74232054458" className={styles.phone}>8 423 205 44 58</a>
+              <a href="tel:+74232054458" className={styles.phone}>+7 (423) 205-44-58</a>
             </div>
           </div>
         </div>

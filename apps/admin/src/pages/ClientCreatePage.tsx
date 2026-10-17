@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '../api/clients';
 import { toast } from '../components/ui/Toast';
+import PhoneInput from '../components/shared/PhoneInput';
+import { isPhoneComplete, phoneToDigits } from '../utils/phone';
 import styles from './ClientDetailPage.module.css';
 
 export default function ClientCreatePage() {
@@ -16,7 +18,7 @@ export default function ClientCreatePage() {
   });
 
   const handleSave = async () => {
-    if (!formData.name.trim() || !formData.phone.trim()) {
+    if (!formData.name.trim() || !isPhoneComplete(formData.phone)) {
       toast.error('Укажите имя и телефон клиента');
       return;
     }
@@ -25,7 +27,7 @@ export default function ClientCreatePage() {
     try {
       const client = await createClient({
         name: formData.name.trim(),
-        phone: formData.phone.trim(),
+        phone: phoneToDigits(formData.phone),
         email: formData.email.trim() || undefined,
         birthday: formData.birthday || undefined,
         notes: formData.notes.trim() || undefined,
@@ -73,11 +75,9 @@ export default function ClientCreatePage() {
           </div>
           <div className={styles.field}>
             <label>Телефон *</label>
-            <input
-              type="text"
+            <PhoneInput
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+7 (999) 123-45-67"
+              onChange={(phone) => setFormData({ ...formData, phone })}
             />
           </div>
           <div className={styles.field}>

@@ -65,7 +65,7 @@ export default function Header() {
 
           <div className={styles.contacts}>
             <div className={styles.address}>
-              <a href="tel:+74232022696" className={styles.phone}>8 423 202 26 96</a>
+              <a href="tel:+74232022696" className={styles.phone}>+7 (423) 202-26-96</a>
             </div>
           </div>
 
@@ -90,7 +90,7 @@ export default function Header() {
             </nav>
             <div className={styles.mobileContacts}>
               <div className={styles.mobileAddress}>
-                <a href="tel:+74232022696" className={styles.phone}>8 423 202 26 96</a>
+                <a href="tel:+74232022696" className={styles.phone}>+7 (423) 202-26-96</a>
               </div>
             </div>
             <nav className={styles.mobileUtility}>

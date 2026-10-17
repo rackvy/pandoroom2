@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getSuppliers, deleteSupplier, type Supplier } from '../../api/content';
 import { toast } from '../../components/ui/Toast';
 import { confirm } from '../../components/ui/ConfirmDialog';
+import { formatPhoneDisplay } from '../../utils/phone';
 import styles from './QuestsListPage.module.css';
 
 export default function SuppliersListPage() {
@@ -108,7 +109,7 @@ export default function SuppliersListPage() {
                   <div className={styles.questName}>{item.name}</div>
                 </td>
                 <td>{item.contactName || '-'}</td>
-                <td>{item.phone || '-'}</td>
+                <td>{formatPhoneDisplay(item.phone) || '-'}</td>
                 <td>{item.email || '-'}</td>
                 <td>
                   <div className={styles.actions}>

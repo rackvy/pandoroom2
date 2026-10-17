@@ -3,31 +3,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { BASE_API_URL } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import PhoneInput from '@/components/PhoneInput'
+import { formatPhone, isPhoneComplete, phoneToDigits } from '@/lib/phone'
 import styles from './vr-booking.module.css'
-
-/* ------------------------------------------------------------------ */
-/*  Phone mask: +7 (9XX) XXX-XX-XX                                    */
-/* ------------------------------------------------------------------ */
-
-function formatPhone(raw: string): string {
-  let digits = raw.replace(/\D/g, '')
-  if (!digits) return ''
-  if (digits.startsWith('8')) digits = '7' + digits.slice(1)
-  if (!digits.startsWith('7')) digits = '7' + digits
-  digits = digits.slice(0, 11)
-
-  const d = digits.slice(1)
-  let out = '+7'
-  if (d.length > 0) out += ' (' + d.slice(0, 3)
-  if (d.length >= 3) out += ') ' + d.slice(3, 6)
-  if (d.length >= 6) out += '-' + d.slice(6, 8)
-  if (d.length >= 8) out += '-' + d.slice(8, 10)
-  return out
-}
-
-function phoneToDigits(formatted: string): string {
-  return formatted.replace(/\D/g, '')
-}
 
 /* ------------------------------------------------------------------ */
 /*  Types & helpers                                                   */
@@ -307,7 +285,7 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
     (!inSplit || halfSide !== '') &&
     (buyout || (guests >= 1 && guests <= guestsCap)) &&
     name.trim().length > 0 &&
-    phoneToDigits(phone).length === 11 &&
+    isPhoneComplete(phone) &&
     !submitting
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -596,13 +574,10 @@ export default function VRBookingSection({ branchId, gameId }: VRBookingSectionP
                 </div>
                 <div className={styles.fieldGroup}>
                   <span className={styles.fieldLabel}>Телефон</span>
-                  <input
+                  <PhoneInput
                     className={styles.input}
-                    type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(formatPhone(e.target.value))}
-                    placeholder="+7 ___ ___-__-__"
-                    inputMode="numeric"
+                    onChange={setPhone}
                     required
                   />
                 </div>

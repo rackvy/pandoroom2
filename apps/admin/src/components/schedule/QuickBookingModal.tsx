@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ClientPicker, { type ClientPickerValue } from '../booking/ClientPicker';
+import { phoneToDigits } from '../../utils/phone';
 import styles from './ScheduleGrid.module.css';
 
 interface QuickBookingModalProps {
@@ -31,7 +32,7 @@ export default function QuickBookingModal({
     try {
       await onSubmit({
         clientName: client.clientName.trim(),
-        clientPhone: client.clientPhone.trim(),
+        clientPhone: phoneToDigits(client.clientPhone),
         clientId: client.clientId,
         durationMinutes,
       });

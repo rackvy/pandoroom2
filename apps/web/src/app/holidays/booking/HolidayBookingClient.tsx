@@ -12,7 +12,8 @@ import {
   getApi,
   postApi,
 } from '@/lib/api'
-import { formatPhone, isPhoneComplete } from '@/lib/phone'
+import { isPhoneComplete, phoneToDigits } from '@/lib/phone'
+import PhoneInput from '@/components/PhoneInput'
 import styles from './holiday-booking.module.css'
 
 interface Props {
@@ -447,7 +448,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
 
     const payload: HolidayLeadRequest = {
       name: name.trim(),
-      phone,
+      phone: phoneToDigits(phone),
       date,
       time,
       adults,
@@ -505,14 +506,10 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                 </label>
                 <label className={styles.field}>
                   <span className={styles.fieldLabel}>Телефон</span>
-                  <input
+                  <PhoneInput
                     className={styles.input}
-                    type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(formatPhone(e.target.value))}
-                    placeholder="+7 (984) 123-54-68"
-                    autoComplete="tel"
-                    inputMode="tel"
+                    onChange={setPhone}
                   />
                 </label>
               </div>
@@ -658,7 +655,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                   <p className={styles.noticeHint}>
                     Можно оставить заявку по телефону{' '}
                     <a href="tel:+74232022696" className={styles.noticeLink}>
-                      8 (423) 202-26-96
+                      +7 (423) 202-26-96
                     </a>
                   </p>
                 </div>
@@ -690,7 +687,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                 Имениннику {birthdayAgeValue} — залы для детей помладше мы скрыли. Если хотите другой зал, менеджер
                 поможет по телефону{' '}
                 <a href="tel:+74232022696" className={styles.noticeLink}>
-                  8 (423) 202-26-96
+                  +7 (423) 202-26-96
                 </a>
                 .
               </p>
@@ -708,7 +705,7 @@ export default function HolidayBookingClient({ zones, quests, menu }: Props) {
                 На {windowLabel} свободных столов не осталось. Попробуйте другое время начала или позвоните —
                 предложим варианты:{' '}
                 <a href="tel:+74232022696" className={styles.noticeLink}>
-                  8 (423) 202-26-96
+                  +7 (423) 202-26-96
                 </a>
                 .
               </p>

@@ -15,6 +15,8 @@ import {
 } from '../../api/vrSchedule';
 import { getVRGames, type VRGame } from '../../api/catalog';
 import PhoneWithChannels from '../../components/shared/PhoneWithChannels';
+import PhoneInput from '../../components/shared/PhoneInput';
+import { formatPhone, phoneToDigits } from '../../utils/phone';
 import {
   formatDateForApi,
   addDays,
@@ -319,7 +321,7 @@ export default function VRSchedulePage() {
       startTime: formatApiTime(reservation.startTime),
       endTime: formatApiTime(reservation.endTime),
       clientName: reservation.clientName || '',
-      clientPhone: reservation.clientPhone || '',
+      clientPhone: formatPhone(reservation.clientPhone || ''),
       guestsCount: reservation.guestsCount,
       gameId: reservation.gameId || '',
       description: reservation.description || '',
@@ -407,6 +409,7 @@ export default function VRSchedulePage() {
 
       const payload = {
         ...form,
+        clientPhone: phoneToDigits(form.clientPhone),
         guestsCount: Number(form.guestsCount),
         gameId: form.gameId || undefined,
         description: form.description || undefined,
@@ -1101,13 +1104,11 @@ export default function VRSchedulePage() {
                 </div>
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Телефон</label>
-                  <input
-                    type="tel"
+                  <PhoneInput
                     className={styles.formInput}
                     value={form.clientPhone}
-                    onChange={(e) => handleFormChange('clientPhone', e.target.value)}
+                    onChange={(value) => handleFormChange('clientPhone', value)}
                     disabled={isSaving}
-                    placeholder="+7 ..."
                   />
                 </div>
               </div>

@@ -161,9 +161,8 @@ export class BookingService {
     }
 
     let clientId: string | null = data.clientId ?? null;
-    if (!clientId && clientPhone && clientName) {
-      const client = await this.clientsService.getOrCreate(clientPhone, clientName);
-      clientId = client.id;
+    if (!clientId && clientPhone) {
+      clientId = await this.clientsService.resolveForBooking(clientPhone, clientName);
     }
 
     let eventWindow: { startTime: Date; endTime: Date } | null = null;
@@ -466,13 +465,11 @@ export class BookingService {
 
     if (!booking) throw new NotFoundException('Бронирование не найдено');
 
-    // Get or create client if phone provided
-    let clientId: string | undefined = undefined;
+    // Клиент берётся по одному номеру: имя в карточке бывает пустым.
     const clientPhone = data.clientPhone ? normalizePhone(data.clientPhone) : data.clientPhone;
-    if (clientPhone && data.clientName) {
-      const client = await this.clientsService.getOrCreate(clientPhone, data.clientName);
-      clientId = client.id;
-    }
+    const nextClientId = clientPhone
+      ? await this.clientsService.resolveForBooking(clientPhone, data.clientName)
+      : null;
 
     // Update booking
     const optionalNumber = (value: unknown) => {
@@ -487,7 +484,7 @@ export class BookingService {
       data: {
         clientName: data.clientName,
         clientPhone,
-        clientId: clientId,
+        clientId: nextClientId ?? booking.clientId,
         depositRub: data.depositRub,
         status: data.status,
         birthdayPersonName: data.birthdayPersonName,

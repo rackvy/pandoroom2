@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { lkFetch } from '@/lib/lk-api'
+import { isPhoneComplete, phoneToDigits } from '@/lib/phone'
+import PhoneInput from '@/components/PhoneInput'
 import styles from './page.module.css'
 
 type LoginStep = 'phone' | 'code'
@@ -69,27 +71,13 @@ export default function LoginPage() {
   const retryIn = Math.max(0, Math.ceil((retryUntil - nowTs) / 1000))
   const expiresIn = Math.max(0, Math.ceil((expiresUntil - nowTs) / 1000))
 
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, '')
-    if (digits.length <= 1) return '+7'
-    if (digits.length <= 4) return `+7 (${digits.slice(1)}`
-    if (digits.length <= 7) return `+7 (${digits.slice(1, 4)}) ${digits.slice(4)}`
-    if (digits.length <= 9) return `+7 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
-    if (digits.length <= 11) return `+7 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 9)}-${digits.slice(9)}`
-    return `+7 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 9)}-${digits.slice(9, 11)}`
-  }
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPhone(formatPhone(e.target.value))
-  }
-
   const deliverCode = async () => {
     setError('')
     setSending(true)
     try {
       const res = await lkFetch<{ expiresInSec?: number; retryAfterSec?: number }>('/auth/send-code', {
         method: 'POST',
-        body: JSON.stringify({ phone, channel }),
+        body: JSON.stringify({ phone: phoneToDigits(phone), channel }),
       })
       const start = Date.now()
       setExpiresUntil(start + (res.expiresInSec || 300) * 1000)
@@ -107,8 +95,7 @@ export default function LoginPage() {
   const handleSendCode = (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    const digits = phone.replace(/\D/g, '')
-    if (digits.length < 11) {
+    if (!isPhoneComplete(phone)) {
       setError('Введите полный номер телефона')
       return
     }
@@ -120,7 +107,7 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      await login(phone, code)
+      await login(phoneToDigits(phone), code)
       router.push('/lk')
     } catch (err: any) {
       setError(err.message || 'Неверный код')
@@ -158,11 +145,9 @@ export default function LoginPage() {
           <form onSubmit={handleSendCode} className={styles.form}>
             <div className={styles.field}>
               <label className={styles.label}>Номер телефона</label>
-              <input
-                type="tel"
+              <PhoneInput
                 value={phone}
-                onChange={handlePhoneChange}
-                placeholder="+7 (999) 123-45-67"
+                onChange={setPhone}
                 className={styles.input}
                 required
                 autoFocus

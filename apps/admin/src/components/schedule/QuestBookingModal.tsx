@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { quickBookQuest, QuickQuestBookingRequest } from '../../api/schedule';
 import ClientPicker, { type ClientPickerValue } from '../booking/ClientPicker';
+import { phoneToDigits } from '../../utils/phone';
 import styles from './QuestBookingModal.module.css';
 
 interface QuestBookingModalProps {
@@ -47,7 +48,7 @@ export default function QuestBookingModal({
         startTime,
         durationMinutes,
         clientName: client.clientName.trim() || undefined,
-        clientPhone: client.clientPhone.trim() || undefined,
+        clientPhone: phoneToDigits(client.clientPhone) || undefined,
         clientId: client.clientId || undefined,
       };
 

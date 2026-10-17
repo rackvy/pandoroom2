@@ -6,6 +6,8 @@ import Link from 'next/link'
 import styles from './quests.module.css'
 import type { Quest } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import PhoneInput from '@/components/PhoneInput'
+import { formatPhone, isPhoneComplete, phoneToDigits } from '@/lib/phone'
 import BookingModal from '@/components/BookingModal'
 import type { BookingSlotData } from '@/components/BookingModal'
 
@@ -231,7 +233,7 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
   function handleSlotClick(quest: Quest, slot: ScheduleSlot) {
     if (slot.isBooked) {
       setSubscribeSlot({ questId: quest.id, questName: quest.name, slotId: slot.slotId, startTime: slot.startTime })
-      setSubscribePhone(client?.phone || '')
+      setSubscribePhone(formatPhone(client?.phone || ''))
       setSubscribeSuccess(false)
       setSubscribeOpen(true)
     } else {
@@ -269,8 +271,7 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
   async function handleSubscribeSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!subscribeSlot) return
-    const digits = subscribePhone.replace(/\D/g, '')
-    if (digits.length < 11) return
+    if (!isPhoneComplete(subscribePhone)) return
 
     setSubscribeLoading(true)
     try {
@@ -283,7 +284,7 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
           desiredDate: formatDateKey(selectedDate),
           desiredTime: subscribeSlot.startTime,
           clientName: client?.name || 'Гость',
-          clientPhone: digits,
+          clientPhone: phoneToDigits(subscribePhone),
         }),
       })
       if (res.ok) {
@@ -527,20 +528,17 @@ export default function QuestsClient({ quests }: QuestsClientProps) {
                   отправим уведомление, когда оно освободится.
                 </p>
                 <form className={styles.subscribeForm} onSubmit={handleSubscribeSubmit}>
-                  <input
-                    type="tel"
+                  <PhoneInput
                     className={styles.subscribeInput}
-                    placeholder="+7 (___) ___-__-__"
                     value={subscribePhone}
-                    onChange={(e) => setSubscribePhone(e.target.value)}
+                    onChange={setSubscribePhone}
                     required
                     disabled={subscribeLoading}
-                    inputMode="numeric"
                   />
                   <button
                     type="submit"
                     className={styles.subscribeBtn}
-                    disabled={subscribeLoading || subscribePhone.replace(/\D/g, '').length < 11}
+                    disabled={subscribeLoading || !isPhoneComplete(subscribePhone)}
                   >
                     {subscribeLoading ? 'Отправка...' : 'Подписаться'}
                   </button>

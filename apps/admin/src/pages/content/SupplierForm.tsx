@@ -4,6 +4,8 @@ import { createSupplier, updateSupplier, getSupplier, type CreateSupplierData } 
 import styles from './Form.module.css';
 import RichTextEditor from '../../components/ui/RichTextEditor';
 import { toast } from '../../components/ui/Toast';
+import PhoneInput from '../../components/shared/PhoneInput';
+import { formatPhoneDisplay, phoneToStored } from '../../utils/phone';
 
 export default function SupplierForm() {
   const navigate = useNavigate();
@@ -36,7 +38,7 @@ export default function SupplierForm() {
       setFormData({
         name: item.name,
         contactName: item.contactName || '',
-        phone: item.phone || '',
+        phone: formatPhoneDisplay(item.phone),
         whatsapp: item.whatsapp || '',
         telegram: item.telegram || '',
         email: item.email || '',
@@ -53,11 +55,12 @@ export default function SupplierForm() {
     e.preventDefault();
     try {
       setSaving(true);
+      const payload = { ...formData, phone: phoneToStored(formData.phone) };
       if (isEdit) {
-        await updateSupplier(id!, formData);
+        await updateSupplier(id!, payload);
         toast.success('Поставщик обновлен');
       } else {
-        await createSupplier(formData);
+        await createSupplier(payload);
         toast.success('Поставщик создан');
       }
       navigate('/content/suppliers');
@@ -105,11 +108,11 @@ export default function SupplierForm() {
 
         <div className={styles.formGroup}>
           <label className={styles.label}>Телефон</label>
-          <input
-            type="tel"
-            value={formData.phone}
-            onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+          <PhoneInput
+            strict={false}
             className={styles.input}
+            value={formData.phone ?? ''}
+            onChange={(phone) => setFormData(prev => ({ ...prev, phone }))}
           />
         </div>
 

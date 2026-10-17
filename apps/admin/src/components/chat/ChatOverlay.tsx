@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getClients, type Client } from '../../api/clients';
 import { getInbox, type InboxItem } from '../../api/chat';
 import { useChatOverlay } from '../../contexts/ChatOverlayContext';
-import { formatPhone } from '../../utils/phone';
+import { formatPhoneDisplay } from '../../utils/phone';
 import ChatThread from './ChatThread';
 import styles from './ChatOverlay.module.css';
 
@@ -148,7 +148,7 @@ export default function ChatOverlay() {
                       >
                         <span className={styles.itemMain}>
                           <span className={styles.itemName}>{c.name || 'Клиент без имени'}</span>
-                          <span className={styles.itemPhone}>{formatPhone(c.phone)}</span>
+                          <span className={styles.itemPhone}>{formatPhoneDisplay(c.phone)}</span>
                         </span>
                         <span className={styles.itemCount}>
                           {c._count?.bookings ? bookingCount(c._count.bookings) : 'без броней'}
@@ -175,7 +175,7 @@ export default function ChatOverlay() {
                       >
                         <span className={styles.itemMain}>
                           <span className={styles.itemName}>{row.client.name || 'Клиент без имени'}</span>
-                          <span className={styles.itemPhone}>{formatPhone(row.client.phone)}</span>
+                          <span className={styles.itemPhone}>{formatPhoneDisplay(row.client.phone)}</span>
                           <span className={styles.itemPreview}>
                             {previewAuthor(row.lastMessage)}
                             {row.lastMessage?.text ?? ''}

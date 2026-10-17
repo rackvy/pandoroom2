@@ -7,6 +7,8 @@ import YandexMapPicker from '../components/YandexMapPicker';
 import MediaPicker from '../components/ui/MediaPicker';
 import { type Media } from '../api/media';
 import { getMediaUrl } from '../utils/media';
+import { formatPhoneDisplay, phoneToStored } from '../utils/phone';
+import PhoneInput from '../components/shared/PhoneInput';
 import styles from './SettingsPage.module.css';
 
 const ZONE_KEYS = [
@@ -124,6 +126,7 @@ export default function SettingsPage() {
     try {
       const branchData = {
         ...branchForm,
+        phone: phoneToStored(branchForm.phone),
         whatsapp: branchForm.whatsapp || null,
         telegram: branchForm.telegram || null,
         max: branchForm.max || null,
@@ -367,7 +370,7 @@ export default function SettingsPage() {
             <input placeholder="Название филиала" value={branchForm.name} onChange={e => setBranchForm({...branchForm, name: e.target.value})} required />
             <input placeholder="Город" value={branchForm.city} onChange={e => setBranchForm({...branchForm, city: e.target.value})} required />
             <input placeholder="Адрес" value={branchForm.address} onChange={e => setBranchForm({...branchForm, address: e.target.value})} required />
-            <input placeholder="Телефон" value={branchForm.phone} onChange={e => setBranchForm({...branchForm, phone: e.target.value})} />
+            <PhoneInput strict={false} placeholder="Телефон" value={branchForm.phone} onChange={phone => setBranchForm({...branchForm, phone})} />
             <input placeholder="Email" value={branchForm.email} onChange={e => setBranchForm({...branchForm, email: e.target.value})} />
 
             {/* Map picker */}
@@ -417,7 +420,7 @@ export default function SettingsPage() {
                   <td><strong>{b.name}</strong></td>
                   <td>{b.city}</td>
                   <td>{b.address}</td>
-                  <td>{b.phone || '-'}</td>
+                  <td>{formatPhoneDisplay(b.phone) || '-'}</td>
                   <td>
                     <div className={styles.flagsCell}>
                       {ZONE_FLAGS.map(flag => (
@@ -434,7 +437,7 @@ export default function SettingsPage() {
                         name: b.name,
                         city: b.city,
                         address: b.address,
-                        phone: b.phone,
+                        phone: formatPhoneDisplay(b.phone),
                         email: b.email,
                         geoLat: b.geoLat ?? null,
                         geoLng: b.geoLng ?? null,
