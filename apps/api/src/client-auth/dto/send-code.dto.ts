@@ -7,6 +7,6 @@ export class SendCodeDto {
   phone: string;
 
   @IsOptional()
-  @IsIn(['call', 'sms'])
+  @IsIn(['call', 'sms', 'telegram', 'max'])
   channel?: OtpChannel;
 }

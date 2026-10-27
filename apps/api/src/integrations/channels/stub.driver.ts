@@ -4,6 +4,7 @@ import { createHash } from 'crypto';
 import {
   ChannelConfig,
   ChannelDriver,
+  ChannelState,
   DigitsPhone,
   InboundEvent,
   ProbeResult,
@@ -53,6 +54,11 @@ export class StubDriver implements ChannelDriver {
       return { available: false, reason: 'Номер не в формате 7XXXXXXXXXX' };
     }
     return { available: true, externalId: phone, reason: undefined };
+  }
+
+  /** Заглушка не имеет права утверждать, что мессенджер доступен. */
+  async channelStates(): Promise<ChannelState[]> {
+    return [];
   }
 
   verifyWebhookAuth(ctx: WebhookContext): boolean {

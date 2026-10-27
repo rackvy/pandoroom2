@@ -5,11 +5,14 @@ import { ClientAuthService } from './client-auth.service';
 import { ClientAuthController } from './client-auth.controller';
 import { OtpService } from './otp.service';
 import { ZvonokModule } from '../zvonok/zvonok.module';
+import { IntegrationsModule } from '../integrations/integrations.module';
 import { ClientGuard } from '../common/guards/client.guard';
 
 @Module({
   imports: [
     ZvonokModule,
+    // ChannelRegistry для запасной отправки кода; ChatModule здесь дал бы цикл.
+    IntegrationsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

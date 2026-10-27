@@ -2,10 +2,12 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   getIntegrations,
   getWazzupDriver,
+  getZvonokIncidents,
   getZvonokStatus,
   patchIntegration,
   type IntegrationGroup,
   type IntegrationProvider,
+  type ZvonokIncident,
   type ZvonokStatus,
 } from '../api/integrations';
 import type { ChatDriverMode } from '../api/chat';
@@ -51,6 +53,7 @@ export default function SettingsIntegrations() {
   const [saving, setSaving] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const [zvonok, setZvonok] = useState<ZvonokStatus | null>(null);
+  const [zvonokIncidents, setZvonokIncidents] = useState<ZvonokIncident[]>([]);
   const [wazzup, setWazzup] = useState<ChatDriverMode | null>(null);
 
   const loadDriver = useCallback(async () => {
@@ -103,7 +106,12 @@ export default function SettingsIntegrations() {
   async function handleCheckZvonok() {
     setChecking(true);
     try {
-      setZvonok(await getZvonokStatus());
+      const [status, incidents] = await Promise.all([
+        getZvonokStatus(),
+        getZvonokIncidents(),
+      ]);
+      setZvonok(status);
+      setZvonokIncidents(incidents);
     } catch (err) {
       toast.error(errorMessage(err, 'Zvonok не ответил'));
     } finally {
@@ -146,8 +154,18 @@ export default function SettingsIntegrations() {
                 </span>
               )}
               {isZvonok && (
-                <span className={zvonok?.configured ? styles.badgeOk : styles.badgeWarn}>
-                  {zvonok === null ? 'не проверено' : zvonok.configured ? 'настроено' : 'не настроено'}
+                <span
+                  className={
+                    zvonok === null || zvonok.campaignCheck?.status === 'ok'
+                      ? styles.badgeOk
+                      : styles.badgeWarn
+                  }
+                >
+                  {zvonok === null
+                    ? 'не проверено'
+                    : zvonok.campaignCheck?.status === 'ok'
+                      ? 'настроено'
+                      : 'нужна настройка'}
                 </span>
               )}
             </div>
@@ -219,6 +237,9 @@ export default function SettingsIntegrations() {
                 {zvonok && !zvonok.error && (
                   <div className={styles.checkResult}>
                     <div>Баланс: {zvonok.balance || '—'}</div>
+                    {zvonok.campaignCheck?.message && (
+                      <div className={styles.errorText}>{zvonok.campaignCheck.message}</div>
+                    )}
                     {zvonok.campaigns.length === 0 ? (
                       <div className={styles.errorText}>
                         Кампаний нет — ни один звонок не уйдёт. Создайте кампанию «Диктовка кода
@@ -234,6 +255,19 @@ export default function SettingsIntegrations() {
                         ))}
                       </ul>
                     )}
+                  </div>
+                )}
+                {zvonokIncidents.length > 0 && (
+                  <div className={styles.checkResult}>
+                    <div>Последние сбои отправки кода:</div>
+                    <ul className={styles.campaigns}>
+                      {zvonokIncidents.map((incident) => (
+                        <li key={incident.id}>
+                          {new Date(incident.createdAt).toLocaleString('ru-RU')} —{' '}
+                          {incident.recipient} — {incident.errorText || 'без описания'}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>

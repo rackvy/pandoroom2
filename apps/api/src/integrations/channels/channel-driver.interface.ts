@@ -56,6 +56,12 @@ export interface WebhookContext {
   query: Record<string, string | undefined>;
 }
 
+/** Состояние канала у провайдера: `active` — можно писать. */
+export interface ChannelState {
+  channelId: string;
+  state: string;
+}
+
 /** Значения группы `wazzup` из каталога интеграций. */
 export interface ChannelConfig {
   apiBaseUrl: string;
@@ -84,6 +90,12 @@ export interface ChannelDriver {
   send(channel: ChannelKind, to: DigitsPhone, text: string): Promise<{ externalId: string }>;
 
   probe(channel: ChannelKind, phone: DigitsPhone): Promise<ProbeResult>;
+
+  /**
+   * Живое состояние каналов у провайдера. Нужно, чтобы предлагать гостю
+   * только те способы, которые действительно доставят код.
+   */
+  channelStates(): Promise<ChannelState[]>;
 
   /**
    * Допуск вебхука. Проверяется до разбора: событие от непонятного источника

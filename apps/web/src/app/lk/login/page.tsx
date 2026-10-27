@@ -4,30 +4,45 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { lkFetch } from '@/lib/lk-api'
+import { lkFetch, MessengerChannel, MESSENGER_LABELS } from '@/lib/lk-api'
 import { isPhoneComplete, phoneToDigits } from '@/lib/phone'
 import PhoneInput from '@/components/PhoneInput'
 import styles from './page.module.css'
 
 type LoginStep = 'phone' | 'code'
-type Channel = 'call' | 'sms'
+type EntryChannel = 'call' | 'sms'
+type OtpChannel = EntryChannel | MessengerChannel
 
-const CHANNEL_LABELS: Record<Channel, string> = {
-  call: 'Позвоним и продиктуем',
-  sms: 'СМС-сообщение',
+interface SendCodeResponse {
+  expiresInSec?: number
+  retryAfterSec?: number
+  fallbackAfterSec?: number
+  fallbackChannels?: MessengerChannel[]
+}
+
+function formatSeconds(total: number): string {
+  const minutes = Math.floor(total / 60)
+  const seconds = total % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
 export default function LoginPage() {
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
   const [step, setStep] = useState<LoginStep>('phone')
-  const [channel, setChannel] = useState<Channel>('call')
-  const [channels, setChannels] = useState<Channel[]>(['call'])
+  // null — настройки ещё не пришли, поэтому кнопку не прячем
+  const [entryChannels, setEntryChannels] = useState<EntryChannel[] | null>(null)
+  const [sentChannel, setSentChannel] = useState<OtpChannel>('call')
+  const [sendingChannel, setSendingChannel] = useState<OtpChannel | null>(null)
+  const [messengers, setMessengers] = useState<MessengerChannel[]>([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
   const [retryUntil, setRetryUntil] = useState(0)
   const [expiresUntil, setExpiresUntil] = useState(0)
+  const [fallbackUntil, setFallbackUntil] = useState(0)
+  const [fallbackRevealed, setFallbackRevealed] = useState(false)
   const [nowTs, setNowTs] = useState(() => Date.now())
   const { login, client } = useAuth()
   const router = useRouter()
@@ -47,48 +62,63 @@ export default function LoginPage() {
     }
   }, [step])
 
-  // Какие каналы доставки реально настроены на сервере
+  // Настроен ли вход по звонку — чтобы не показывать кнопку в пустоту
   useEffect(() => {
-    lkFetch<{ channels?: Channel[] }>('/auth/channels')
-      .then((data) => {
-        const available = data?.channels || []
-        if (!available.length) return
-        setChannels(available)
-        if (!available.includes(channel)) setChannel(available[0])
-      })
+    lkFetch<{ channels?: EntryChannel[] }>('/auth/channels')
+      .then((data) => setEntryChannels(data?.channels || []))
       .catch(() => {
         // Сервер сам ответит понятной ошибкой при попытке отправки
       })
   }, [])
 
-  // Один тикер на оба обратных отсчёта
+  // Один тикер на все обратные отсчёты
   useEffect(() => {
-    if (!retryUntil && !expiresUntil) return
+    if (!retryUntil && !expiresUntil && !fallbackUntil) return
     const id = setInterval(() => setNowTs(Date.now()), 1000)
     return () => clearInterval(id)
-  }, [retryUntil, expiresUntil])
+  }, [retryUntil, expiresUntil, fallbackUntil])
+
+  // Блок запасных способов показываем один раз и больше не прячем
+  useEffect(() => {
+    if (fallbackUntil && nowTs >= fallbackUntil) setFallbackRevealed(true)
+  }, [fallbackUntil, nowTs])
 
   const retryIn = Math.max(0, Math.ceil((retryUntil - nowTs) / 1000))
   const expiresIn = Math.max(0, Math.ceil((expiresUntil - nowTs) / 1000))
+  const fallbackIn = Math.max(0, Math.ceil((fallbackUntil - nowTs) / 1000))
+  const callConfigured = entryChannels === null || entryChannels.includes('call')
 
-  const deliverCode = async () => {
+  const deliverCode = async (nextChannel: OtpChannel) => {
     setError('')
+    setNotice('')
     setSending(true)
+    setSendingChannel(nextChannel)
     try {
-      const res = await lkFetch<{ expiresInSec?: number; retryAfterSec?: number }>('/auth/send-code', {
+      const res = await lkFetch<SendCodeResponse>('/auth/send-code', {
         method: 'POST',
-        body: JSON.stringify({ phone: phoneToDigits(phone), channel }),
+        body: JSON.stringify({ phone: phoneToDigits(phone), channel: nextChannel }),
       })
       const start = Date.now()
       setExpiresUntil(start + (res.expiresInSec || 300) * 1000)
       setRetryUntil(start + (res.retryAfterSec || 60) * 1000)
       setNowTs(start)
+      setSentChannel(nextChannel)
+      setMessengers(Array.isArray(res.fallbackChannels) ? res.fallbackChannels : [])
+      // Таймер «ждём звонок» относится только к звонку и после мессенджера не перезапускается
+      if (nextChannel === 'telegram' || nextChannel === 'max') {
+        setFallbackUntil(0)
+        setNotice(`Отправили новый код в ${MESSENGER_LABELS[nextChannel]}`)
+      } else if (nextChannel === 'call') {
+        setFallbackUntil(start + (res.fallbackAfterSec || 120) * 1000)
+        setFallbackRevealed(false)
+      }
       setCode('')
       setStep('code')
     } catch (err: any) {
       setError(err.message || 'Не удалось отправить код')
     } finally {
       setSending(false)
+      setSendingChannel(null)
     }
   }
 
@@ -99,7 +129,7 @@ export default function LoginPage() {
       setError('Введите полный номер телефона')
       return
     }
-    deliverCode()
+    deliverCode('call')
   }
 
   const handleVerifyCode = async (e: React.FormEvent) => {
@@ -120,10 +150,22 @@ export default function LoginPage() {
     setStep('phone')
     setCode('')
     setError('')
+    setNotice('')
+    setSentChannel('call')
+    setFallbackUntil(0)
+    setFallbackRevealed(false)
+    setMessengers([])
   }
 
-  const channelTitle =
-    channel === 'sms' ? `Код отправлен СМС на ${phone}` : `Звоним на ${phone} — робот продиктует код`
+  const sendingText =
+    sendingChannel === 'telegram' || sendingChannel === 'max'
+      ? `Отправляем код в ${MESSENGER_LABELS[sendingChannel]}…`
+      : `Звоним на ${phone}…`
+
+  const sentTitle =
+    sentChannel === 'telegram' || sentChannel === 'max'
+      ? `Код отправлен в ${MESSENGER_LABELS[sentChannel]}`
+      : `Звоним на ${phone} — робот продиктует код`
 
   return (
     <div className={styles.loginPage}>
@@ -136,7 +178,7 @@ export default function LoginPage() {
         {sending && (
           <div className={styles.sendingState}>
             <div className={styles.sendingSpinner} />
-            <p className={styles.sendingText}>Отправляем код на {phone}</p>
+            <p className={styles.sendingText}>{sendingText}</p>
           </div>
         )}
 
@@ -154,32 +196,15 @@ export default function LoginPage() {
               />
             </div>
 
-            {channels.length > 1 && (
-              <div className={styles.field}>
-                <span className={styles.label}>Как получить код</span>
-                <div className={styles.channels}>
-                  {channels.map((item) => (
-                    <label
-                      key={item}
-                      className={channel === item ? styles.channelActive : styles.channel}
-                    >
-                      <input
-                        type="radio"
-                        name="channel"
-                        value={item}
-                        checked={channel === item}
-                        onChange={() => setChannel(item)}
-                      />
-                      {CHANNEL_LABELS[item]}
-                    </label>
-                  ))}
-                </div>
+            {callConfigured ? (
+              <button type="submit" className={styles.button}>
+                Получить код
+              </button>
+            ) : (
+              <div className={styles.codeHint}>
+                Вход по звонку сейчас недоступен — попробуйте позже.
               </div>
             )}
-
-            <button type="submit" className={styles.button}>
-              Получить код
-            </button>
           </form>
         )}
 
@@ -188,8 +213,10 @@ export default function LoginPage() {
           <form onSubmit={handleVerifyCode} className={styles.form}>
             <div className={styles.sentInfo}>
               <span className={styles.sentIcon}>✓</span>
-              {channelTitle}
+              {sentTitle}
             </div>
+
+            {notice && <div className={styles.codeHint}>{notice}</div>}
 
             <div className={styles.field}>
               <label className={styles.label}>Код подтверждения</label>
@@ -207,23 +234,45 @@ export default function LoginPage() {
             </div>
 
             <div className={styles.codeHint}>
-              {expiresIn > 0
-                ? `Код действителен ещё ${expiresIn} с`
-                : 'Код истёк — запросите новый'}
+              {sentChannel === 'call' && !fallbackRevealed
+                ? `Ждём звонок · ${formatSeconds(fallbackIn)}`
+                : expiresIn > 0
+                  ? `Код действителен ещё ${expiresIn} с`
+                  : 'Код истёк — запросите новый'}
             </div>
 
             <button type="submit" className={styles.button} disabled={loading || code.length < 4}>
               {loading ? 'Проверяем...' : 'Войти'}
             </button>
 
-            <button
-              type="button"
-              className={styles.resendBtn}
-              onClick={deliverCode}
-              disabled={retryIn > 0}
-            >
-              {retryIn > 0 ? `Отправить ещё раз через ${retryIn} с` : 'Отправить код ещё раз'}
-            </button>
+            {fallbackRevealed && (
+              <div className={styles.field}>
+                <span className={styles.label}>Не дозвонились?</span>
+                <div className={styles.channels}>
+                  <button
+                    type="button"
+                    className={styles.resendBtn}
+                    onClick={() => deliverCode('call')}
+                    disabled={retryIn > 0}
+                  >
+                    {retryIn > 0 ? `Повторить звонок через ${retryIn} с` : 'Повторить звонок'}
+                  </button>
+                  {messengers.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className={styles.resendBtn}
+                      onClick={() => deliverCode(item)}
+                      disabled={retryIn > 0}
+                    >
+                      {retryIn > 0
+                        ? `Отправить код в ${MESSENGER_LABELS[item]} через ${retryIn} с`
+                        : `Отправить код в ${MESSENGER_LABELS[item]}`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <button type="button" className={styles.backBtn} onClick={handleBack}>
               ← Изменить номер

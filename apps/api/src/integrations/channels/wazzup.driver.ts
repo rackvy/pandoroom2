@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'crypto';
 import {
   ChannelConfig,
   ChannelDriver,
+  ChannelState,
   DigitsPhone,
   InboundEvent,
   ProbeResult,
@@ -186,6 +187,12 @@ export class WazzupDriver implements ChannelDriver {
       externalId: phone,
       reason: 'Wazzup не проверяет регистрацию номера — канал подтвердится первым входящим сообщением',
     };
+  }
+
+  /** Состояния всех подключённых каналов: реестр отбирает из них наши ID. */
+  async channelStates(): Promise<ChannelState[]> {
+    const rows = await this.listChannels();
+    return rows.map(({ channelId, state }) => ({ channelId, state }));
   }
 
   /**

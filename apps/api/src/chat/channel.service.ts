@@ -3,6 +3,7 @@ import { ChannelKind, MessageStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClientsService } from '../clients/clients.service';
 import { isValidPhone, normalizePhone } from '../client-auth/phone';
+import { isOtpMessage } from '../client-auth/otp-message';
 import { ChannelRegistry } from '../integrations/channels/channel-registry';
 import {
   InboundEvent,
@@ -30,6 +31,11 @@ export interface WebhookOutcome {
   noClient: number;
   /** Клиент заведён автоматически: по нему видно, сколько незнакомых номеров пришло. */
   newClients: number;
+  /**
+   * Эхо нашего кода входа. Не пишем его в переписку и не заводим клиента:
+   * иначе одноразовый код остаётся в ленте админки навсегда.
+   */
+  otpEcho: number;
 }
 
 export interface StaffSendInput {
@@ -68,10 +74,18 @@ export class ChannelService {
       ignored: 0,
       noClient: 0,
       newClients: 0,
+      otpEcho: 0,
     };
 
     for (const event of events) {
       if (isInboundEvent(event)) {
+        // До создания клиента, записи в ленту и подтверждения канала:
+        // эхо нашего кода — служебное сообщение, а не обращение гостя.
+        if (event.fromStaff && isOtpMessage(event.text)) {
+          outcome.otpEcho += 1;
+          continue;
+        }
+
         const client = await this.clientForEvent(event);
         if (!client) {
           outcome.noClient += 1;

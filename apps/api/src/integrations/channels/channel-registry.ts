@@ -5,6 +5,16 @@ import { ChannelConfig, ChannelDriver } from './channel-driver.interface';
 import { StubDriver } from './stub.driver';
 import { WazzupDriver } from './wazzup.driver';
 
+/** Снимок доступности живёт минуту: вход не должен ходить к провайдеру на каждый экран. */
+const AVAILABLE_TTL_MS = 60_000;
+
+/**
+ * Кого предлагаем запасным путём кода помимо звонка. WhatsApp здесь не
+ * появится, пока не будет утверждённого в Meta шаблона с кодом: свободный
+ * текст незнакомому номеру WABA не пропускает.
+ */
+const FALLBACK_CANDIDATES: ChannelKind[] = [ChannelKind.TELEGRAM, ChannelKind.MAX];
+
 /**
  * Выбор драйвера по конфигурации. Боевой режим включается сам, когда заданы
  * адрес и ключ, — отдельного переключателя, которое можно забыть включить,
@@ -14,6 +24,7 @@ import { WazzupDriver } from './wazzup.driver';
 export class ChannelRegistry {
   private readonly logger = new Logger(ChannelRegistry.name);
   private warnedStub = false;
+  private availableCache: { fetchedAt: number; channels: ChannelKind[] } | null = null;
 
   constructor(private readonly integrations: IntegrationsService) {}
 
@@ -42,6 +53,41 @@ export class ChannelRegistry {
       this.logger.warn(`Каналы работают в режиме заглушки: ${this.stubReason(config)}`);
     }
     return new StubDriver(config);
+  }
+
+  /**
+   * Куда реально можно отдать код прямо сейчас: настроенный ID и состояние
+   * `active` у провайдера. Проверка по факту, а не по наличию ID: кнопку,
+   * которая не доставит, показывать нельзя. В заглушке и при сбое — пусто.
+   */
+  async available(): Promise<ChannelKind[]> {
+    if (this.availableCache && Date.now() - this.availableCache.fetchedAt < AVAILABLE_TTL_MS) {
+      return this.availableCache.channels;
+    }
+
+    const config = await this.config();
+    let channels: ChannelKind[] = [];
+    if (this.isLive(config)) {
+      try {
+        const states = new Map(
+          (await new WazzupDriver(config).channelStates()).map((row) => [row.channelId, row.state]),
+        );
+        channels = FALLBACK_CANDIDATES.filter((kind) => {
+          const id = config.channelIds[kind];
+          if (!id) return false;
+          return states.get(id) === 'active';
+        });
+      } catch (error) {
+        this.logger.warn(
+          `Состояния каналов Wazzup не получены: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    }
+
+    this.availableCache = { fetchedAt: Date.now(), channels };
+    return channels;
   }
 
   /** Чем именно сейчас отправляем — нужно интерфейсу, чтобы не выдавать заглушку за работу. */

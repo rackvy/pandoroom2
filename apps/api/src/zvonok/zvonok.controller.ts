@@ -15,4 +15,9 @@ export class ZvonokController {
   status() {
     return this.zvonokService.status();
   }
+
+  @Get('incidents')
+  incidents() {
+    return this.zvonokService.incidents();
+  }
 }

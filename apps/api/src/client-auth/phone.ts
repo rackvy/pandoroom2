@@ -13,3 +13,8 @@ export function isValidPhone(digits: string): boolean {
 export function toMsisdn(digits: string): string {
   return `+${digits}`;
 }
+
+/** Маска для журналов и инцидентов: +7***4567 */
+export function maskPhone(digits: string): string {
+  return digits.length >= 4 ? `+${digits.slice(0, 1)}***${digits.slice(-4)}` : '***';
+}

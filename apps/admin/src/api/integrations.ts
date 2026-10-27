@@ -33,6 +33,11 @@ export interface ZvonokCampaign {
   isActive: boolean | null;
 }
 
+export interface ZvonokCampaignCheck {
+  status: 'ok' | 'invalid-type' | 'missing' | 'auth' | 'unavailable' | 'skipped';
+  message: string | null;
+}
+
 export interface ZvonokStatus {
   configured: boolean;
   publicKeySet: boolean;
@@ -40,7 +45,16 @@ export interface ZvonokStatus {
   smsCampaignId: string | null;
   balance: string | null;
   campaigns: ZvonokCampaign[];
+  campaignCheck: ZvonokCampaignCheck;
   error: string | null;
+}
+
+export interface ZvonokIncident {
+  id: string;
+  template: string;
+  recipient: string;
+  errorText: string | null;
+  createdAt: string;
 }
 
 export const getIntegrations = async (): Promise<IntegrationGroup[]> => {
@@ -59,6 +73,12 @@ export const patchIntegration = async (
 export const getZvonokStatus = async (): Promise<ZvonokStatus> => {
   const response = await api.get('/api/admin/zvonok/status');
   return response.data;
+};
+
+/** Последние сбои отправки кода входа — баннер в настройках интеграций. */
+export const getZvonokIncidents = async (): Promise<ZvonokIncident[]> => {
+  const response = await api.get('/api/admin/zvonok/incidents');
+  return response.data.incidents;
 };
 
 /** Чем сейчас работают каналы: боевой Wazzup или заглушка. */

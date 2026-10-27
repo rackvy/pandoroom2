@@ -2,6 +2,14 @@ const API_ROOT = process.env.NEXT_PUBLIC_API_URL?.replace('/api/public', '') || 
 
 export const LK_API_BASE = `${API_ROOT}/api/lk`
 
+// Запасные способы получить код: WhatsApp не входит, пока нет WABA-шаблона.
+export type MessengerChannel = 'telegram' | 'max'
+
+export const MESSENGER_LABELS: Record<MessengerChannel, string> = {
+  telegram: 'Telegram',
+  max: 'MAX',
+}
+
 function getToken(): string | null {
   if (typeof window === 'undefined') return null
   return localStorage.getItem('lk_token')
@@ -24,9 +32,16 @@ export async function lkFetch<T = unknown>(endpoint: string, options?: RequestIn
   })
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}))
-    const message = Array.isArray(err.message) ? err.message.join('; ') : err.message
-    throw new Error(message || `API Error: ${res.status}`)
+    const body = await res.json().catch(() => null)
+    const raw = Array.isArray(body?.message) ? body.message.join('; ') : body?.message
+    // 502 от Traefik приходит HTML-ом — гостю нужен текст, а не «API Error: 502»
+    const message =
+      typeof raw === 'string' && raw.trim()
+        ? raw
+        : res.status >= 500
+          ? 'Сервис временно недоступен. Попробуйте через минуту.'
+          : `Не удалось выполнить запрос (${res.status})`
+    throw new Error(message)
   }
 
   return res.json()
