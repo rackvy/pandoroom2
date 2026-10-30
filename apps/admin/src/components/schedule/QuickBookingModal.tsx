@@ -6,7 +6,7 @@ import styles from './ScheduleGrid.module.css';
 interface QuickBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { clientName: string; clientPhone: string; clientId: string | null; durationMinutes: number }) => void;
+  onSubmit: (data: { clientName: string; clientPhone: string; clientId: string | null; durationMinutes: number }) => Promise<void>;
   defaultDuration: number;
   title: string;
 }
@@ -36,9 +36,6 @@ export default function QuickBookingModal({
         clientId: client.clientId,
         durationMinutes,
       });
-      // Reset form
-      setClient({ clientId: null, clientName: '', clientPhone: '' });
-      setDurationMinutes(defaultDuration);
     } finally {
       setIsLoading(false);
     }

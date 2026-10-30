@@ -4,7 +4,7 @@ import GridColumn from './GridColumn';
 import BookingPopover from './BookingPopover';
 import QuickBookingModal from './QuickBookingModal';
 import { toast } from '../ui/Toast';
-import { getTimeSlots, timeToMinutes, minutesToTime, snapToGrid } from './timeUtils';
+import { getTimeSlots } from './timeUtils';
 import { 
   parseTime, 
   formatTime, 
@@ -27,7 +27,7 @@ interface ScheduleGridProps {
   isTable: boolean;
   branchId: string;
   eventDate: string;
-  onMove: (id: string, updates: { tableId?: string; questId?: string; startTime: string; endTime: string }) => void;
+  onMove: (id: string, updates: { tableId?: string; questId?: string; startTime: string; endTime: string }) => void | Promise<void>;
   onCancel: (id: string) => void;
   onNavigateToBooking: (bookingId: string) => void;
   onQuickBook?: (response: { reservation: TableReservation | QuestReservation }) => void;
@@ -50,9 +50,6 @@ export default function ScheduleGrid({
     reservation: TableReservation | QuestReservation;
     position: { x: number; y: number };
   } | null>(null);
-  
-  // Track hovered cell for highlighting (tableId/questId + time slot)
-  const [hoveredCell, setHoveredCell] = useState<{ itemId: string; timeSlot: string } | null>(null);
   
   // Quick booking modal state
   const [quickBookState, setQuickBookState] = useState<{
@@ -99,12 +96,12 @@ export default function ScheduleGrid({
 
     if (!reservation || !dropData?.itemId || !dropData?.timeSlot) return;
 
-    // Calculate new time based on dropped cell
-    const snappedMinutes = snapToGrid(timeToMinutes(dropData.timeSlot));
-    const newStartTime = minutesToTime(snappedMinutes);
-
-    const duration = timeToMinutes(reservation.endTime) - timeToMinutes(reservation.startTime);
-    const newEndTime = minutesToTime(snappedMinutes + duration);
+    const duration = parseTime(reservation.endTime) - parseTime(reservation.startTime);
+    const startMinutes = Math.max(GRID_START_MINUTES, Math.min(parseTime(dropData.timeSlot), GRID_END_MINUTES - duration));
+    const newStartTime = formatTime(startMinutes);
+    const newEndTime = formatTime(startMinutes + duration);
+    const currentItemId = isTable ? (reservation as TableReservation).tableId : (reservation as QuestReservation).questId;
+    if (currentItemId === dropData.itemId && newStartTime === reservation.startTime) return;
 
     const updates: { tableId?: string; questId?: string; startTime: string; endTime: string } = {
       startTime: newStartTime,
@@ -146,7 +143,7 @@ export default function ScheduleGrid({
       updates.questId = (reservation as QuestReservation).questId;
     }
 
-    onMove(id, updates);
+    return onMove(id, updates);
   }, [reservations, isTable, onMove]);
 
   // Group tables by zones
@@ -193,15 +190,6 @@ export default function ScheduleGrid({
     
     return false;
   }, [getReservationsForItem, isTable]);
-
-  // Handle cell hover for highlighting
-  const handleCellHover = useCallback((itemId: string | null, timeSlot: string | null) => {
-    if (itemId && timeSlot) {
-      setHoveredCell({ itemId, timeSlot });
-    } else {
-      setHoveredCell(null);
-    }
-  }, []);
 
   // Handle cell click for quick booking
   const handleCellClick = useCallback((itemId: string, timeSlot: string) => {
@@ -394,17 +382,13 @@ export default function ScheduleGrid({
             endTime: response.reservation.endTime,
           };
 
+      onQuickBook?.({ reservation: newReservation });
       setPopoverState({
         reservation: newReservation,
         position: { x: window.innerWidth / 2, y: window.innerHeight / 2 },
       });
     } catch (error: any) {
-      if (error.response?.status === 409) {
-        toast.error(error.response.data?.message || 'Слот занят');
-      } else {
-        toast.error('Ошибка создания брони');
-      }
-      throw error;
+      toast.error(error.response?.data?.message || 'Ошибка создания брони');
     }
   }, [quickBookState, isTable, branchId, eventDate, onQuickBook]);
 
@@ -466,8 +450,6 @@ export default function ScheduleGrid({
                       item={table}
                       reservations={getReservationsForItem(table.id)}
                       timeSlots={timeSlots}
-                      hoveredCell={hoveredCell}
-                      onCellHover={handleCellHover}
                       onCellClick={onQuickBook ? handleCellClick : undefined}
                       onOpenPopover={handleOpenPopover}
                       onResize={handleResize}
@@ -489,8 +471,6 @@ export default function ScheduleGrid({
                     item={quest}
                     reservations={getReservationsForItem(quest.id)}
                     timeSlots={timeSlots}
-                    hoveredCell={hoveredCell}
-                    onCellHover={handleCellHover}
                     onCellClick={onQuickBook ? handleCellClick : undefined}
                     onOpenPopover={handleOpenPopover}
                     onResize={handleResize}

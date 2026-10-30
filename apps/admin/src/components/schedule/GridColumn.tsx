@@ -2,7 +2,7 @@ import { useDroppable } from '@dnd-kit/core';
 import ReservationBlock from './ReservationBlock';
 import SelectionOverlay from './SelectionOverlay';
 import { timeToMinutes } from './timeUtils';
-import { parseTime, minutesToPixels } from '../../utils/time';
+import { parseTime } from '../../utils/time';
 import styles from './ScheduleGrid.module.css';
 import type { Table, Quest, TableReservation, QuestReservation } from '../../api/schedule';
 
@@ -10,11 +10,9 @@ interface GridColumnProps {
   item: Table | Quest;
   reservations: (TableReservation | QuestReservation)[];
   timeSlots: string[];
-  hoveredCell: { itemId: string; timeSlot: string } | null;
-  onCellHover: (itemId: string | null, timeSlot: string | null) => void;
   onCellClick?: (itemId: string, timeSlot: string) => void;
   onOpenPopover: (reservation: TableReservation | QuestReservation, rect: DOMRect) => void;
-  onResize: (id: string, newStartTime: string, newEndTime: string) => void;
+  onResize: (id: string, newStartTime: string, newEndTime: string) => void | Promise<void>;
   // Range selection props
   isSelecting?: boolean;
   selectionColumnId?: string | null;
@@ -24,22 +22,11 @@ interface GridColumnProps {
   onMouseDown?: (e: React.MouseEvent, itemId: string) => void;
 }
 
-// Droppable cell component
-function DroppableCell({ 
-  timeSlot, 
-  itemId, 
-  isHovered, 
-  hasReservation, 
-  onCellClick, 
-  onCellHover, 
-  children 
-}: { 
+function DroppableCell({ timeSlot, itemId, hasReservation, onCellClick, children }: {
   timeSlot: string;
   itemId: string;
-  isHovered: boolean;
   hasReservation: boolean;
   onCellClick?: () => void;
-  onCellHover: (hovered: boolean) => void;
   children?: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({
@@ -51,9 +38,7 @@ function DroppableCell({
   return (
     <div
       ref={setNodeRef}
-      className={`${styles.gridCell} ${isHovered ? styles.selectedCell : ''} ${!hasReservation && onCellClick ? styles.clickableCell : ''} ${isOver ? styles.dragOver : ''}`}
-      onMouseEnter={() => onCellHover(true)}
-      onMouseLeave={() => onCellHover(false)}
+      className={`${styles.gridCell} ${!hasReservation && onCellClick ? styles.clickableCell : ''} ${isOver ? styles.dragOver : ''}`}
       onClick={onCellClick}
     >
       {children}
@@ -71,8 +56,6 @@ export default function GridColumn({
   item, 
   reservations, 
   timeSlots,
-  hoveredCell,
-  onCellHover,
   onCellClick,
   onOpenPopover, 
   onResize,
@@ -125,8 +108,8 @@ export default function GridColumn({
   const selectionRect = showSelection ? (() => {
     const start = Math.min(selectionStartMinutes, selectionEndMinutes);
     const end = Math.max(selectionStartMinutes, selectionEndMinutes);
-    const topPx = minutesToPixels(start - parseTime(timeSlots[0]));
-    const heightPx = minutesToPixels(end - start);
+    const topPx = start - parseTime(timeSlots[0]);
+    const heightPx = end - start;
     return { topPx, heightPx, startMinutes: start, endMinutes: end };
   })() : null;
 
@@ -147,8 +130,6 @@ export default function GridColumn({
     >
       {timeSlots.map((timeSlot, index) => {
         const reservationPos = getReservationForSlot(index);
-        const isHovered = hoveredCell?.itemId === item.id && hoveredCell?.timeSlot === timeSlot;
-        
         const hasReservation = reservationPos && isFirstSlotOfReservation(index, reservationPos);
         
         return (
@@ -156,16 +137,13 @@ export default function GridColumn({
             key={timeSlot}
             timeSlot={timeSlot}
             itemId={item.id}
-            isHovered={isHovered}
             hasReservation={!!hasReservation}
-            onCellHover={(hovered) => onCellHover(hovered ? item.id : null, hovered ? timeSlot : null)}
             onCellClick={!hasReservation && onCellClick ? () => onCellClick(item.id, timeSlot) : undefined}
           >
             {hasReservation && (
               <ReservationBlock
                 reservation={reservationPos.reservation}
                 slotHeight={30}
-                slotCount={reservationPos.endSlotIndex - reservationPos.startSlotIndex}
                 onOpenPopover={onOpenPopover}
                 onResize={onResize}
               />

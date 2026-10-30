@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, ConflictException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizePhone } from '../client-auth/phone';
-import { parseDateOnly, endMinutesOfDay } from '../common/slot-time';
+import { parseDateOnly, endMinutesOfDay, minutesToHHMM } from '../common/slot-time';
 import { ReservationStatus, BookingStatus } from '@prisma/client';
 import { WaitlistService } from '../waitlist/waitlist.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -61,25 +61,7 @@ export class ScheduleService {
       }),
     ]);
 
-    const formattedReservations: TableReservationResponseDto[] = reservations.map((r) => {
-      const blockedUntil = this.addMinutesToTime(
-        this.timeToString(r.endTime),
-        r.cleaningBufferMinutes,
-      );
-      return {
-        id: r.id,
-        bookingId: r.bookingId,
-        tableId: r.tableId,
-        title: r.title,
-        comment: r.comment,
-        status: r.status,
-        eventDate: r.eventDate.toISOString().split('T')[0],
-        startTime: this.timeToString(r.startTime),
-        endTime: this.timeToString(r.endTime),
-        cleaningBufferMinutes: r.cleaningBufferMinutes,
-        blockedUntilTime: blockedUntil,
-      };
-    });
+    const formattedReservations = reservations.map((reservation) => this.formatTableReservation(reservation));
 
     return { zones, tables, reservations: formattedReservations };
   }
@@ -442,10 +424,8 @@ export class ScheduleService {
       },
     });
 
-    const blockedUntil = this.addMinutesToTime(
-      this.timeToString(reservation.endTime),
-      reservation.cleaningBufferMinutes,
-    );
+    const formattedEndTime = minutesToHHMM(endMinutesOfDay(reservation.endTime, reservation.startTime));
+    const blockedUntil = this.addMinutesToTime(formattedEndTime, reservation.cleaningBufferMinutes);
 
     return {
       booking: {
@@ -460,7 +440,7 @@ export class ScheduleService {
         id: reservation.id,
         tableId: reservation.tableId,
         startTime: this.timeToString(reservation.startTime),
-        endTime: this.timeToString(reservation.endTime),
+        endTime: formattedEndTime,
         cleaningBufferMinutes: reservation.cleaningBufferMinutes,
         blockedUntilTime: blockedUntil,
       },
@@ -640,10 +620,8 @@ export class ScheduleService {
   }
 
   private formatTableReservation(reservation: any): TableReservationResponseDto {
-    const blockedUntil = this.addMinutesToTime(
-      this.timeToString(reservation.endTime),
-      reservation.cleaningBufferMinutes,
-    );
+    const formattedEndTime = minutesToHHMM(endMinutesOfDay(reservation.endTime, reservation.startTime));
+    const blockedUntil = this.addMinutesToTime(formattedEndTime, reservation.cleaningBufferMinutes);
     return {
       id: reservation.id,
       bookingId: reservation.bookingId,
@@ -653,7 +631,7 @@ export class ScheduleService {
       status: reservation.status,
       eventDate: reservation.eventDate.toISOString().split('T')[0],
       startTime: this.timeToString(reservation.startTime),
-      endTime: this.timeToString(reservation.endTime),
+      endTime: formattedEndTime,
       cleaningBufferMinutes: reservation.cleaningBufferMinutes,
       blockedUntilTime: blockedUntil,
     };

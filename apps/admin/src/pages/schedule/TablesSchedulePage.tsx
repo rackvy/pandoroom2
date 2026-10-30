@@ -4,6 +4,7 @@ import ScheduleGrid from '../../components/schedule/ScheduleGrid';
 import { getTablesSchedule, moveTableReservation, cancelTableReservation, type TablesScheduleResponse, type TableReservation } from '../../api/schedule';
 import { useBranchSelection } from '../../hooks/useBranchSelection';
 import { formatDateForApi, addDays, parseDateFromString } from '../../components/schedule/timeUtils';
+import { toast } from '../../components/ui/Toast';
 import styles from './SchedulePage.module.css';
 
 export default function TablesSchedulePage() {
@@ -64,19 +65,19 @@ export default function TablesSchedulePage() {
 
   const handleMove = useCallback(async (id: string, updates: { tableId?: string; startTime: string; endTime: string }) => {
     try {
-      await moveTableReservation(id, {
+      const updated = await moveTableReservation(id, {
         tableId: updates.tableId,
         startTime: updates.startTime,
         endTime: updates.endTime,
       });
-      // Refresh schedule
-      const dateStr = formatDateForApi(date);
-      const data = await getTablesSchedule(branchId, dateStr);
-      setScheduleData(data);
+      setScheduleData(prev => prev ? {
+        ...prev,
+        reservations: prev.reservations.map(reservation => reservation.id === id ? updated : reservation),
+      } : prev);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Ошибка перемещения брони');
+      toast.error(err.response?.data?.message || 'Ошибка изменения брони');
     }
-  }, [date, branchId]);
+  }, []);
 
   const handleCancel = useCallback(async (id: string) => {
     if (!confirm('Отменить эту бронь?')) return;
